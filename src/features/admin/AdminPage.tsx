@@ -1,22 +1,22 @@
 import React, { useState } from 'react';
 import { DataService } from '../../services/api';
 import { Lock, Unlock, UploadCloud, Loader2, Image as ImageIcon } from 'lucide-react';
+import { useAuth } from '../../hooks/useAuth';
 
 const AdminPage: React.FC = () => {
-  const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const { isAuthenticated, login, logout } = useAuth();
   const [passwordInput, setPasswordInput] = useState("");
   const [error, setError] = useState("");
-  
 
   const [uploading, setUploading] = useState(false);
   const [successMsg, setSuccessMsg] = useState("");
 
-
-
-  const handleLogin = (e: React.FormEvent) => {
+  const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (passwordInput === "123456") {
-      setIsAuthenticated(true);
+    // Using a default demo email for the admin page
+    const demoEmail = 'user1@test.com';
+
+    if (await login(passwordInput, demoEmail)) {
       setError("");
     } else {
       setError("סיסמה שגויה, נסה שנית.");
@@ -29,7 +29,7 @@ const AdminPage: React.FC = () => {
 
     setUploading(true);
     setSuccessMsg("");
-    
+
     try {
       await DataService.uploadGalleryPhoto(file);
       setSuccessMsg(`התמונה "${file.name}" עלתה בהצלחה לגלריה!`);
@@ -48,7 +48,7 @@ const AdminPage: React.FC = () => {
           <div className="bg-gray-100 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-6">
             <Lock className="text-secondary w-8 h-8" />
           </div>
-          
+
           <h2 className="text-2xl font-heading font-bold mb-2 text-primary">Admin Access</h2>
           <p className="text-secondary mb-8 text-sm">Please enter your password to manage the portfolio.</p>
 
@@ -61,10 +61,10 @@ const AdminPage: React.FC = () => {
               className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-accent focus:border-transparent outline-none transition"
               autoFocus
             />
-            
+
             {error && <p className="text-red-500 text-sm font-medium shake-animation">{error}</p>}
 
-            <button 
+            <button
               type="submit"
               className="w-full bg-primary text-white py-3 rounded-lg font-medium hover:bg-black transition-all flex items-center justify-center gap-2"
             >
@@ -84,8 +84,8 @@ const AdminPage: React.FC = () => {
           <h1 className="text-3xl font-heading font-bold text-primary">Dashboard</h1>
           <p className="text-secondary">Manage your gallery and content.</p>
         </div>
-        <button 
-          onClick={() => setIsAuthenticated(false)} 
+        <button
+          onClick={logout}
           className="text-sm text-red-500 hover:text-red-700 font-medium underline"
         >
           Logout
@@ -98,20 +98,20 @@ const AdminPage: React.FC = () => {
             <ImageIcon className="text-accent" size={24} />
             <h2 className="text-xl font-bold">Upload to Gallery</h2>
           </div>
-          
+
           <div className={`
             border-2 border-dashed rounded-xl p-12 text-center transition-all duration-300
             ${uploading ? 'bg-gray-50 border-gray-300' : 'border-accent/30 hover:border-accent hover:bg-blue-50/50'}
           `}>
-            <input 
-              type="file" 
-              id="gallery-upload" 
-              className="hidden" 
-              onChange={handleUpload} 
+            <input
+              type="file"
+              id="gallery-upload"
+              className="hidden"
+              onChange={handleUpload}
               accept="image/*"
               disabled={uploading}
             />
-            
+
             <label htmlFor="gallery-upload" className={`cursor-pointer flex flex-col items-center gap-4 ${uploading ? 'cursor-not-allowed' : ''}`}>
               {uploading ? (
                 <>
@@ -139,7 +139,7 @@ const AdminPage: React.FC = () => {
           )}
         </div>
 
-        {}
+        { }
       </div>
     </div>
   );
