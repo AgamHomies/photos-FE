@@ -11,7 +11,8 @@ import {
   MapPin,
   Calendar,
   Search,
-  Loader2
+  Loader2,
+  X
 } from 'lucide-react';
 
 interface GalleryPageProps {
@@ -31,6 +32,7 @@ const GalleryPage: React.FC<GalleryPageProps> = ({ mode }) => {
 
   const [selectedImage, setSelectedImage] = useState<File | null>(null);
   const [photos, setPhotos] = useState<Photo[]>([]); // All photos (for full view) or matched photos (for guest view)
+  const [lightboxPhoto, setLightboxPhoto] = useState<Photo | null>(null);
 
   // Refs for scrolling
   const resultsRef = useRef<HTMLDivElement>(null);
@@ -92,17 +94,61 @@ const GalleryPage: React.FC<GalleryPageProps> = ({ mode }) => {
     }, 3000);
   };
 
-  const handleDownload = (photo: Photo) => {
-    const link = document.createElement('a');
-    link.href = photo.url;
-    link.download = `photo-${photo.id}.jpg`;
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
+  const handleShare = async (photo: Photo, e: React.MouseEvent) => {
+    e.stopPropagation();
+    if (navigator.share) {
+      try {
+        await navigator.share({
+          title: 'תמונה מהאירוע',
+          text: `תמונה מהאירוע ${event?.name}`,
+          url: photo.url,
+        });
+      } catch (error) {
+        console.log('Error sharing', error);
+      }
+    } else {
+      navigator.clipboard.writeText(photo.url);
+      alert('הקישור לתמונה הועתק ללוח');
+    }
+  };
+
+  const handleDownload = async (photo: Photo, e?: React.MouseEvent) => {
+    if (e) e.stopPropagation();
+
+    try {
+      const response = await fetch(photo.url);
+      const blob = await response.blob();
+      const url = window.URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = `photo-${photo.id}.jpg`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      window.URL.revokeObjectURL(url);
+    } catch (error) {
+      // Fallback for cross-origin images that block fetch
+      const link = document.createElement('a');
+      link.href = photo.url;
+      link.download = `photo-${photo.id}.jpg`;
+      link.target = "_blank";
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+    }
   };
 
   const handleDownloadAll = () => {
     alert(`מוריד ${photos.length} תמונות...`);
+  };
+
+  const handleSavePhone = () => {
+    if (photographer?.phone) {
+      navigator.clipboard.writeText(photographer.phone);
+      alert(`המספר ${photographer.phone} הועתק ללוח`);
+    } else {
+      alert('מספר טלפון לא זמין');
+    }
   };
 
   if (loading) {
@@ -145,7 +191,10 @@ const GalleryPage: React.FC<GalleryPageProps> = ({ mode }) => {
                 <Instagram className="w-5 h-5" />
               </a>
             )}
-            <button className="bg-stone-900 text-white text-xs px-3 py-2 rounded-full flex items-center gap-2 hover:bg-stone-800 transition-colors">
+            <button
+              onClick={handleSavePhone}
+              className="bg-stone-900 text-white text-xs px-3 py-2 rounded-full flex items-center gap-2 hover:bg-stone-800 transition-colors"
+            >
               <Phone className="w-3 h-3" />
               <span>שמור טלפון</span>
             </button>
@@ -220,7 +269,7 @@ const GalleryPage: React.FC<GalleryPageProps> = ({ mode }) => {
           </div>
         )}
 
-        {/* Results State (Shared for both Guest Results and Full Mode) */}
+        {/* Results State */}
         {viewState === 'results' && (
           <div ref={resultsRef} className="animate-fade-in-up">
             <div className="flex items-center justify-between mb-6 mt-8">
@@ -246,7 +295,11 @@ const GalleryPage: React.FC<GalleryPageProps> = ({ mode }) => {
 
             <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
               {photos.map((photo) => (
-                <div key={photo.id} className="group relative aspect-[2/3] bg-stone-200 rounded-xl overflow-hidden shadow-sm hover:shadow-md transition-shadow">
+                <div
+                  key={photo.id}
+                  onClick={() => setLightboxPhoto(photo)}
+                  className="group relative aspect-[2/3] bg-stone-200 rounded-xl overflow-hidden shadow-sm hover:shadow-md transition-shadow cursor-pointer"
+                >
                   <img
                     src={photo.url}
                     alt="Event"
@@ -264,13 +317,14 @@ const GalleryPage: React.FC<GalleryPageProps> = ({ mode }) => {
                   <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity flex flex-col justify-end p-4">
                     <div className="flex gap-2 justify-end">
                       <button
-                        onClick={() => handleDownload(photo)}
+                        onClick={(e) => handleDownload(photo, e)}
                         className="p-2 bg-white/20 backdrop-blur-md text-white rounded-full hover:bg-white hover:text-stone-900 transition-colors"
                         title="הורד תמונה"
                       >
                         <Download className="w-5 h-5" />
                       </button>
                       <button
+                        onClick={(e) => handleShare(photo, e)}
                         className="p-2 bg-white/20 backdrop-blur-md text-white rounded-full hover:bg-white hover:text-stone-900 transition-colors"
                         title="שתף"
                       >
@@ -330,6 +384,44 @@ const GalleryPage: React.FC<GalleryPageProps> = ({ mode }) => {
           </p>
         </div>
       </footer>
+
+      {/* Lightbox Modal */}
+      {lightboxPhoto && (
+        <div className="fixed inset-0 z-50 bg-black/95 flex items-center justify-center p-4 animate-fade-in">
+          <button
+            onClick={() => setLightboxPhoto(null)}
+            className="absolute top-4 right-4 p-2 text-white/70 hover:text-white transition-colors z-50"
+          >
+            <X className="w-8 h-8" />
+          </button>
+
+          <div className="relative max-w-full max-h-full">
+            <img
+              src={lightboxPhoto.url}
+              alt="Full view"
+              className="max-w-full max-h-[90vh] object-contain rounded-sm shadow-2xl"
+            />
+
+            {/* Lightbox Actions */}
+            <div className="absolute bottom-4 left-1/2 transform -translate-x-1/2 flex gap-4">
+              <button
+                onClick={(e) => handleDownload(lightboxPhoto, e)}
+                className="bg-white/10 backdrop-blur-md text-white px-4 py-2 rounded-full flex items-center gap-2 hover:bg-white/20 transition-colors"
+              >
+                <Download className="w-5 h-5" />
+                <span>הורד</span>
+              </button>
+              <button
+                onClick={(e) => handleShare(lightboxPhoto, e)}
+                className="bg-white/10 backdrop-blur-md text-white px-4 py-2 rounded-full flex items-center gap-2 hover:bg-white/20 transition-colors"
+              >
+                <Share2 className="w-5 h-5" />
+                <span>שתף</span>
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

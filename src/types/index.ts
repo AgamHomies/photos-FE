@@ -3,6 +3,7 @@ export interface PhotographerProfile {
   bio: string;
   profileImageUrl: string;
   contactEmail: string;
+  phone?: string;
   instagramUrl?: string;
   portfolio?: File[];
 }

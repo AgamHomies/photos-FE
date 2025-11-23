@@ -1,6 +1,6 @@
 import { PhotographerRegistration, PhotographerProfile, Photo, Event, DashboardStats } from '../types';
 
-const STORAGE_KEY = 'mock_s3_data';
+const STORAGE_KEY = 'mock_s3_data_v2';
 const CURRENT_USER_KEY = 'current_user_email';
 
 interface MockS3Data {
@@ -64,6 +64,7 @@ const INITIAL_DATA: MockS3Data = {
             bio: 'Professional wedding photographer with 10 years of experience.',
             profileImageUrl: 'https://images.unsplash.com/photo-1556103255-4443dbae8e5a?ixlib=rb-1.0.3&auto=format&fit=crop&w=200&q=80',
             contactEmail: 'user1@test.com',
+            phone: '050-1111111',
             instagramUrl: 'https://instagram.com/ronny_shooter',
             portfolio: []
         },
@@ -72,6 +73,7 @@ const INITIAL_DATA: MockS3Data = {
             bio: 'Capturing moments that last a lifetime. Specializing in events and portraits.',
             profileImageUrl: 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?ixlib=rb-1.0.3&auto=format&fit=crop&w=200&q=80',
             contactEmail: 'user2@test.com',
+            phone: '050-2222222',
             instagramUrl: 'https://instagram.com/dana_clicks',
             portfolio: []
         },
@@ -80,6 +82,7 @@ const INITIAL_DATA: MockS3Data = {
             bio: 'Artistic photography for unique events.',
             profileImageUrl: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?ixlib=rb-1.0.3&auto=format&fit=crop&w=200&q=80',
             contactEmail: 'user3@test.com',
+            phone: '050-3333333',
             instagramUrl: 'https://instagram.com/yossi_focus',
             portfolio: []
         },
@@ -88,6 +91,7 @@ const INITIAL_DATA: MockS3Data = {
             bio: 'Specializing in candid moments and happy guests.',
             profileImageUrl: 'https://images.unsplash.com/photo-1544005313-94ddf0286df2?ixlib=rb-1.0.3&auto=format&fit=crop&w=200&q=80',
             contactEmail: 'shira@happyguests.com',
+            phone: '050-4444444',
             instagramUrl: 'https://instagram.com/happy_shira',
             portfolio: []
         }
@@ -118,6 +122,7 @@ const INITIAL_DATA: MockS3Data = {
         'user1@test.com': [
             {
                 id: 'evt-1',
+                photographerId: 'user1@test.com',
                 name: 'Wedding of Sarah & Tom',
                 date: '2023-10-15',
                 location: 'Tel Aviv',
@@ -131,6 +136,7 @@ const INITIAL_DATA: MockS3Data = {
             },
             {
                 id: 'evt-2',
+                photographerId: 'user1@test.com',
                 name: 'Bar Mitzvah of David',
                 date: '2023-09-20',
                 location: 'Jerusalem',
@@ -164,7 +170,7 @@ const saveData = (data: MockS3Data) => {
 
 export const MockS3Service = {
     register: async (data: PhotographerRegistration): Promise<boolean> => {
-        await new Promise(resolve => setTimeout(resolve, 1000)); // Simulate network delay
+        await new Promise(resolve => setTimeout(resolve, 1000));
         const s3Data = loadData();
 
         if (s3Data.users[data.email]) {
@@ -173,12 +179,12 @@ export const MockS3Service = {
 
         s3Data.users[data.email] = data;
 
-        // Create initial profile from registration data
         s3Data.profiles[data.email] = {
             name: data.fullName,
             bio: data.description,
             profileImageUrl: data.logo ? URL.createObjectURL(data.logo) : 'https://via.placeholder.com/150',
             contactEmail: data.email,
+            phone: data.phone,
             instagramUrl: data.instagramUrl,
             portfolio: data.portfolio
         };
@@ -266,7 +272,7 @@ export const MockS3Service = {
         const stats: DashboardStats = {
             totalDownloads: userEvents.reduce((acc, curr) => acc + curr.downloads, 0),
             totalPageVisits: userEvents.reduce((acc, curr) => acc + curr.guestVisits, 0),
-            phoneSaves: Math.floor(userEvents.reduce((acc, curr) => acc + curr.guestVisits, 0) * 0.4), // Mock calculation
+            phoneSaves: Math.floor(userEvents.reduce((acc, curr) => acc + curr.guestVisits, 0) * 0.4),
             activeEvents: userEvents.filter(e => e.status === 'active').length,
             expiredEvents: userEvents.filter(e => e.status === 'expired').length
         };
@@ -292,6 +298,7 @@ export const MockS3Service = {
 
         const newEvent: Event = {
             id: Math.random().toString(36).substr(2, 9),
+            photographerId: currentUserEmail,
             name: eventData.name || 'New Event',
             date: eventData.date || new Date().toISOString().split('T')[0],
             location: eventData.location || '',
@@ -315,9 +322,13 @@ export const MockS3Service = {
     getEvent: async (id: string): Promise<Event | undefined> => {
         await new Promise(resolve => setTimeout(resolve, 500));
         const s3Data = loadData();
-        const email = localStorage.getItem(CURRENT_USER_KEY);
-        if (!email) return undefined;
-        return s3Data.events[email]?.find(e => e.id === id);
+
+        // Search across all users' events
+        for (const email in s3Data.events) {
+            const event = s3Data.events[email].find(e => e.id === id);
+            if (event) return event;
+        }
+        return undefined;
     },
 
     updateEvent: async (id: string, updates: Partial<Event>): Promise<Event> => {
@@ -338,8 +349,6 @@ export const MockS3Service = {
 
     getEventPhotos: async (eventId: string): Promise<Photo[]> => {
         await new Promise(resolve => setTimeout(resolve, 600));
-        // Mocking photos for the event if none exist in a real DB
-        // In a real app, this would query a 'photos' table/collection
         return Array.from({ length: 12 }).map((_, i) => ({
             id: `photo-${eventId}-${i}`,
             url: `https://picsum.photos/seed/${eventId}-${i}/800/600`,
@@ -352,7 +361,7 @@ export const MockS3Service = {
     },
 
     uploadEventPhotos: async (eventId: string, files: File[]): Promise<void> => {
-        await new Promise(resolve => setTimeout(resolve, 2000)); // Simulate upload time
+        await new Promise(resolve => setTimeout(resolve, 2000));
         const s3Data = loadData();
         const email = localStorage.getItem(CURRENT_USER_KEY);
         if (!email) return;
@@ -385,6 +394,18 @@ export const MockS3Service = {
         const s3Data = loadData();
         if (s3Data.events[email]) {
             s3Data.events[email] = s3Data.events[email].filter(e => e.id !== id);
+            saveData(s3Data);
+        }
+    },
+
+    updateProfile: async (updates: Partial<PhotographerProfile>): Promise<void> => {
+        await new Promise(resolve => setTimeout(resolve, 800));
+        const email = localStorage.getItem(CURRENT_USER_KEY);
+        if (!email) throw new Error('Not authenticated');
+
+        const s3Data = loadData();
+        if (s3Data.profiles[email]) {
+            s3Data.profiles[email] = { ...s3Data.profiles[email], ...updates };
             saveData(s3Data);
         }
     }
