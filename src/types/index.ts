@@ -1,15 +1,20 @@
 export interface PhotographerProfile {
-
   name: string;
   bio: string;
   profileImageUrl: string;
   contactEmail: string;
+  instagramUrl?: string;
+  portfolio?: File[];
 }
 
 export interface Photo {
   id: string;
   url: string;
+  thumbnailUrl?: string;
   title: string;
+  date?: string;
+  width?: number;
+  height?: number;
 }
 
 export interface PhotographerRegistration {
@@ -23,4 +28,27 @@ export interface PhotographerRegistration {
   portfolio: File[];
   instagramUrl?: string;
   termsAccepted: boolean;
+}
+
+export interface Event {
+  id: string;
+  photographerId?: string;
+  name: string;
+  date: string;
+  location: string;
+  coverImage: string;
+  photoCount: number;
+  guestVisits: number;
+  downloads: number;
+  uniqueLink: string;
+  expiryDate: string;
+  status: 'active' | 'expired';
+}
+
+export interface DashboardStats {
+  totalDownloads: number;
+  totalPageVisits: number;
+  phoneSaves: number;
+  activeEvents: number;
+  expiredEvents: number;
 }
