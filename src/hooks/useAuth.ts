@@ -1,5 +1,9 @@
 import { useState, useEffect } from 'react';
 import { MockS3Service } from '../services/mockS3';
+import { RealAuthAPI } from '../services/realApi';
+import { CONFIG } from '../config';
+
+const USE_MOCK = CONFIG.USE_MOCK;
 
 export const useAuth = () => {
     const [isAuthenticated, setIsAuthenticated] = useState<boolean>(false);
@@ -7,7 +11,10 @@ export const useAuth = () => {
 
     useEffect(() => {
         // Check for existing session on mount
-        const userEmail = MockS3Service.getCurrentUserEmail();
+        const userEmail = USE_MOCK
+            ? MockS3Service.getCurrentUserEmail()
+            : RealAuthAPI.getCurrentUserEmail();
+
         if (userEmail) {
             setIsAuthenticated(true);
         }
@@ -15,23 +22,32 @@ export const useAuth = () => {
     }, []);
 
     const login = async (password: string, email?: string): Promise<boolean> => {
-        if (!email) return false; // We need email now
+        if (!email) return false;
+
         try {
-            const success = await MockS3Service.login(email, password);
+            const success = USE_MOCK
+                ? await MockS3Service.login(email, password)
+                : await RealAuthAPI.login(email, password);
+
             if (success) {
                 setIsAuthenticated(true);
                 return true;
             }
         } catch (error) {
             console.error("Login failed", error);
+            throw error; // Re-throw to allow error handling in components
         }
         return false;
     };
 
     const logout = () => {
-        MockS3Service.logout();
+        if (USE_MOCK) {
+            MockS3Service.logout();
+        } else {
+            RealAuthAPI.logout();
+        }
         setIsAuthenticated(false);
     };
 
-    return { isAuthenticated, isLoading, login, logout };
+    return { isAuthenticated, isLoading: isLoading, login, logout };
 };

@@ -1,7 +1,7 @@
-import React, { useState, useRef } from 'react';
+import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Upload, Calendar, MapPin, Image as ImageIcon, Check, Loader2, ArrowRight, FileText } from 'lucide-react';
-import { MockS3Service } from '../../services/mockS3';
+import { Upload, Image as ImageIcon, Check, ArrowRight, FileText } from 'lucide-react';
+import { BackendService } from '../../services/backendService';
 
 const CreateEventPage: React.FC = () => {
     const navigate = useNavigate();
@@ -12,7 +12,6 @@ const CreateEventPage: React.FC = () => {
         date: '',
         location: ''
     });
-    const [coverImage, setCoverImage] = useState<File | null>(null);
     const [coverPreview, setCoverPreview] = useState<string | null>(null);
     const [galleryFiles, setGalleryFiles] = useState<File[]>([]);
     const [uploadProgress, setUploadProgress] = useState(0);
@@ -27,7 +26,6 @@ const CreateEventPage: React.FC = () => {
     const handleCoverImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         if (e.target.files && e.target.files[0]) {
             const file = e.target.files[0];
-            setCoverImage(file);
             setCoverPreview(URL.createObjectURL(file));
         }
     };
@@ -56,18 +54,18 @@ const CreateEventPage: React.FC = () => {
             // 3. Uploading Gallery Photos
             setProcessingStage(`מעלה ${galleryFiles.length} תמונות ל-S3...`);
             setUploadProgress(60);
-            await new Promise(resolve => setTimeout(resolve, 1500)); // Simulate bulk upload
+            await new Promise(resolve => setTimeout(resolve, 1500));
 
             // 4. AI Processing
             setProcessingStage('מבצע זיהוי פנים (Face Indexing)...');
             setUploadProgress(85);
-            await new Promise(resolve => setTimeout(resolve, 2000)); // Simulate AI processing
+            await new Promise(resolve => setTimeout(resolve, 2000));
 
             // 5. Finalizing
             setProcessingStage('בונה אוספים ומפיק קישור ייחודי...');
             setUploadProgress(100);
 
-            const newEvent = await MockS3Service.createEvent({
+            const newEvent = await BackendService.createEvent({
                 name: formData.name,
                 date: formData.date,
                 location: formData.location,

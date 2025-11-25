@@ -9,7 +9,6 @@ import {
   Aperture,
   ChevronDown,
   ChevronUp,
-  CheckCircle2,
   ArrowRight,
   Mail,
   Phone,

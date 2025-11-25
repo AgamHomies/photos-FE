@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../hooks/useAuth';
-import { MockS3Service } from '../../services/mockS3';
+import { BackendService } from '../../services/backendService';
 import { DashboardStats, Event, PhotographerProfile } from '../../types';
 import {
     LayoutDashboard,
@@ -14,7 +14,6 @@ import {
     AlertCircle,
     Plus,
     Trash2,
-    ExternalLink,
     Camera,
     Heart
 } from 'lucide-react';
@@ -41,16 +40,28 @@ const DashboardPage: React.FC = () => {
     const loadData = async () => {
         setLoading(true);
         try {
+            // Check if user has token before making requests
+            const token = localStorage.getItem('auth_token');
+            if (!token) {
+                console.warn('No auth token found, redirecting to login');
+                navigate('/auth');
+                return;
+            }
+
             const [statsData, eventsData, profileData] = await Promise.all([
-                MockS3Service.getDashboardStats(),
-                MockS3Service.getEvents(),
-                MockS3Service.getProfile()
+                BackendService.getDashboardStats(),
+                BackendService.getEvents(),
+                BackendService.getProfile()
             ]);
             setStats(statsData);
             setEvents(eventsData);
             setProfile(profileData);
         } catch (error) {
-            console.error("Failed to load dashboard data", error);
+            console.error('Failed to load dashboard data:', error);
+            // If unauthorized, redirect to login
+            if (error instanceof Error && error.message.includes('Not authenticated')) {
+                navigate('/auth');
+            }
         } finally {
             setLoading(false);
         }
@@ -62,14 +73,14 @@ const DashboardPage: React.FC = () => {
     };
 
     const handleDeleteEvent = async (id: string, e: React.MouseEvent) => {
-        e.stopPropagation(); // Prevent row click
+        e.stopPropagation();
         if (window.confirm('האם אתה בטוח שברצונך למחוק אירוע זה?')) {
-            await MockS3Service.deleteEvent(id);
+            await BackendService.deleteEvent(id);
             loadData();
         }
     };
 
-    if (loading && !stats) { // Show loading only on initial load
+    if (loading && !stats) {
         return <div className="min-h-screen flex items-center justify-center bg-stone-50">טוען נתונים...</div>;
     }
 

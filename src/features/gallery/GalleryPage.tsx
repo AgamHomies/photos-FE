@@ -1,6 +1,6 @@
 import React, { useEffect, useState, useRef } from 'react';
 import { useParams } from 'react-router-dom';
-import { MockS3Service } from '../../services/mockS3';
+import { BackendService } from '../../services/backendService';
 import { Event, Photo, PhotographerProfile } from '../../types';
 import {
   Camera,
@@ -46,14 +46,14 @@ const GalleryPage: React.FC<GalleryPageProps> = ({ mode }) => {
   const loadData = async (eventId: string) => {
     try {
       const [eventData, eventPhotos] = await Promise.all([
-        MockS3Service.getEvent(eventId),
-        MockS3Service.getEventPhotos(eventId)
+        BackendService.getEvent(eventId),
+        BackendService.getEventPhotos(eventId)
       ]);
 
       if (eventData) {
         setEvent(eventData);
         if (eventData.photographerId) {
-          const profile = await MockS3Service.getPhotographerProfile(eventData.photographerId);
+          const profile = await BackendService.getPhotographerProfile(eventData.photographerId);
           setPhotographer(profile);
         }
       }
@@ -81,7 +81,7 @@ const GalleryPage: React.FC<GalleryPageProps> = ({ mode }) => {
     // Simulate processing time
     setTimeout(async () => {
       if (id) {
-        const allPhotos = await MockS3Service.getEventPhotos(id);
+        const allPhotos = await BackendService.getEventPhotos(id);
         // Simulate finding matches (randomly select 30-50% of photos)
         const matches = allPhotos.filter(() => Math.random() > 0.6);
         setPhotos(matches);

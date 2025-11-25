@@ -1,18 +1,13 @@
 import React, { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { MockS3Service } from '../../services/mockS3';
+import { BackendService } from '../../services/backendService';
 import { Event, Photo } from '../../types';
 import {
     ArrowRight,
-    Calendar,
-    MapPin,
-    Image as ImageIcon,
     Upload,
     Trash2,
     Star,
     Save,
-    MoreVertical,
-    Check,
     Loader2,
     Users,
     Heart
@@ -44,8 +39,8 @@ const EventManagePage: React.FC = () => {
         setLoading(true);
         try {
             const [eventData, photosData] = await Promise.all([
-                MockS3Service.getEvent(eventId),
-                MockS3Service.getEventPhotos(eventId)
+                BackendService.getEvent(eventId),
+                BackendService.getEventPhotos(eventId)
             ]);
 
             if (eventData) {
@@ -57,7 +52,7 @@ const EventManagePage: React.FC = () => {
                 });
                 setPhotos(photosData);
             } else {
-                navigate('/admin'); // Event not found
+                navigate('/admin');
             }
         } catch (error) {
             console.error("Failed to load event", error);
@@ -70,9 +65,7 @@ const EventManagePage: React.FC = () => {
         if (e.target.files && e.target.files.length > 0 && id) {
             setUploading(true);
             try {
-                await MockS3Service.uploadEventPhotos(id, Array.from(e.target.files));
-                // Reload photos to show "new" ones (mock will just update count, but in real app we'd fetch new photos)
-                // For mock visualization, we'll just add dummy photos to the list
+                await BackendService.uploadEventPhotos(id, Array.from(e.target.files));
                 const newPhotos = Array.from(e.target.files).map((file, i) => ({
                     id: `new-${Date.now()}-${i}`,
                     url: URL.createObjectURL(file),
@@ -95,7 +88,7 @@ const EventManagePage: React.FC = () => {
     const handleDeletePhoto = async (photoId: string) => {
         if (window.confirm('האם למחוק תמונה זו?') && id) {
             try {
-                await MockS3Service.deleteEventPhoto(id, photoId);
+                await BackendService.deleteEventPhoto(id, photoId);
                 setPhotos(prev => prev.filter(p => p.id !== photoId));
             } catch (error) {
                 alert('שגיאה במחיקת תמונה');
@@ -106,7 +99,7 @@ const EventManagePage: React.FC = () => {
     const handleSetCover = async (photoUrl: string) => {
         if (id && event) {
             try {
-                const updated = await MockS3Service.updateEvent(id, { coverImage: photoUrl });
+                const updated = await BackendService.updateEvent(id, { coverImage: photoUrl });
                 setEvent(updated);
                 alert('תמונת קאבר עודכנה בהצלחה');
             } catch (error) {
@@ -119,7 +112,7 @@ const EventManagePage: React.FC = () => {
         e.preventDefault();
         if (id) {
             try {
-                const updated = await MockS3Service.updateEvent(id, editForm);
+                const updated = await BackendService.updateEvent(id, editForm);
                 setEvent(updated);
                 alert('פרטי האירוע עודכנו בהצלחה');
             } catch (error) {
@@ -132,7 +125,7 @@ const EventManagePage: React.FC = () => {
         if (window.confirm('האם אתה בטוח שברצונך למחוק את האירוע לצמיתות? פעולה זו אינה הפיכה.')) {
             if (id) {
                 try {
-                    await MockS3Service.deleteEvent(id);
+                    await BackendService.deleteEvent(id);
                     navigate('/admin');
                 } catch (error) {
                     alert('שגיאה במחיקת האירוע');

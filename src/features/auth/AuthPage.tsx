@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { Camera, Upload, Instagram, Mail, Lock, MapPin, Phone, User, FileText } from 'lucide-react';
 import { PhotographerRegistration } from '../../types';
 import { useAuth } from '../../hooks/useAuth';
-import { MockS3Service } from '../../services/mockS3';
+import { BackendService } from '../../services/backendService';
 
 const AuthPage: React.FC = () => {
     const navigate = useNavigate();
@@ -87,7 +87,7 @@ const AuthPage: React.FC = () => {
                         alert('שם משתמש או סיסמה שגויים');
                     }
                 } else {
-                    await MockS3Service.register(formData);
+                    await BackendService.register(formData);
                     // Auto login after register
                     await login(formData.password, formData.email);
                     alert('הרשמה בוצעה בהצלחה!');
