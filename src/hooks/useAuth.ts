@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
+import { supabaseAuthService } from '../services/supabaseAuthService';
 import { MockS3Service } from '../services/mockS3';
-import { RealAuthAPI } from '../services/realApi';
 import { CONFIG } from '../config';
 
 const USE_MOCK = CONFIG.USE_MOCK;
@@ -11,40 +11,58 @@ export const useAuth = () => {
 
     useEffect(() => {
         // Check for existing session on mount
-        const userEmail = USE_MOCK
-            ? MockS3Service.getCurrentUserEmail()
-            : RealAuthAPI.getCurrentUserEmail();
+        const checkSession = async () => {
+            if (USE_MOCK) {
+                const userEmail = MockS3Service.getCurrentUserEmail();
+                if (userEmail) {
+                    setIsAuthenticated(true);
+                }
+            } else {
+                const { session } = await supabaseAuthService.getSession();
+                if (session) {
+                    setIsAuthenticated(true);
+                }
+            }
+            setIsLoading(false);
+        };
 
-        if (userEmail) {
-            setIsAuthenticated(true);
+        checkSession();
+
+        // Listen to auth state changes (Supabase only)
+        if (!USE_MOCK) {
+            const { data: { subscription } } = supabaseAuthService.onAuthStateChange((session) => {
+                setIsAuthenticated(!!session);
+            });
+
+            return () => {
+                subscription.unsubscribe();
+            };
         }
-        setIsLoading(false);
     }, []);
 
     const login = async (password: string, email?: string): Promise<boolean> => {
-        if (!email) return false;
-
-        try {
-            const success = USE_MOCK
-                ? await MockS3Service.login(email, password)
-                : await RealAuthAPI.login(email, password);
-
-            if (success) {
-                setIsAuthenticated(true);
-                return true;
+        // This method is kept for backward compatibility but not used with Supabase
+        // Supabase login is handled directly in AuthPage
+        if (USE_MOCK && email) {
+            try {
+                const success = await MockS3Service.login(email, password);
+                if (success) {
+                    setIsAuthenticated(true);
+                    return true;
+                }
+            } catch (error) {
+                console.error("Login failed", error);
+                throw error;
             }
-        } catch (error) {
-            console.error("Login failed", error);
-            throw error; // Re-throw to allow error handling in components
         }
         return false;
     };
 
-    const logout = () => {
+    const logout = async () => {
         if (USE_MOCK) {
             MockS3Service.logout();
         } else {
-            RealAuthAPI.logout();
+            await supabaseAuthService.signOut();
         }
         setIsAuthenticated(false);
     };

@@ -3,9 +3,12 @@ import { PhotographerProfile, Photo, Event, DashboardStats, PhotographerRegistra
 
 const API_BASE_URL = CONFIG.API_BASE_URL;
 
-// Helper function to get auth token
-const getAuthToken = (): string | null => {
-    return localStorage.getItem('auth_token');
+// Helper function to get auth token from Supabase
+const getAuthToken = async (): Promise<string | null> => {
+    // Import supabase client
+    const { supabase } = await import('./supabaseClient');
+    const { data: { session } } = await supabase.auth.getSession();
+    return session?.access_token || null;
 };
 
 // Helper function for API requests
@@ -13,7 +16,7 @@ const apiRequest = async (
     endpoint: string,
     options: RequestInit = {}
 ): Promise<any> => {
-    const token = getAuthToken();
+    const token = await getAuthToken();
     const headers: Record<string, string> = {
         ...(options.headers as Record<string, string> || {}),
     };
@@ -71,19 +74,28 @@ export const RealAuthAPI = {
 
     register: async (registrationData: PhotographerRegistration): Promise<boolean> => {
         const formData = new FormData();
+
+        // Required fields
         formData.append('email', registrationData.email);
         formData.append('password', registrationData.password);
+        formData.append('fullName', registrationData.fullName);
+        formData.append('description', registrationData.description);
+        formData.append('address', registrationData.address);
+        formData.append('phone', registrationData.phone);
+        formData.append('termsAccepted', registrationData.termsAccepted.toString());
 
-        const profileData = {
-            name: registrationData.fullName,
-            short_description: registrationData.description,
-            address: registrationData.address,
-            phone: registrationData.phone,
-            instagram_url: registrationData.instagramUrl || '',
-            logo_url: '',
-        };
-        formData.append('profile', JSON.stringify(profileData));
+        // Optional social media URLs
+        if (registrationData.instagramUrl) {
+            formData.append('instagramUrl', registrationData.instagramUrl);
+        }
+        if (registrationData.tiktokUrl) {
+            formData.append('tiktokUrl', registrationData.tiktokUrl);
+        }
+        if (registrationData.facebookUrl) {
+            formData.append('facebookUrl', registrationData.facebookUrl);
+        }
 
+        // Optional file uploads
         if (registrationData.logo) {
             formData.append('logo', registrationData.logo);
         }
@@ -94,8 +106,12 @@ export const RealAuthAPI = {
             });
         }
 
+        const token = await getAuthToken();
         const response = await fetch(`${API_BASE_URL}/auth/register`, {
             method: 'POST',
+            headers: {
+                'Authorization': `Bearer ${token}`,
+            },
             body: formData,
         });
 
@@ -308,7 +324,7 @@ export const RealPhotoAPI = {
             formData.append('files', file);
         });
 
-        const token = getAuthToken();
+        const token = await getAuthToken();
         const response = await fetch(`${API_BASE_URL}/events/${eventId}/images`, {
             method: 'POST',
             headers: {
