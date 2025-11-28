@@ -36,18 +36,27 @@ const AuthPage: React.FC = () => {
         const handleOAuthCallback = async () => {
             const { session, error } = await supabaseAuthService.getSession();
             if (session && !error) {
-                // User authenticated via OAuth, redirect to complete profile
+                // User authenticated via OAuth
                 const user = session.user;
-                setFormData(prev => ({
-                    ...prev,
-                    email: user.email || '',
-                }));
-                // Check if user has completed profile in backend
-                // If not, show profile completion form
+
+                try {
+                    // Check if user has completed profile in backend
+                    await BackendService.getProfile();
+                    // If successful, user exists -> redirect to admin
+                    navigate('/admin');
+                } catch (err) {
+                    // If profile not found (or other error), show registration form
+                    console.log('Profile not found, redirecting to registration');
+                    setIsLogin(false);
+                    setFormData(prev => ({
+                        ...prev,
+                        email: user.email || '',
+                    }));
+                }
             }
         };
         handleOAuthCallback();
-    }, []);
+    }, [navigate]);
 
     const handleInputChange = (e: ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
         const { name, value } = e.target;

@@ -141,35 +141,19 @@ export const RealAuthAPI = {
 // ============================================
 export const RealProfileAPI = {
     getProfile: async (): Promise<PhotographerProfile | null> => {
-        try {
-            const data = await apiRequest('/auth/me');
+        const data = await apiRequest('/auth/me');
 
-            return {
-                name: data.profile.name,
-                bio: data.profile.short_description,
-                profileImageUrl: data.profile.logo_url || 'https://via.placeholder.com/150',
-                contactEmail: data.email,
-                phone: data.profile.phone,
-                instagramUrl: data.profile.instagram_url,
-                portfolio: [],
-            };
-        } catch (error) {
-            console.warn('GET /auth/me failed (endpoint may not be implemented yet):', error);
-            // Return a minimal profile if endpoint doesn't exist
-            const email = localStorage.getItem('current_user_email');
-            if (email) {
-                return {
-                    name: 'Photographer',
-                    bio: 'Profile endpoint not yet implemented',
-                    profileImageUrl: 'https://via.placeholder.com/150',
-                    contactEmail: email,
-                    phone: '',
-                    instagramUrl: '',
-                    portfolio: [],
-                };
-            }
-            return null;
-        }
+        return {
+            name: data.profile.name,
+            bio: data.profile.short_description,
+            profileImageUrl: data.profile.logo_url || 'https://via.placeholder.com/150',
+            contactEmail: data.email,
+            phone: data.profile.phone,
+            instagramUrl: data.profile.instagram_url,
+            tiktokUrl: data.profile.tiktok_url,
+            facebookUrl: data.profile.facebook_url,
+            portfolio: data.profile.portfolio || [],
+        };
     },
 
     getPhotographerProfile: async (email: string): Promise<PhotographerProfile | null> => {
