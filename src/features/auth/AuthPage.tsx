@@ -33,36 +33,45 @@ const AuthPage: React.FC = () => {
     const [confirmPassword, setConfirmPassword] = useState('');
     const [confirmPasswordError, setConfirmPasswordError] = useState('');
 
-    // Check for OAuth callback - only run if there's a hash in the URL (OAuth redirect)
+    // Check for OAuth callback
     useEffect(() => {
+        let hasRun = false;
+
         const handleOAuthCallback = async () => {
-            // Only check for OAuth callback if there's a hash fragment in the URL
-            // This prevents running on every page load
-            if (!window.location.hash) {
+            if (hasRun) return;
+            hasRun = true;
+
+            const { session, error } = await supabaseAuthService.getSession();
+
+            // Only proceed if there's actually a session
+            if (!session || error) {
                 return;
             }
 
-            const { session, error } = await supabaseAuthService.getSession();
-            if (session && !error) {
-                // User authenticated via OAuth
-                const user = session.user;
+            // User authenticated via OAuth
+            const user = session.user;
 
-                try {
-                    // Check if user has completed profile in backend
-                    await BackendService.getProfile();
-                    // If successful, user exists -> redirect to admin
-                    navigate('/admin');
-                } catch (err) {
-                    // If profile not found (or other error), show registration form
-                    console.log('Profile not found, redirecting to registration');
-                    setIsLogin(false);
-                    setFormData(prev => ({
-                        ...prev,
-                        email: user.email || '',
-                    }));
+            try {
+                // Check if user has completed profile in backend
+                await BackendService.getProfile();
+                // If successful, user exists -> redirect to admin
+                navigate('/admin');
+            } catch (err) {
+                // If profile not found, check if this is from an OAuth callback
+                // by looking for hash or if the session is very recent (< 10 seconds old)
+                const sessionAge = Date.now() - new Date(session.user.created_at).getTime();
+                const isRecentSession = sessionAge < 10000; // Less than 10 seconds
+                const hasHash = window.location.hash.includes('access_token');
+
+                if (hasHash || isRecentSession) {
+                    // This is likely an OAuth callback, show registration
+                    console.log('Profile not found after OAuth, redirecting to profile completion');
+                    navigate('/complete-profile');
                 }
+                // Otherwise, do nothing - let user stay on login page
             }
         };
+
         handleOAuthCallback();
     }, [navigate]);
 
