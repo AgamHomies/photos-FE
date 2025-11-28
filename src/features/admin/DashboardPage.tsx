@@ -28,14 +28,8 @@ const DashboardPage: React.FC = () => {
     const [loading, setLoading] = useState(true);
 
     useEffect(() => {
-        if (authLoading) return;
-
-        if (!isAuthenticated) {
-            navigate('/auth');
-            return;
-        }
         loadData();
-    }, [isAuthenticated, authLoading, navigate]);
+    }, []);
 
     const loadData = async () => {
         setLoading(true);

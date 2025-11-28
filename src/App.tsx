@@ -8,6 +8,7 @@ import EventManagePage from './features/admin/EventManagePage';
 import AuthPage from './features/auth/AuthPage';
 import AuthCallbackPage from './features/auth/AuthCallbackPage';
 import { CONFIG } from './config';
+import ProtectedRoute from './components/ProtectedRoute';
 
 function App() {
   // Log the current mode on app start
@@ -29,9 +30,14 @@ function App() {
           <Route path="gallery/:id/full" element={<GalleryPage mode="full" />} />
           <Route path="auth" element={<AuthPage />} />
           <Route path="auth/callback" element={<AuthCallbackPage />} />
-          <Route path="admin" element={<DashboardPage />} />
-          <Route path="admin/create-event" element={<CreateEventPage />} />
-          <Route path="admin/events/:id" element={<EventManagePage />} />
+
+          {/* Protected Admin Routes */}
+          <Route element={<ProtectedRoute />}>
+            <Route path="admin" element={<DashboardPage />} />
+            <Route path="admin/create-event" element={<CreateEventPage />} />
+            <Route path="admin/events/:id" element={<EventManagePage />} />
+          </Route>
+
           <Route path="*" element={<Navigate to="/" replace />} />
         </Route>
       </Routes>
