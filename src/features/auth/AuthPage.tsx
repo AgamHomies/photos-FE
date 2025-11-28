@@ -30,6 +30,8 @@ const AuthPage: React.FC = () => {
     const [logoPreview, setLogoPreview] = useState<string | null>(null);
     const [portfolioPreviews, setPortfolioPreviews] = useState<string[]>([]);
     const [isSubmitting, setIsSubmitting] = useState(false);
+    const [confirmPassword, setConfirmPassword] = useState('');
+    const [confirmPasswordError, setConfirmPasswordError] = useState('');
 
     // Check for OAuth callback
     useEffect(() => {
@@ -114,6 +116,15 @@ const AuthPage: React.FC = () => {
         }
 
         if (!isLogin) {
+            // Check password confirmation
+            if (!confirmPassword) {
+                setConfirmPasswordError('אימות סיסמה הוא שדה חובה');
+            } else if (formData.password !== confirmPassword) {
+                setConfirmPasswordError('הסיסמאות אינן תואמות');
+            } else {
+                setConfirmPasswordError('');
+            }
+
             if (!formData.fullName) newErrors.fullName = 'שם מלא/עסק הוא שדה חובה';
             if (!formData.description) newErrors.description = 'תיאור הוא שדה חובה';
             if (formData.description.length > 150) newErrors.description = 'תיאור מוגבל ל-150 תווים';
@@ -123,7 +134,7 @@ const AuthPage: React.FC = () => {
         }
 
         setErrors(newErrors);
-        return Object.keys(newErrors).length === 0;
+        return Object.keys(newErrors).length === 0 && (!isLogin ? !confirmPasswordError && confirmPassword === formData.password : true);
     };
 
 
@@ -263,6 +274,27 @@ const AuthPage: React.FC = () => {
                                 />
                                 {errors.password && <p className="text-red-500 text-xs mt-1">{errors.password}</p>}
                             </div>
+
+                            {/* Password Confirmation - Only show during registration */}
+                            {!isLogin && (
+                                <div className="relative">
+                                    <div className="absolute inset-y-0 right-0 pr-3 flex items-center pointer-events-none">
+                                        <Lock className="h-5 w-5 text-stone-400" />
+                                    </div>
+                                    <input
+                                        name="confirmPassword"
+                                        type="password"
+                                        placeholder="אימות סיסמה"
+                                        className={`block w-full pr-10 border ${confirmPasswordError ? 'border-red-500' : 'border-stone-300'} rounded-lg p-3 focus:ring-amber-500 focus:border-amber-500`}
+                                        value={confirmPassword}
+                                        onChange={(e) => {
+                                            setConfirmPassword(e.target.value);
+                                            if (confirmPasswordError) setConfirmPasswordError('');
+                                        }}
+                                    />
+                                    {confirmPasswordError && <p className="text-red-500 text-xs mt-1">{confirmPasswordError}</p>}
+                                </div>
+                            )}
                         </div>
 
                         {/* Registration Fields */}
