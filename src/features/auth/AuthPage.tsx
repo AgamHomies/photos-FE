@@ -33,9 +33,15 @@ const AuthPage: React.FC = () => {
     const [confirmPassword, setConfirmPassword] = useState('');
     const [confirmPasswordError, setConfirmPasswordError] = useState('');
 
-    // Check for OAuth callback
+    // Check for OAuth callback - only run if there's a hash in the URL (OAuth redirect)
     useEffect(() => {
         const handleOAuthCallback = async () => {
+            // Only check for OAuth callback if there's a hash fragment in the URL
+            // This prevents running on every page load
+            if (!window.location.hash) {
+                return;
+            }
+
             const { session, error } = await supabaseAuthService.getSession();
             if (session && !error) {
                 // User authenticated via OAuth
