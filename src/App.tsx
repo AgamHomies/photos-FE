@@ -6,6 +6,7 @@ import DashboardPage from './features/admin/DashboardPage';
 import CreateEventPage from './features/admin/CreateEventPage';
 import EventManagePage from './features/admin/EventManagePage';
 import AuthPage from './features/auth/AuthPage';
+import ProfileCompletionPage from './features/auth/ProfileCompletionPage';
 import AuthCallbackPage from './features/auth/AuthCallbackPage';
 import { CONFIG } from './config';
 import ProtectedRoute from './components/ProtectedRoute';
@@ -33,6 +34,7 @@ function App() {
 
           {/* Protected Admin Routes */}
           <Route element={<ProtectedRoute />}>
+            <Route path="complete-profile" element={<ProfileCompletionPage />} />
             <Route path="admin" element={<DashboardPage />} />
             <Route path="admin/create-event" element={<CreateEventPage />} />
             <Route path="admin/events/:id" element={<EventManagePage />} />

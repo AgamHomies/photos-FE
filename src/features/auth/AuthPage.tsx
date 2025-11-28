@@ -121,15 +121,9 @@ const AuthPage: React.FC = () => {
                 setConfirmPasswordError('אימות סיסמה הוא שדה חובה');
             } else if (formData.password !== confirmPassword) {
                 setConfirmPasswordError('הסיסמאות אינן תואמות');
-            } else {
-                setConfirmPasswordError('');
             }
 
-            if (!formData.fullName) newErrors.fullName = 'שם מלא/עסק הוא שדה חובה';
-            if (!formData.description) newErrors.description = 'תיאור הוא שדה חובה';
-            if (formData.description.length > 150) newErrors.description = 'תיאור מוגבל ל-150 תווים';
-            if (!formData.address) newErrors.address = 'כתובת היא שדה חובה';
-            if (!formData.phone) newErrors.phone = 'טלפון הוא שדה חובה';
+            // Profile fields are no longer validated here - they'll be collected on the profile completion page
             if (!formData.termsAccepted) newErrors.termsAccepted = 'חובה לאשר את תנאי השימוש';
         }
 
@@ -159,7 +153,7 @@ const AuthPage: React.FC = () => {
                         navigate('/admin');
                     }
                 } else {
-                    // Register with Supabase
+                    // Register with Supabase - only email and password
                     const { user, session, error } = await supabaseAuthService.signUpWithEmail(
                         formData.email,
                         formData.password
@@ -170,16 +164,9 @@ const AuthPage: React.FC = () => {
                         return;
                     }
 
-                    // Save profile data to backend
-                    try {
-                        await BackendService.register(formData);
-                    } catch (profileError: any) {
-                        console.error('Failed to save profile:', profileError);
-                        alert('הרשמה הצליחה אך שמירת הפרופיל נכשלה. אנא עדכן את הפרופיל שלך מההגדרות.');
-                    }
-
-                    alert('הרשמה בוצעה בהצלחה!');
-                    navigate('/admin');
+                    // Redirect to profile completion page
+                    alert('הרשמה בוצעה בהצלחה! אנא השלם את הפרופיל שלך.');
+                    navigate('/complete-profile');
                 }
             } catch (error: any) {
                 console.error(error);
@@ -295,149 +282,9 @@ const AuthPage: React.FC = () => {
                                     {confirmPasswordError && <p className="text-red-500 text-xs mt-1">{confirmPasswordError}</p>}
                                 </div>
                             )}
-                        </div>
 
-                        {/* Registration Fields */}
-                        {!isLogin && (
-                            <>
-                                <div className="relative">
-                                    <div className="absolute inset-y-0 right-0 pr-3 flex items-center pointer-events-none">
-                                        <User className="h-5 w-5 text-stone-400" />
-                                    </div>
-                                    <input
-                                        name="fullName"
-                                        type="text"
-                                        placeholder="שם מלא / שם העסק"
-                                        className={`block w-full pr-10 border ${errors.fullName ? 'border-red-500' : 'border-stone-300'} rounded-lg p-3 focus:ring-amber-500 focus:border-amber-500`}
-                                        value={formData.fullName}
-                                        onChange={handleInputChange}
-                                    />
-                                    {errors.fullName && <p className="text-red-500 text-xs mt-1">{errors.fullName}</p>}
-                                </div>
-
-                                <div className="relative">
-                                    <div className="absolute inset-y-0 right-0 pr-3 flex items-center pointer-events-none">
-                                        <Phone className="h-5 w-5 text-stone-400" />
-                                    </div>
-                                    <input
-                                        name="phone"
-                                        type="tel"
-                                        placeholder="טלפון"
-                                        className={`block w-full pr-10 border ${errors.phone ? 'border-red-500' : 'border-stone-300'} rounded-lg p-3 focus:ring-amber-500 focus:border-amber-500`}
-                                        value={formData.phone}
-                                        onChange={handleInputChange}
-                                    />
-                                    {errors.phone && <p className="text-red-500 text-xs mt-1">{errors.phone}</p>}
-                                </div>
-
-                                <div className="relative col-span-1 md:col-span-2">
-                                    <div className="absolute inset-y-0 right-0 pr-3 pt-3 pointer-events-none">
-                                        <MapPin className="h-5 w-5 text-stone-400" />
-                                    </div>
-                                    <input
-                                        name="address"
-                                        type="text"
-                                        placeholder="כתובת"
-                                        className={`block w-full pr-10 border ${errors.address ? 'border-red-500' : 'border-stone-300'} rounded-lg p-3 focus:ring-amber-500 focus:border-amber-500`}
-                                        value={formData.address}
-                                        onChange={handleInputChange}
-                                    />
-                                    {errors.address && <p className="text-red-500 text-xs mt-1">{errors.address}</p>}
-                                </div>
-
-                                <div className="relative col-span-1 md:col-span-2">
-                                    <div className="absolute inset-y-0 right-0 pr-3 pt-3 pointer-events-none">
-                                        <FileText className="h-5 w-5 text-stone-400" />
-                                    </div>
-                                    <textarea
-                                        name="description"
-                                        placeholder="תיאור קצר (עד 150 תווים)"
-                                        maxLength={150}
-                                        rows={3}
-                                        className={`block w-full pr-10 border ${errors.description ? 'border-red-500' : 'border-stone-300'} rounded-lg p-3 focus:ring-amber-500 focus:border-amber-500`}
-                                        value={formData.description}
-                                        onChange={handleInputChange}
-                                    />
-                                    <div className="text-left text-xs text-stone-400 mt-1">
-                                        {formData.description.length}/150
-                                    </div>
-                                    {errors.description && <p className="text-red-500 text-xs mt-1">{errors.description}</p>}
-                                </div>
-
-                                {/* Social Media URLs */}
-                                <div className="relative col-span-1 md:col-span-2">
-                                    <div className="absolute inset-y-0 right-0 pr-3 flex items-center pointer-events-none">
-                                        <Instagram className="h-5 w-5 text-stone-400" />
-                                    </div>
-                                    <input
-                                        name="instagramUrl"
-                                        type="url"
-                                        placeholder="קישור לאינסטגרם (אופציונלי)"
-                                        className="block w-full pr-10 border border-stone-300 rounded-lg p-3 focus:ring-amber-500 focus:border-amber-500"
-                                        value={formData.instagramUrl}
-                                        onChange={handleInputChange}
-                                    />
-                                </div>
-
-                                <div className="relative">
-                                    <div className="absolute inset-y-0 right-0 pr-3 flex items-center pointer-events-none text-stone-400">
-                                        <FaTiktok className="h-5 w-5" />
-                                    </div>
-                                    <input
-                                        name="tiktokUrl"
-                                        type="url"
-                                        placeholder="קישור לטיקטוק (אופציונלי)"
-                                        className="block w-full pr-10 border border-stone-300 rounded-lg p-3 focus:ring-amber-500 focus:border-amber-500"
-                                        value={formData.tiktokUrl}
-                                        onChange={handleInputChange}
-                                    />
-                                </div>
-
-                                <div className="relative">
-                                    <div className="absolute inset-y-0 right-0 pr-3 flex items-center pointer-events-none text-stone-400">
-                                        <FaFacebook className="h-5 w-5" />
-                                    </div>
-                                    <input
-                                        name="facebookUrl"
-                                        type="url"
-                                        placeholder="קישור לפייסבוק (אופציונלי)"
-                                        className="block w-full pr-10 border border-stone-300 rounded-lg p-3 focus:ring-amber-500 focus:border-amber-500"
-                                        value={formData.facebookUrl}
-                                        onChange={handleInputChange}
-                                    />
-                                </div>
-
-                                {/* File Uploads */}
-                                <div className="col-span-1">
-                                    <label className="block text-sm font-medium text-stone-700 mb-2">לוגו העסק</label>
-                                    <div className="flex items-center gap-4">
-                                        <label className="cursor-pointer bg-stone-100 hover:bg-stone-200 text-stone-600 px-4 py-2 rounded-lg flex items-center gap-2 transition-colors">
-                                            <Upload className="w-4 h-4" />
-                                            <span>בחר קובץ</span>
-                                            <input type="file" accept="image/*" className="hidden" onChange={handleLogoUpload} />
-                                        </label>
-                                        {logoPreview && (
-                                            <img src={logoPreview} alt="Logo Preview" className="h-12 w-12 rounded-full object-cover border border-stone-200" />
-                                        )}
-                                    </div>
-                                </div>
-
-                                <div className="col-span-1 md:col-span-2">
-                                    <label className="block text-sm font-medium text-stone-700 mb-2">תיק עבודות (3 תמונות)</label>
-                                    <div className="flex flex-col gap-4">
-                                        <label className="cursor-pointer bg-stone-100 hover:bg-stone-200 text-stone-600 px-4 py-2 rounded-lg flex items-center gap-2 w-fit transition-colors">
-                                            <Upload className="w-4 h-4" />
-                                            <span>בחר תמונות</span>
-                                            <input type="file" accept="image/*" multiple max={3} className="hidden" onChange={handlePortfolioUpload} />
-                                        </label>
-                                        <div className="flex gap-4">
-                                            {portfolioPreviews.map((src, index) => (
-                                                <img key={index} src={src} alt={`Portfolio ${index}`} className="h-20 w-20 object-cover rounded-lg border border-stone-200" />
-                                            ))}
-                                        </div>
-                                    </div>
-                                </div>
-
+                            {/* Terms Acceptance - Only show during registration */}
+                            {!isLogin && (
                                 <div className="col-span-1 md:col-span-2">
                                     <div className="flex items-center">
                                         <input
@@ -454,8 +301,8 @@ const AuthPage: React.FC = () => {
                                     </div>
                                     {errors.termsAccepted && <p className="text-red-500 text-xs mt-1">{errors.termsAccepted}</p>}
                                 </div>
-                            </>
-                        )}
+                            )}
+                        </div>
                     </div>
 
                     <div>
