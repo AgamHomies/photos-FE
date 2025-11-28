@@ -349,7 +349,6 @@ const AuthPage: React.FC = () => {
 
                                 <div className="relative">
                                     <div className="absolute inset-y-0 right-0 pr-3 flex items-center pointer-events-none text-stone-400">
-                                        {/* @ts-ignore: react-icons type mismatch with React 19 */}
                                         <FaTiktok className="h-5 w-5" />
                                     </div>
                                     <input
@@ -364,7 +363,6 @@ const AuthPage: React.FC = () => {
 
                                 <div className="relative">
                                     <div className="absolute inset-y-0 right-0 pr-3 flex items-center pointer-events-none text-stone-400">
-                                        {/* @ts-ignore: react-icons type mismatch with React 19 */}
                                         <FaFacebook className="h-5 w-5" />
                                     </div>
                                     <input
