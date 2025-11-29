@@ -102,7 +102,7 @@ const HomePage: React.FC = () => {
             הפכו כל תמונה לכלי שיווקי וכל אורח לממליץ. המערכת החכמה לצלמי אירועים.
           </p>
           <button
-            onClick={() => navigate('/auth')}
+            onClick={() => navigate('/auth', { state: { mode: 'register' } })}
             className="bg-amber-500 hover:bg-amber-600 text-white text-lg font-bold py-4 px-10 rounded-full transition-all transform hover:scale-105 shadow-xl flex items-center gap-2 mx-auto"
           >
             הירשם עכשיו
@@ -263,7 +263,7 @@ const HomePage: React.FC = () => {
             הצטרפו למאות צלמים שכבר נהנים מחשיפה מוגברת ולקוחות מרוצים.
           </p>
           <button
-            onClick={() => navigate('/auth')}
+            onClick={() => navigate('/auth', { state: { mode: 'register' } })}
             className="bg-white text-amber-600 text-lg font-bold py-4 px-12 rounded-full hover:bg-stone-100 transition-colors shadow-lg"
           >
             הירשם עכשיו - בחינם

@@ -1,5 +1,5 @@
 import React, { useState, ChangeEvent, FormEvent, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { Camera, Upload, Instagram, Mail, Lock, MapPin, Phone, User, FileText } from 'lucide-react';
 import { FaFacebook, FaTiktok } from 'react-icons/fa';
 import { PhotographerRegistration } from '../../types';
@@ -9,8 +9,12 @@ import { supabaseAuthService } from '../../services/supabaseAuthService';
 
 const AuthPage: React.FC = () => {
     const navigate = useNavigate();
+    const location = useLocation();
     const { login } = useAuth();
-    const [isLogin, setIsLogin] = useState(true);
+
+    // Check if we came from a registration button
+    const initialMode = (location.state as any)?.mode === 'register' ? false : true;
+    const [isLogin, setIsLogin] = useState(initialMode);
     const [loading, setLoading] = useState(false);
     const [formData, setFormData] = useState<PhotographerRegistration>({
         email: '',
