@@ -75,36 +75,9 @@ export const RealAuthAPI = {
     register: async (registrationData: PhotographerRegistration): Promise<boolean> => {
         const formData = new FormData();
 
-        // Required fields
+        // Only send email and termsAccepted for basic registration
         formData.append('email', registrationData.email);
-        formData.append('password', registrationData.password);
-        formData.append('fullName', registrationData.fullName);
-        formData.append('description', registrationData.description);
-        formData.append('address', registrationData.address);
-        formData.append('phone', registrationData.phone);
         formData.append('termsAccepted', registrationData.termsAccepted.toString());
-
-        // Optional social media URLs
-        if (registrationData.instagramUrl) {
-            formData.append('instagramUrl', registrationData.instagramUrl);
-        }
-        if (registrationData.tiktokUrl) {
-            formData.append('tiktokUrl', registrationData.tiktokUrl);
-        }
-        if (registrationData.facebookUrl) {
-            formData.append('facebookUrl', registrationData.facebookUrl);
-        }
-
-        // Optional file uploads
-        if (registrationData.logo) {
-            formData.append('logo', registrationData.logo);
-        }
-
-        if (registrationData.portfolio && registrationData.portfolio.length > 0) {
-            registrationData.portfolio.forEach((file) => {
-                formData.append('portfolio', file);
-            });
-        }
 
         const token = await getAuthToken();
         const response = await fetch(`${API_BASE_URL}/auth/register`, {
@@ -121,8 +94,7 @@ export const RealAuthAPI = {
             throw new Error(data.detail || 'Registration failed');
         }
 
-        localStorage.setItem('auth_token', data.access_token);
-        localStorage.setItem('current_user_email', registrationData.email);
+        // User created successfully, but profile not complete yet
         return true;
     },
 
@@ -162,6 +134,46 @@ export const RealProfileAPI = {
 
     updateProfile: async (updates: Partial<PhotographerProfile>): Promise<void> => {
         console.warn('Profile update not yet implemented in backend');
+    },
+
+    completeProfile: async (profileData: Partial<PhotographerRegistration>): Promise<boolean> => {
+        const formData = new FormData();
+
+        // Required profile fields
+        if (profileData.fullName) formData.append('fullName', profileData.fullName);
+        if (profileData.description) formData.append('description', profileData.description);
+        if (profileData.address) formData.append('address', profileData.address);
+        if (profileData.phone) formData.append('phone', profileData.phone);
+
+        // Optional social media URLs
+        if (profileData.instagramUrl) formData.append('instagramUrl', profileData.instagramUrl);
+        if (profileData.tiktokUrl) formData.append('tiktokUrl', profileData.tiktokUrl);
+        if (profileData.facebookUrl) formData.append('facebookUrl', profileData.facebookUrl);
+
+        // Optional file uploads
+        if (profileData.logo) formData.append('logo', profileData.logo);
+        if (profileData.portfolio && profileData.portfolio.length > 0) {
+            profileData.portfolio.forEach((file) => {
+                formData.append('portfolio', file);
+            });
+        }
+
+        const token = await getAuthToken();
+        const response = await fetch(`${API_BASE_URL}/auth/profile/complete`, {
+            method: 'POST',
+            headers: {
+                'Authorization': `Bearer ${token}`,
+            },
+            body: formData,
+        });
+
+        const data = await response.json();
+
+        if (!response.ok) {
+            throw new Error(data.detail || 'Profile completion failed');
+        }
+
+        return true;
     },
 };
 

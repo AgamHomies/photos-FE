@@ -68,7 +68,7 @@ const ProfileCompletionPage: React.FC = () => {
         if (validateForm()) {
             setIsSubmitting(true);
             try {
-                // Create a PhotographerRegistration object with the profile data
+                // Create profile data object
                 const profileData: Partial<PhotographerRegistration> = {
                     fullName: formData.fullName,
                     description: formData.description,
@@ -79,16 +79,14 @@ const ProfileCompletionPage: React.FC = () => {
                     instagramUrl: formData.instagramUrl,
                     tiktokUrl: formData.tiktokUrl,
                     facebookUrl: formData.facebookUrl,
-                    termsAccepted: true, // Already accepted during registration
-                    email: '', // Will be filled from the authenticated user
-                    password: '' // Not needed for profile completion
                 };
 
-                await BackendService.register(profileData as PhotographerRegistration);
+                // Call new completeProfile endpoint
+                await BackendService.completeProfile(profileData);
                 alert('הפרופיל הושלם בהצלחה!');
                 navigate('/admin');
             } catch (error: any) {
-                console.error('Failed to save profile:', error);
+                console.error('Failed to complete profile:', error);
                 alert('שגיאה בשמירת הפרופיל. אנא נסה שנית.');
             } finally {
                 setIsSubmitting(false);

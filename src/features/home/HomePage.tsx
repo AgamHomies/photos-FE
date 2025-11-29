@@ -263,7 +263,7 @@ const HomePage: React.FC = () => {
             הצטרפו למאות צלמים שכבר נהנים מחשיפה מוגברת ולקוחות מרוצים.
           </p>
           <button
-            onClick={() => navigate('/auth', { state: { mode: 'register' } })}
+            onClick={() => navigate('/auth')}
             className="bg-white text-amber-600 text-lg font-bold py-4 px-12 rounded-full hover:bg-stone-100 transition-colors shadow-lg"
           >
             הירשם עכשיו - בחינם

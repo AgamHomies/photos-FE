@@ -32,9 +32,11 @@ function App() {
           <Route path="auth" element={<AuthPage />} />
           <Route path="auth/callback" element={<AuthCallbackPage />} />
 
+          {/* Profile Completion - Must be OUTSIDE ProtectedRoute */}
+          <Route path="complete-profile" element={<ProfileCompletionPage />} />
+
           {/* Protected Admin Routes */}
           <Route element={<ProtectedRoute />}>
-            <Route path="complete-profile" element={<ProfileCompletionPage />} />
             <Route path="admin" element={<DashboardPage />} />
             <Route path="admin/create-event" element={<CreateEventPage />} />
             <Route path="admin/events/:id" element={<EventManagePage />} />

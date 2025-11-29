@@ -69,6 +69,14 @@ export const BackendService = {
             : await RealProfileAPI.updateProfile(updates);
     },
 
+    completeProfile: async (profileData: Partial<PhotographerRegistration>): Promise<boolean> => {
+        if (USE_MOCK) {
+            console.warn('completeProfile not implemented for mock');
+            return false;
+        }
+        return await RealProfileAPI.completeProfile(profileData);
+    },
+
     // ============================================
     // Events
     // ============================================
