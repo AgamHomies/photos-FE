@@ -35,12 +35,9 @@ const DashboardPage: React.FC = () => {
         setLoading(true);
         try {
             // Check if user has token before making requests
-            const token = localStorage.getItem('auth_token');
-            if (!token) {
-                console.warn('No auth token found, redirecting to login');
-                navigate('/auth');
-                return;
-            }
+            // Note: With Supabase, we don't rely on localStorage 'auth_token'
+            // The BackendService will get the token from the Supabase session
+
 
             const [statsData, eventsData, profileData] = await Promise.all([
                 BackendService.getDashboardStats(),

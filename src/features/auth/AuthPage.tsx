@@ -45,10 +45,26 @@ const AuthPage: React.FC = () => {
             if (hasRun) return;
             hasRun = true;
 
+            console.log('Checking for OAuth session...');
             const { session, error } = await supabaseAuthService.getSession();
 
-            // Only proceed if there's actually a session
-            if (!session || error) {
+            if (error) {
+                console.error('Supabase session error:', error);
+                return;
+            }
+
+            if (!session) {
+                console.log('No Supabase session found');
+                return;
+            }
+
+            console.log('Supabase session found for user:', session.user.email);
+
+            // Check if this is from an OAuth callback
+            const hasHash = window.location.hash.includes('access_token');
+            console.log('URL hash present:', hasHash);
+
+            if (!hasHash) {
                 return;
             }
 
@@ -56,23 +72,39 @@ const AuthPage: React.FC = () => {
             const user = session.user;
 
             try {
-                // Check if user has completed profile in backend
+                // First, check if user already has a profile
+                console.log('Checking if profile exists...');
                 await BackendService.getProfile();
                 // If successful, user exists -> redirect to admin
+                console.log('Profile exists, redirecting to admin');
                 navigate('/admin');
             } catch (err) {
-                // If profile not found, check if this is from an OAuth callback
-                // by looking for hash or if the session is very recent (< 10 seconds old)
-                const sessionAge = Date.now() - new Date(session.user.created_at).getTime();
-                const isRecentSession = sessionAge < 10000; // Less than 10 seconds
-                const hasHash = window.location.hash.includes('access_token');
+                console.log('Profile not found (expected for new users). Attempting registration...');
+                // Profile not found, need to register
+                try {
+                    // Create basic user account via /auth/register
+                    console.log('Calling BackendService.register...');
+                    await BackendService.register({
+                        email: user.email || '',
+                        password: '', // Not needed for OAuth
+                        fullName: '',
+                        description: '',
+                        address: '',
+                        phone: '',
+                        termsAccepted: true, // Implicit acceptance via OAuth
+                        logo: null,
+                        portfolio: [],
+                        instagramUrl: '',
+                        tiktokUrl: '',
+                        facebookUrl: ''
+                    });
 
-                if (hasHash || isRecentSession) {
-                    // This is likely an OAuth callback, show registration
-                    console.log('Profile not found after OAuth, redirecting to profile completion');
+                    console.log('User account created successfully, redirecting to profile completion');
                     navigate('/complete-profile');
+                } catch (registerErr) {
+                    console.error('Failed to register user:', registerErr);
+                    alert('שגיאה ביצירת חשבון. אנא נסה שנית.');
                 }
-                // Otherwise, do nothing - let user stay on login page
             }
         };
 
