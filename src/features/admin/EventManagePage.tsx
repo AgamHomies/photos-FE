@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { BackendService } from '../../services/backendService';
 import { Event, Photo } from '../../types';
+import Layout from '../../components/Layout';
 import {
     ArrowRight,
     Upload,
@@ -10,7 +11,9 @@ import {
     Save,
     Loader2,
     Users,
-    Heart
+    Heart,
+    Image as ImageIcon,
+    FileText
 } from 'lucide-react';
 
 const EventManagePage: React.FC = () => {
@@ -135,82 +138,90 @@ const EventManagePage: React.FC = () => {
     };
 
     if (loading) {
-        return <div className="min-h-screen flex items-center justify-center bg-stone-50">
-            <Loader2 className="w-8 h-8 animate-spin text-stone-400" />
-        </div>;
+        return (
+            <Layout>
+                <div className="min-h-[60vh] flex items-center justify-center">
+                    <Loader2 className="w-10 h-10 animate-spin text-cyan-500" />
+                </div>
+            </Layout>
+        );
     }
 
     if (!event) return null;
 
     return (
-        <div className="min-h-screen bg-stone-50 flex flex-col font-sans text-stone-800" dir="rtl">
-            {/* Header */}
-            <header className="bg-white border-b border-stone-200 sticky top-0 z-10">
-                <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
-                    <div className="flex items-center gap-4">
-                        <button
-                            onClick={() => navigate('/admin')}
-                            className="p-2 hover:bg-stone-100 rounded-full transition-colors"
-                        >
-                            <ArrowRight className="w-5 h-5 text-stone-500" />
-                        </button>
-                        <div>
-                            <h1 className="text-xl font-bold text-stone-900">{event.name}</h1>
-                            <div className="flex items-center gap-2 text-xs text-stone-500">
-                                <span className={`w-2 h-2 rounded-full ${event.status === 'active' ? 'bg-green-500' : 'bg-red-500'}`}></span>
-                                {event.status === 'active' ? 'פעיל' : 'פג תוקף'}
+        <Layout>
+            <div className="bg-white border-b border-slate-200 sticky top-0 z-30 shadow-sm">
+                <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
+                    <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+                        <div className="flex items-center gap-4">
+                            <button
+                                onClick={() => navigate('/admin')}
+                                className="p-2 hover:bg-slate-100 rounded-full transition-colors"
+                            >
+                                <ArrowRight className="w-5 h-5 text-slate-500" />
+                            </button>
+                            <div>
+                                <h1 className="text-2xl font-bold text-slate-900">{event.name}</h1>
+                                <div className="flex items-center gap-2 text-xs text-slate-500">
+                                    <span className={`w-2 h-2 rounded-full ${event.status === 'active' ? 'bg-green-500' : 'bg-red-500'}`}></span>
+                                    {event.status === 'active' ? 'פעיל' : 'פג תוקף'}
+                                    <span className="mx-1">•</span>
+                                    <span>{new Date(event.date).toLocaleDateString('he-IL')}</span>
+                                </div>
                             </div>
                         </div>
+                        <div className="flex gap-3">
+                            <button
+                                onClick={() => window.open(`/gallery/${event.id}`, '_blank')}
+                                className="px-4 py-2 text-sm font-bold text-slate-600 border border-slate-200 hover:bg-slate-50 rounded-xl transition-colors flex items-center gap-2"
+                                title="קישור לאורחים (זיהוי פנים)"
+                            >
+                                <Users className="w-4 h-4" />
+                                <span>לאורחים</span>
+                            </button>
+                            <button
+                                onClick={() => window.open(`/gallery/${event.id}/full`, '_blank')}
+                                className="px-4 py-2 text-sm font-bold text-cyan-600 bg-cyan-50 hover:bg-cyan-100 rounded-xl transition-colors flex items-center gap-2 border border-cyan-100"
+                                title="קישור לזוג (גלריה מלאה)"
+                            >
+                                <Heart className="w-4 h-4" />
+                                <span>לזוג</span>
+                            </button>
+                        </div>
                     </div>
-                    <div className="flex gap-2">
+
+                    {/* Tabs */}
+                    <div className="flex gap-8 mt-6 border-t border-slate-100 pt-2">
                         <button
-                            onClick={() => window.open(`/gallery/${event.id}`, '_blank')}
-                            className="px-4 py-2 text-sm font-medium text-stone-600 border border-stone-200 hover:bg-stone-50 rounded-lg transition-colors flex items-center gap-2"
-                            title="קישור לאורחים (זיהוי פנים)"
+                            onClick={() => setActiveTab('photos')}
+                            className={`pb-3 text-sm font-bold border-b-2 transition-colors flex items-center gap-2 ${activeTab === 'photos'
+                                ? 'border-cyan-500 text-cyan-600'
+                                : 'border-transparent text-slate-500 hover:text-slate-700'
+                                }`}
                         >
-                            <Users className="w-4 h-4" />
-                            <span>לאורחים</span>
+                            <ImageIcon className="w-4 h-4" />
+                            ניהול תמונות
                         </button>
                         <button
-                            onClick={() => window.open(`/gallery/${event.id}/full`, '_blank')}
-                            className="px-4 py-2 text-sm font-medium text-stone-900 bg-amber-100 hover:bg-amber-200 rounded-lg transition-colors flex items-center gap-2"
-                            title="קישור לזוג (גלריה מלאה)"
+                            onClick={() => setActiveTab('details')}
+                            className={`pb-3 text-sm font-bold border-b-2 transition-colors flex items-center gap-2 ${activeTab === 'details'
+                                ? 'border-cyan-500 text-cyan-600'
+                                : 'border-transparent text-slate-500 hover:text-slate-700'
+                                }`}
                         >
-                            <Heart className="w-4 h-4 text-amber-600" />
-                            <span>לזוג</span>
+                            <FileText className="w-4 h-4" />
+                            פרטי אירוע
                         </button>
                     </div>
                 </div>
+            </div>
 
-                {/* Tabs */}
-                <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex gap-8">
-                    <button
-                        onClick={() => setActiveTab('photos')}
-                        className={`py-4 text-sm font-medium border-b-2 transition-colors ${activeTab === 'photos'
-                            ? 'border-stone-900 text-stone-900'
-                            : 'border-transparent text-stone-500 hover:text-stone-700'
-                            }`}
-                    >
-                        ניהול תמונות
-                    </button>
-                    <button
-                        onClick={() => setActiveTab('details')}
-                        className={`py-4 text-sm font-medium border-b-2 transition-colors ${activeTab === 'details'
-                            ? 'border-stone-900 text-stone-900'
-                            : 'border-transparent text-stone-500 hover:text-stone-700'
-                            }`}
-                    >
-                        פרטי אירוע
-                    </button>
-                </div>
-            </header>
-
-            <main className="flex-1 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 w-full">
-
+            <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
                 {activeTab === 'photos' && (
                     <div className="space-y-8">
                         {/* Upload Section */}
-                        <div className="bg-white p-8 rounded-2xl border border-dashed border-stone-300 text-center hover:bg-stone-50 transition-colors relative group">
+                        <div className="bg-white p-10 rounded-3xl border-2 border-dashed border-slate-200 text-center hover:bg-slate-50 hover:border-cyan-500 transition-all relative group cursor-pointer">
                             <input
                                 type="file"
                                 multiple
@@ -221,54 +232,60 @@ const EventManagePage: React.FC = () => {
                             />
                             {uploading ? (
                                 <div className="flex flex-col items-center">
-                                    <Loader2 className="w-10 h-10 text-amber-500 animate-spin mb-3" />
-                                    <p className="text-stone-600 font-medium">מעלה תמונות...</p>
+                                    <Loader2 className="w-12 h-12 text-cyan-500 animate-spin mb-4" />
+                                    <p className="text-slate-600 font-bold text-lg">מעלה תמונות...</p>
                                 </div>
                             ) : (
                                 <>
-                                    <Upload className="w-10 h-10 text-stone-400 mx-auto mb-3 group-hover:text-amber-500 transition-colors" />
-                                    <h3 className="text-lg font-bold text-stone-900">העלאת תמונות נוספות</h3>
-                                    <p className="text-stone-500 text-sm mt-1">גרור לכאן או לחץ לבחירה</p>
+                                    <div className="bg-cyan-50 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4 group-hover:scale-110 transition-transform">
+                                        <Upload className="w-8 h-8 text-cyan-600" />
+                                    </div>
+                                    <h3 className="text-xl font-bold text-slate-900 mb-2">העלאת תמונות נוספות</h3>
+                                    <p className="text-slate-500">גרור לכאן תמונות או לחץ לבחירה</p>
                                 </>
                             )}
                         </div>
 
                         {/* Photos Grid */}
                         <div>
-                            <div className="flex justify-between items-center mb-4">
-                                <h2 className="text-lg font-bold text-stone-900">כל התמונות ({photos.length})</h2>
+                            <div className="flex justify-between items-center mb-6">
+                                <h2 className="text-xl font-bold text-slate-900 flex items-center gap-2">
+                                    <div className="w-2 h-8 bg-cyan-500 rounded-full"></div>
+                                    כל התמונות ({photos.length})
+                                </h2>
                             </div>
 
                             <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-4">
                                 {photos.map((photo) => (
-                                    <div key={photo.id} className="group relative aspect-square bg-stone-100 rounded-xl overflow-hidden">
+                                    <div key={photo.id} className="group relative aspect-square bg-slate-100 rounded-2xl overflow-hidden shadow-sm hover:shadow-md transition-all">
                                         <img
                                             src={photo.thumbnailUrl || photo.url}
                                             alt={photo.title}
-                                            className="w-full h-full object-cover"
+                                            className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
                                         />
 
                                         {/* Overlay Actions */}
-                                        <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-2">
+                                        <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-2 backdrop-blur-sm">
                                             <button
                                                 onClick={() => handleSetCover(photo.url)}
-                                                className="p-2 bg-white/90 rounded-full hover:bg-white text-amber-500 transition-colors"
+                                                className="p-3 bg-white/90 rounded-xl hover:bg-white text-amber-500 transition-colors shadow-lg transform hover:scale-105"
                                                 title="קבע כתמונת קאבר"
                                             >
-                                                <Star className="w-4 h-4" />
+                                                <Star className="w-5 h-5 fill-current" />
                                             </button>
                                             <button
                                                 onClick={() => handleDeletePhoto(photo.id)}
-                                                className="p-2 bg-white/90 rounded-full hover:bg-white text-red-500 transition-colors"
+                                                className="p-3 bg-white/90 rounded-xl hover:bg-white text-red-500 transition-colors shadow-lg transform hover:scale-105"
                                                 title="מחק תמונה"
                                             >
-                                                <Trash2 className="w-4 h-4" />
+                                                <Trash2 className="w-5 h-5" />
                                             </button>
                                         </div>
 
                                         {/* Cover Indicator */}
                                         {event.coverImage === photo.url && (
-                                            <div className="absolute top-2 right-2 bg-amber-500 text-white text-xs px-2 py-1 rounded-full font-medium shadow-sm">
+                                            <div className="absolute top-2 right-2 bg-amber-500 text-white text-xs px-2 py-1 rounded-lg font-bold shadow-sm flex items-center gap-1">
+                                                <Star className="w-3 h-3 fill-current" />
                                                 Cover
                                             </div>
                                         )}
@@ -280,47 +297,52 @@ const EventManagePage: React.FC = () => {
                 )}
 
                 {activeTab === 'details' && (
-                    <div className="max-w-2xl mx-auto">
-                        <div className="bg-white rounded-2xl shadow-sm border border-stone-100 overflow-hidden">
-                            <div className="p-6 border-b border-stone-100">
-                                <h2 className="text-lg font-bold text-stone-900">עריכת פרטי אירוע</h2>
+                    <div className="max-w-3xl mx-auto">
+                        <div className="bg-white rounded-3xl shadow-sm border border-slate-100 overflow-hidden">
+                            <div className="p-8 border-b border-slate-100">
+                                <h2 className="text-xl font-bold text-slate-900 flex items-center gap-2">
+                                    <div className="bg-cyan-100 p-2 rounded-lg text-cyan-600">
+                                        <FileText className="w-5 h-5" />
+                                    </div>
+                                    עריכת פרטי אירוע
+                                </h2>
                             </div>
-                            <form onSubmit={handleUpdateDetails} className="p-6 space-y-6">
+                            <form onSubmit={handleUpdateDetails} className="p-8 space-y-6">
                                 <div>
-                                    <label className="block text-sm font-medium text-stone-700 mb-2">שם האירוע</label>
+                                    <label className="block text-sm font-medium text-slate-700 mb-2">שם האירוע</label>
                                     <input
                                         type="text"
                                         value={editForm.name}
                                         onChange={e => setEditForm({ ...editForm, name: e.target.value })}
-                                        className="block w-full border border-stone-300 rounded-lg p-3 focus:ring-amber-500 focus:border-amber-500"
+                                        className="block w-full border border-slate-200 rounded-xl p-3 focus:ring-2 focus:ring-cyan-500 focus:border-cyan-500 transition-colors"
                                     />
                                 </div>
 
                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                                     <div>
-                                        <label className="block text-sm font-medium text-stone-700 mb-2">תאריך</label>
+                                        <label className="block text-sm font-medium text-slate-700 mb-2">תאריך</label>
                                         <input
                                             type="date"
                                             value={editForm.date}
                                             onChange={e => setEditForm({ ...editForm, date: e.target.value })}
-                                            className="block w-full border border-stone-300 rounded-lg p-3 focus:ring-amber-500 focus:border-amber-500"
+                                            className="block w-full border border-slate-200 rounded-xl p-3 focus:ring-2 focus:ring-cyan-500 focus:border-cyan-500 transition-colors"
                                         />
                                     </div>
                                     <div>
-                                        <label className="block text-sm font-medium text-stone-700 mb-2">מיקום</label>
+                                        <label className="block text-sm font-medium text-slate-700 mb-2">מיקום</label>
                                         <input
                                             type="text"
                                             value={editForm.location}
                                             onChange={e => setEditForm({ ...editForm, location: e.target.value })}
-                                            className="block w-full border border-stone-300 rounded-lg p-3 focus:ring-amber-500 focus:border-amber-500"
+                                            className="block w-full border border-slate-200 rounded-xl p-3 focus:ring-2 focus:ring-cyan-500 focus:border-cyan-500 transition-colors"
                                         />
                                     </div>
                                 </div>
 
-                                <div className="pt-4 flex justify-end">
+                                <div className="pt-6 flex justify-end border-t border-slate-100">
                                     <button
                                         type="submit"
-                                        className="bg-stone-900 text-white px-6 py-3 rounded-xl font-medium hover:bg-stone-800 transition-colors flex items-center gap-2"
+                                        className="bg-slate-900 text-white px-8 py-3 rounded-xl font-bold hover:bg-slate-800 transition-colors flex items-center gap-2 shadow-lg"
                                     >
                                         <Save className="w-4 h-4" />
                                         <span>שמור שינויים</span>
@@ -329,20 +351,27 @@ const EventManagePage: React.FC = () => {
                             </form>
                         </div>
 
-                        <div className="mt-8 bg-red-50 rounded-2xl border border-red-100 p-6">
-                            <h3 className="text-red-800 font-bold mb-2">אזור מסוכן</h3>
-                            <p className="text-red-600 text-sm mb-4">מחיקת האירוע היא פעולה בלתי הפיכה ותמחק את כל התמונות והנתונים הקשורים אליו.</p>
-                            <button
-                                onClick={handleDeleteEvent}
-                                className="text-red-600 hover:text-red-700 font-medium text-sm border border-red-200 bg-white px-4 py-2 rounded-lg hover:bg-red-50 transition-colors"
-                            >
-                                מחק את האירוע לצמיתות
-                            </button>
+                        <div className="mt-8 bg-red-50 rounded-3xl border border-red-100 p-8">
+                            <div className="flex items-start gap-4">
+                                <div className="bg-red-100 p-3 rounded-xl text-red-600">
+                                    <Trash2 className="w-6 h-6" />
+                                </div>
+                                <div>
+                                    <h3 className="text-red-900 font-bold text-lg mb-1">אזור מסוכן</h3>
+                                    <p className="text-red-700 text-sm mb-6 max-w-lg">מחיקת האירוע היא פעולה בלתי הפיכה ותמחק את כל התמונות והנתונים הקשורים אליו. אנא וודא שאתה באמת רוצה לעשות זאת.</p>
+                                    <button
+                                        onClick={handleDeleteEvent}
+                                        className="text-red-600 hover:text-white font-bold text-sm border border-red-200 bg-white px-6 py-3 rounded-xl hover:bg-red-600 transition-all shadow-sm hover:shadow-md"
+                                    >
+                                        מחק את האירוע לצמיתות
+                                    </button>
+                                </div>
+                            </div>
                         </div>
                     </div>
                 )}
-            </main>
-        </div>
+            </div>
+        </Layout>
     );
 };
 

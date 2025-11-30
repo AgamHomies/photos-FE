@@ -2,12 +2,14 @@ import { useState, useEffect } from 'react';
 import { supabaseAuthService } from '../services/supabaseAuthService';
 import { MockS3Service } from '../services/mockS3';
 import { CONFIG } from '../config';
+import { User } from '@supabase/supabase-js';
 
 const USE_MOCK = CONFIG.USE_MOCK;
 
 export const useAuth = () => {
     const [isAuthenticated, setIsAuthenticated] = useState<boolean>(false);
     const [isLoading, setIsLoading] = useState<boolean>(true);
+    const [user, setUser] = useState<User | null>(null);
 
     useEffect(() => {
         // Check for existing session on mount
@@ -16,11 +18,23 @@ export const useAuth = () => {
                 const userEmail = MockS3Service.getCurrentUserEmail();
                 if (userEmail) {
                     setIsAuthenticated(true);
+                    // Create a mock user object
+                    setUser({
+                        id: 'mock-user-id',
+                        app_metadata: {},
+                        user_metadata: {
+                            full_name: 'Mock User',
+                            avatar_url: null
+                        },
+                        aud: 'authenticated',
+                        created_at: new Date().toISOString()
+                    } as User);
                 }
             } else {
                 const { session } = await supabaseAuthService.getSession();
                 if (session) {
                     setIsAuthenticated(true);
+                    setUser(session.user);
                 }
             }
             setIsLoading(false);
@@ -32,6 +46,7 @@ export const useAuth = () => {
         if (!USE_MOCK) {
             const { data: { subscription } } = supabaseAuthService.onAuthStateChange((session) => {
                 setIsAuthenticated(!!session);
+                setUser(session?.user || null);
             });
 
             return () => {
@@ -48,6 +63,16 @@ export const useAuth = () => {
                 const success = await MockS3Service.login(email, password);
                 if (success) {
                     setIsAuthenticated(true);
+                    setUser({
+                        id: 'mock-user-id',
+                        app_metadata: {},
+                        user_metadata: {
+                            full_name: 'Mock User',
+                            avatar_url: null
+                        },
+                        aud: 'authenticated',
+                        created_at: new Date().toISOString()
+                    } as User);
                     return true;
                 }
             } catch (error) {
@@ -65,7 +90,8 @@ export const useAuth = () => {
             await supabaseAuthService.signOut();
         }
         setIsAuthenticated(false);
+        setUser(null);
     };
 
-    return { isAuthenticated, isLoading: isLoading, login, logout };
+    return { isAuthenticated, isLoading, login, logout, user };
 };

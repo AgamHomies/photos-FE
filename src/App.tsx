@@ -1,5 +1,4 @@
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
-import MainLayout from './layouts/MainLayout';
 import HomePage from './features/home/HomePage';
 import GalleryPage from './features/gallery/GalleryPage';
 import DashboardPage from './features/admin/DashboardPage';
@@ -8,6 +7,8 @@ import EventManagePage from './features/admin/EventManagePage';
 import AuthPage from './features/auth/AuthPage';
 import ProfileCompletionPage from './features/auth/ProfileCompletionPage';
 import AuthCallbackPage from './features/auth/AuthCallbackPage';
+import ResetPasswordPage from './features/auth/ResetPasswordPage';
+import ContactPage from './features/home/ContactPage';
 import { CONFIG } from './config';
 import ProtectedRoute from './components/ProtectedRoute';
 
@@ -25,25 +26,25 @@ function App() {
   return (
     <BrowserRouter>
       <Routes>
-        <Route path="/" element={<MainLayout />}>
-          <Route index element={<HomePage />} />
-          <Route path="gallery/:id" element={<GalleryPage mode="guest" />} />
-          <Route path="gallery/:id/full" element={<GalleryPage mode="full" />} />
-          <Route path="auth" element={<AuthPage />} />
-          <Route path="auth/callback" element={<AuthCallbackPage />} />
+        <Route path="/" element={<HomePage />} />
+        <Route path="/contact" element={<ContactPage />} />
+        <Route path="gallery/:id" element={<GalleryPage mode="guest" />} />
+        <Route path="gallery/:id/full" element={<GalleryPage mode="full" />} />
+        <Route path="auth" element={<AuthPage />} />
+        <Route path="auth/callback" element={<AuthCallbackPage />} />
+        <Route path="auth/reset-password" element={<ResetPasswordPage />} />
 
-          {/* Profile Completion - Must be OUTSIDE ProtectedRoute */}
-          <Route path="complete-profile" element={<ProfileCompletionPage />} />
+        {/* Profile Completion - Must be OUTSIDE ProtectedRoute */}
+        <Route path="complete-profile" element={<ProfileCompletionPage />} />
 
-          {/* Protected Admin Routes */}
-          <Route element={<ProtectedRoute />}>
-            <Route path="admin" element={<DashboardPage />} />
-            <Route path="admin/create-event" element={<CreateEventPage />} />
-            <Route path="admin/events/:id" element={<EventManagePage />} />
-          </Route>
-
-          <Route path="*" element={<Navigate to="/" replace />} />
+        {/* Protected Admin Routes */}
+        <Route element={<ProtectedRoute />}>
+          <Route path="admin" element={<DashboardPage />} />
+          <Route path="admin/create-event" element={<CreateEventPage />} />
+          <Route path="admin/events/:id" element={<EventManagePage />} />
         </Route>
+
+        <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
     </BrowserRouter>
   );

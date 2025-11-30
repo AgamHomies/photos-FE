@@ -12,7 +12,8 @@ import {
   Calendar,
   Search,
   Loader2,
-  X
+  X,
+  CheckCircle2
 } from 'lucide-react';
 
 interface GalleryPageProps {
@@ -25,16 +26,14 @@ const GalleryPage: React.FC<GalleryPageProps> = ({ mode }) => {
   const [photographer, setPhotographer] = useState<PhotographerProfile | null>(null);
   const [loading, setLoading] = useState(true);
 
-  // View state logic: if full mode, start directly at results. If guest, start at landing.
   const [viewState, setViewState] = useState<'landing' | 'scanning' | 'results'>(
     mode === 'full' ? 'results' : 'landing'
   );
 
   const [selectedImage, setSelectedImage] = useState<File | null>(null);
-  const [photos, setPhotos] = useState<Photo[]>([]); // All photos (for full view) or matched photos (for guest view)
+  const [photos, setPhotos] = useState<Photo[]>([]);
   const [lightboxPhoto, setLightboxPhoto] = useState<Photo | null>(null);
 
-  // Refs for scrolling
   const resultsRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -58,7 +57,6 @@ const GalleryPage: React.FC<GalleryPageProps> = ({ mode }) => {
         }
       }
 
-      // If in full mode, show all photos immediately
       if (mode === 'full') {
         setPhotos(eventPhotos);
       }
@@ -78,15 +76,12 @@ const GalleryPage: React.FC<GalleryPageProps> = ({ mode }) => {
   };
 
   const simulateScanning = async () => {
-    // Simulate processing time
     setTimeout(async () => {
       if (id) {
         const allPhotos = await BackendService.getEventPhotos(id);
-        // Simulate finding matches (randomly select 30-50% of photos)
         const matches = allPhotos.filter(() => Math.random() > 0.6);
         setPhotos(matches);
         setViewState('results');
-        // Scroll to results
         setTimeout(() => {
           resultsRef.current?.scrollIntoView({ behavior: 'smooth' });
         }, 100);
@@ -127,7 +122,6 @@ const GalleryPage: React.FC<GalleryPageProps> = ({ mode }) => {
       document.body.removeChild(link);
       window.URL.revokeObjectURL(url);
     } catch (error) {
-      // Fallback for cross-origin images that block fetch
       const link = document.createElement('a');
       link.href = photo.url;
       link.download = `photo-${photo.id}.jpg`;
@@ -155,45 +149,45 @@ const GalleryPage: React.FC<GalleryPageProps> = ({ mode }) => {
     return (
       <div className="min-h-screen flex items-center justify-center bg-white">
         <div className="text-center">
-          <Loader2 className="w-10 h-10 animate-spin text-stone-300 mx-auto mb-4" />
-          <p className="text-stone-500 font-serif">טוען גלריה...</p>
+          <Loader2 className="w-10 h-10 animate-spin text-cyan-500 mx-auto mb-4" />
+          <p className="text-slate-500">טוען גלריה...</p>
         </div>
       </div>
     );
   }
 
   if (!event) {
-    return <div className="min-h-screen flex items-center justify-center text-stone-500">אירוע לא נמצא</div>;
+    return <div className="min-h-screen flex items-center justify-center text-slate-500">אירוע לא נמצא</div>;
   }
 
   return (
-    <div className="min-h-screen bg-stone-50 font-sans text-stone-800" dir="rtl">
+    <div className="min-h-screen bg-slate-50 font-sans text-slate-800" dir="rtl">
 
       {/* Photographer Branding Header */}
-      <header className="bg-white border-b border-stone-100 sticky top-0 z-20">
-        <div className="max-w-5xl mx-auto px-4 h-16 flex items-center justify-between">
+      <header className="bg-white border-b border-slate-100 sticky top-0 z-20 shadow-sm">
+        <div className="max-w-6xl mx-auto px-4 h-16 flex items-center justify-between">
           <div className="flex items-center gap-3">
             {photographer?.profileImageUrl ? (
-              <img src={photographer.profileImageUrl} alt="Photographer" className="w-10 h-10 rounded-full object-cover border border-stone-200" />
+              <img src={photographer.profileImageUrl} alt="Photographer" className="w-10 h-10 rounded-full object-cover border border-slate-200" />
             ) : (
-              <div className="w-10 h-10 bg-stone-200 rounded-full flex items-center justify-center">
-                <Camera className="w-5 h-5 text-stone-500" />
+              <div className="w-10 h-10 bg-slate-100 rounded-full flex items-center justify-center text-slate-400">
+                <Camera className="w-5 h-5" />
               </div>
             )}
             <div>
-              <h2 className="font-bold text-sm leading-tight">{photographer?.name || 'הצלם שלך'}</h2>
-              <p className="text-[10px] text-stone-500">צילום אירועים מקצועי</p>
+              <h2 className="font-bold text-sm leading-tight text-slate-900">{photographer?.name || 'הצלם שלך'}</h2>
+              <p className="text-[11px] text-slate-500 font-medium">צילום אירועים מקצועי</p>
             </div>
           </div>
           <div className="flex items-center gap-3">
             {photographer?.instagramUrl && (
-              <a href={photographer.instagramUrl} target="_blank" rel="noreferrer" className="p-2 text-stone-400 hover:text-pink-600 transition-colors">
+              <a href={photographer.instagramUrl} target="_blank" rel="noreferrer" className="p-2 text-slate-400 hover:text-pink-600 transition-colors bg-slate-50 rounded-full">
                 <Instagram className="w-5 h-5" />
               </a>
             )}
             <button
               onClick={handleSavePhone}
-              className="bg-stone-900 text-white text-xs px-3 py-2 rounded-full flex items-center gap-2 hover:bg-stone-800 transition-colors"
+              className="bg-slate-900 text-white text-xs px-4 py-2.5 rounded-full flex items-center gap-2 hover:bg-slate-800 transition-colors font-medium shadow-sm"
             >
               <Phone className="w-3 h-3" />
               <span>שמור טלפון</span>
@@ -203,22 +197,22 @@ const GalleryPage: React.FC<GalleryPageProps> = ({ mode }) => {
       </header>
 
       {/* Hero / Event Info */}
-      <div className="relative bg-stone-900 text-white overflow-hidden">
+      <div className="relative bg-slate-900 text-white overflow-hidden">
         <div className="absolute inset-0">
-          <img src={event.coverImage} alt="Cover" className="w-full h-full object-cover opacity-60 blur-sm scale-105" />
-          <div className="absolute inset-0 bg-gradient-to-t from-stone-900 via-stone-900/40 to-transparent"></div>
+          <img src={event.coverImage} alt="Cover" className="w-full h-full object-cover opacity-50 blur-sm scale-105" />
+          <div className="absolute inset-0 bg-gradient-to-t from-slate-900 via-slate-900/50 to-transparent"></div>
         </div>
 
-        <div className="relative max-w-2xl mx-auto px-6 py-20 text-center">
-          <div className="inline-flex items-center gap-2 bg-white/10 backdrop-blur-md px-3 py-1 rounded-full text-xs font-medium mb-6 border border-white/20">
-            <Calendar className="w-3 h-3" />
-            <span>{event.date}</span>
-            <span className="mx-1">•</span>
-            <MapPin className="w-3 h-3" />
+        <div className="relative max-w-3xl mx-auto px-6 py-24 text-center">
+          <div className="inline-flex items-center gap-3 bg-white/10 backdrop-blur-md px-4 py-1.5 rounded-full text-xs font-medium mb-8 border border-white/20 shadow-lg">
+            <Calendar className="w-3 h-3 text-cyan-400" />
+            <span>{new Date(event.date).toLocaleDateString('he-IL')}</span>
+            <span className="w-1 h-1 bg-white/40 rounded-full"></span>
+            <MapPin className="w-3 h-3 text-cyan-400" />
             <span>{event.location}</span>
           </div>
-          <h1 className="text-4xl md:text-5xl font-serif font-bold mb-4 leading-tight">{event.name}</h1>
-          <p className="text-stone-300 text-lg max-w-lg mx-auto leading-relaxed">
+          <h1 className="text-4xl md:text-6xl font-bold mb-6 leading-tight tracking-tight">{event.name}</h1>
+          <p className="text-slate-200 text-lg md:text-xl max-w-xl mx-auto leading-relaxed font-light">
             {mode === 'full'
               ? 'ברוכים הבאים לגלריה המלאה. כל הרגעים היפים מהאירוע במקום אחד.'
               : 'ברוכים הבאים לגלריה הרשמית. כאן תוכלו למצוא את כל הרגעים היפים מהאירוע.'}
@@ -227,83 +221,84 @@ const GalleryPage: React.FC<GalleryPageProps> = ({ mode }) => {
       </div>
 
       {/* Main Action Area */}
-      <div className="max-w-5xl mx-auto px-4 -mt-10 relative z-10 pb-20">
+      <div className="max-w-6xl mx-auto px-4 -mt-12 relative z-10 pb-20">
 
         {/* Guest Mode: Landing State */}
         {mode === 'guest' && viewState === 'landing' && (
-          <div className="bg-white rounded-2xl shadow-xl p-8 md:p-12 text-center max-w-2xl mx-auto border border-stone-100">
-            <div className="w-16 h-16 bg-amber-50 rounded-full flex items-center justify-center mx-auto mb-6">
-              <Search className="w-8 h-8 text-amber-600" />
+          <div className="bg-white rounded-3xl shadow-xl p-8 md:p-16 text-center max-w-2xl mx-auto border border-slate-100">
+            <div className="w-20 h-20 bg-cyan-50 rounded-full flex items-center justify-center mx-auto mb-8 ring-8 ring-cyan-50/50">
+              <Search className="w-10 h-10 text-cyan-600" />
             </div>
-            <h2 className="text-2xl font-bold mb-3">מצא את התמונות שלי</h2>
-            <p className="text-stone-500 mb-8 max-w-sm mx-auto">
+            <h2 className="text-3xl font-bold mb-4 text-slate-900">מצא את התמונות שלי</h2>
+            <p className="text-slate-500 mb-10 max-w-md mx-auto text-lg leading-relaxed">
               העלה תמונת סלפי קצרה, והמערכת החכמה שלנו תמצא את כל התמונות שלך מהאירוע תוך שניות.
             </p>
 
-            <div className="flex flex-col gap-4 max-w-xs mx-auto">
-              <label className="bg-stone-900 text-white py-4 px-6 rounded-xl font-bold text-lg cursor-pointer hover:bg-stone-800 transition-all transform hover:scale-105 shadow-lg flex items-center justify-center gap-3">
+            <div className="flex flex-col gap-4 max-w-sm mx-auto">
+              <label className="bg-cyan-500 text-white py-4 px-8 rounded-2xl font-bold text-lg cursor-pointer hover:bg-cyan-600 transition-all transform hover:-translate-y-1 shadow-lg hover:shadow-cyan-500/30 flex items-center justify-center gap-3">
                 <Camera className="w-6 h-6" />
                 <span>העלה סלפי לחיפוש</span>
                 <input type="file" accept="image/*" className="hidden" onChange={handleImageUpload} />
               </label>
+              <p className="text-xs text-slate-400 mt-2 flex items-center justify-center gap-1">
+                <CheckCircle2 className="w-3 h-3" />
+                פרטיות מובטחת. התמונה משמשת לחיפוש בלבד.
+              </p>
             </div>
           </div>
         )}
 
         {/* Guest Mode: Scanning State */}
         {mode === 'guest' && viewState === 'scanning' && (
-          <div className="bg-white rounded-2xl shadow-xl p-12 text-center max-w-2xl mx-auto border border-stone-100">
+          <div className="bg-white rounded-3xl shadow-xl p-16 text-center max-w-2xl mx-auto border border-slate-100">
             <div className="relative w-32 h-32 mx-auto mb-8">
               {selectedImage && (
                 <img
                   src={URL.createObjectURL(selectedImage)}
                   alt="Selfie"
-                  className="w-full h-full object-cover rounded-full border-4 border-white shadow-lg relative z-10"
+                  className="w-full h-full object-cover rounded-full border-4 border-white shadow-xl relative z-10"
                 />
               )}
-              <div className="absolute inset-0 border-4 border-amber-500 rounded-full animate-ping opacity-20"></div>
-              <div className="absolute -inset-4 border border-amber-200 rounded-full animate-spin border-t-amber-500"></div>
+              <div className="absolute inset-0 border-4 border-cyan-500 rounded-full animate-ping opacity-20"></div>
+              <div className="absolute -inset-4 border border-cyan-200 rounded-full animate-spin border-t-cyan-500"></div>
             </div>
-            <h2 className="text-2xl font-bold mb-2 animate-pulse">מחפש אותך בתמונות...</h2>
-            <p className="text-stone-500">סורק אלפי תמונות באמצעות בינה מלאכותית</p>
+            <h2 className="text-2xl font-bold mb-2 animate-pulse text-slate-900">מחפש אותך בתמונות...</h2>
+            <p className="text-slate-500">סורק אלפי תמונות באמצעות בינה מלאכותית</p>
           </div>
         )}
 
         {/* Results State */}
         {viewState === 'results' && (
           <div ref={resultsRef} className="animate-fade-in-up">
-            <div className="flex items-center justify-between mb-6 mt-8">
+            <div className="flex items-center justify-between mb-8 mt-12 px-2">
               <div>
-                <h2 className="text-2xl font-bold text-stone-900">
+                <h2 className="text-2xl font-bold text-slate-900 flex items-center gap-3">
                   {mode === 'full' ? 'כל התמונות' : 'התמונות שלך'}
+                  <span className="bg-slate-100 text-slate-600 text-sm px-3 py-1 rounded-full font-medium">
+                    {photos.length}
+                  </span>
                 </h2>
-                <p className="text-stone-500 text-sm">
-                  {mode === 'full'
-                    ? `סה"כ ${photos.length} תמונות בגלריה`
-                    : `נמצאו ${photos.length} תמונות`
-                  }
-                </p>
               </div>
               <button
                 onClick={handleDownloadAll}
-                className="bg-stone-900 text-white px-5 py-2.5 rounded-lg text-sm font-medium flex items-center gap-2 hover:bg-stone-800 transition-colors"
+                className="bg-slate-900 text-white px-6 py-3 rounded-xl text-sm font-bold flex items-center gap-2 hover:bg-slate-800 transition-all shadow-lg hover:shadow-xl transform hover:-translate-y-0.5"
               >
                 <Download className="w-4 h-4" />
                 <span className="hidden sm:inline">הורד הכל</span>
               </button>
             </div>
 
-            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
               {photos.map((photo) => (
                 <div
                   key={photo.id}
                   onClick={() => setLightboxPhoto(photo)}
-                  className="group relative aspect-[2/3] bg-stone-200 rounded-xl overflow-hidden shadow-sm hover:shadow-md transition-shadow cursor-pointer"
+                  className="group relative aspect-[2/3] bg-slate-200 rounded-2xl overflow-hidden shadow-sm hover:shadow-xl transition-all cursor-pointer"
                 >
                   <img
                     src={photo.url}
                     alt="Event"
-                    className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
+                    className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
                   />
 
                   {/* Watermark Overlay */}
@@ -314,18 +309,18 @@ const GalleryPage: React.FC<GalleryPageProps> = ({ mode }) => {
                   </div>
 
                   {/* Action Overlay */}
-                  <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity flex flex-col justify-end p-4">
-                    <div className="flex gap-2 justify-end">
+                  <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-all duration-300 flex flex-col justify-end p-6">
+                    <div className="flex gap-3 justify-end translate-y-4 group-hover:translate-y-0 transition-transform duration-300">
                       <button
                         onClick={(e) => handleDownload(photo, e)}
-                        className="p-2 bg-white/20 backdrop-blur-md text-white rounded-full hover:bg-white hover:text-stone-900 transition-colors"
+                        className="p-3 bg-white/20 backdrop-blur-md text-white rounded-full hover:bg-white hover:text-slate-900 transition-colors shadow-lg"
                         title="הורד תמונה"
                       >
                         <Download className="w-5 h-5" />
                       </button>
                       <button
                         onClick={(e) => handleShare(photo, e)}
-                        className="p-2 bg-white/20 backdrop-blur-md text-white rounded-full hover:bg-white hover:text-stone-900 transition-colors"
+                        className="p-3 bg-white/20 backdrop-blur-md text-white rounded-full hover:bg-white hover:text-slate-900 transition-colors shadow-lg"
                         title="שתף"
                       >
                         <Share2 className="w-5 h-5" />
@@ -337,25 +332,25 @@ const GalleryPage: React.FC<GalleryPageProps> = ({ mode }) => {
             </div>
 
             {photos.length === 0 && (
-              <div className="text-center py-20 bg-white rounded-2xl border border-stone-100">
-                <div className="w-16 h-16 bg-stone-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                  <Search className="w-8 h-8 text-stone-400" />
+              <div className="text-center py-24 bg-white rounded-3xl border border-slate-100 shadow-sm">
+                <div className="w-20 h-20 bg-slate-50 rounded-full flex items-center justify-center mx-auto mb-6">
+                  <Search className="w-10 h-10 text-slate-300" />
                 </div>
-                <h3 className="text-lg font-bold text-stone-900">לא נמצאו תמונות</h3>
+                <h3 className="text-xl font-bold text-slate-900 mb-2">לא נמצאו תמונות</h3>
                 {mode === 'guest' ? (
                   <>
-                    <p className="text-stone-500 max-w-xs mx-auto mt-2">
+                    <p className="text-slate-500 max-w-xs mx-auto mb-6">
                       לא הצלחנו למצוא תמונות תואמות. נסה להעלות תמונה אחרת.
                     </p>
                     <button
                       onClick={() => setViewState('landing')}
-                      className="mt-6 text-amber-600 font-medium hover:underline"
+                      className="text-cyan-600 font-bold hover:text-cyan-700 hover:underline"
                     >
                       נסה שוב
                     </button>
                   </>
                 ) : (
-                  <p className="text-stone-500 max-w-xs mx-auto mt-2">
+                  <p className="text-slate-500 max-w-xs mx-auto">
                     הגלריה ריקה כרגע.
                   </p>
                 )}
@@ -366,54 +361,54 @@ const GalleryPage: React.FC<GalleryPageProps> = ({ mode }) => {
       </div>
 
       {/* Footer */}
-      <footer className="bg-white border-t border-stone-100 py-12 mt-12">
+      <footer className="bg-white border-t border-slate-100 py-16 mt-20">
         <div className="max-w-5xl mx-auto px-4 text-center">
-          <p className="text-stone-400 text-sm mb-2">צולם באהבה על ידי</p>
-          <h3 className="font-serif text-xl font-bold text-stone-900 mb-6">{photographer?.name}</h3>
-          <div className="flex justify-center gap-4 mb-8">
+          <p className="text-slate-400 text-sm mb-3 font-medium tracking-wide uppercase">צולם באהבה על ידי</p>
+          <h3 className="text-2xl font-bold text-slate-900 mb-8">{photographer?.name}</h3>
+          <div className="flex justify-center gap-4 mb-10">
             {photographer?.portfolio?.slice(0, 3).map((file, i) => (
-              <div key={i} className="w-20 h-20 rounded-lg overflow-hidden bg-stone-100">
-                <div className="w-full h-full bg-stone-200 flex items-center justify-center text-stone-400 text-xs">
+              <div key={i} className="w-24 h-24 rounded-xl overflow-hidden bg-slate-100 shadow-sm hover:shadow-md transition-shadow">
+                <div className="w-full h-full bg-slate-200 flex items-center justify-center text-slate-400 text-xs font-medium">
                   תיק עבודות
                 </div>
               </div>
             ))}
           </div>
-          <p className="text-stone-400 text-xs">
-            © כל הזכויות שמורות ל{photographer?.name}. נבנה באמצעות PhotosApp.
+          <p className="text-slate-400 text-xs">
+            © כל הזכויות שמורות ל{photographer?.name}. נבנה באמצעות <span className="font-bold text-slate-600">Click2Pic</span>.
           </p>
         </div>
       </footer>
 
       {/* Lightbox Modal */}
       {lightboxPhoto && (
-        <div className="fixed inset-0 z-50 bg-black/95 flex items-center justify-center p-4 animate-fade-in">
+        <div className="fixed inset-0 z-50 bg-black/95 flex items-center justify-center p-4 animate-fade-in backdrop-blur-sm">
           <button
             onClick={() => setLightboxPhoto(null)}
-            className="absolute top-4 right-4 p-2 text-white/70 hover:text-white transition-colors z-50"
+            className="absolute top-6 right-6 p-2 text-white/70 hover:text-white transition-colors z-50 bg-white/10 rounded-full"
           >
-            <X className="w-8 h-8" />
+            <X className="w-6 h-6" />
           </button>
 
           <div className="relative max-w-full max-h-full">
             <img
               src={lightboxPhoto.url}
               alt="Full view"
-              className="max-w-full max-h-[90vh] object-contain rounded-sm shadow-2xl"
+              className="max-w-full max-h-[90vh] object-contain rounded-lg shadow-2xl"
             />
 
             {/* Lightbox Actions */}
-            <div className="absolute bottom-4 left-1/2 transform -translate-x-1/2 flex gap-4">
+            <div className="absolute bottom-8 left-1/2 transform -translate-x-1/2 flex gap-4">
               <button
                 onClick={(e) => handleDownload(lightboxPhoto, e)}
-                className="bg-white/10 backdrop-blur-md text-white px-4 py-2 rounded-full flex items-center gap-2 hover:bg-white/20 transition-colors"
+                className="bg-white/10 backdrop-blur-md text-white px-6 py-3 rounded-full flex items-center gap-2 hover:bg-white/20 transition-all font-medium border border-white/10"
               >
                 <Download className="w-5 h-5" />
                 <span>הורד</span>
               </button>
               <button
                 onClick={(e) => handleShare(lightboxPhoto, e)}
-                className="bg-white/10 backdrop-blur-md text-white px-4 py-2 rounded-full flex items-center gap-2 hover:bg-white/20 transition-colors"
+                className="bg-white/10 backdrop-blur-md text-white px-6 py-3 rounded-full flex items-center gap-2 hover:bg-white/20 transition-all font-medium border border-white/10"
               >
                 <Share2 className="w-5 h-5" />
                 <span>שתף</span>

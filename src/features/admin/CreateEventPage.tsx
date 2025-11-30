@@ -1,7 +1,8 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Upload, Image as ImageIcon, Check, ArrowRight, FileText } from 'lucide-react';
+import { Upload, Image as ImageIcon, Check, ArrowRight, FileText, Calendar, MapPin } from 'lucide-react';
 import { BackendService } from '../../services/backendService';
+import Layout from '../../components/Layout';
 
 const CreateEventPage: React.FC = () => {
     const navigate = useNavigate();
@@ -84,211 +85,234 @@ const CreateEventPage: React.FC = () => {
     };
 
     return (
-        <div className="min-h-screen bg-stone-50 py-12 px-4 sm:px-6 lg:px-8" dir="rtl">
-            <div className="max-w-3xl mx-auto bg-white rounded-3xl shadow-xl overflow-hidden">
+        <Layout>
+            <div className="container mx-auto px-4 py-12 max-w-4xl">
+                <div className="bg-white rounded-3xl shadow-xl overflow-hidden border border-slate-100">
 
-                {/* Header */}
-                <div className="bg-stone-900 px-8 py-6 flex items-center justify-between">
-                    <h1 className="text-2xl font-bold text-white">יצירת אירוע חדש</h1>
-                    <button onClick={() => navigate('/admin')} className="text-stone-400 hover:text-white transition-colors">
-                        חזרה לדשבורד
-                    </button>
-                </div>
+                    {/* Header */}
+                    <div className="bg-slate-900 px-8 py-6 flex items-center justify-between">
+                        <h1 className="text-2xl font-bold text-white">יצירת אירוע חדש</h1>
+                        <button onClick={() => navigate('/admin')} className="text-slate-400 hover:text-white transition-colors text-sm font-medium">
+                            חזרה לדשבורד
+                        </button>
+                    </div>
 
-                <div className="p-8">
-                    {step === 'details' && (
-                        <form onSubmit={handleSubmit} className="space-y-8">
-                            {/* Event Details Section */}
-                            <div className="space-y-6">
-                                <h3 className="text-lg font-bold text-stone-800 flex items-center gap-2">
-                                    <FileText className="w-5 h-5 text-amber-600" />
-                                    פרטי האירוע
-                                </h3>
+                    <div className="p-8 md:p-10">
+                        {step === 'details' && (
+                            <form onSubmit={handleSubmit} className="space-y-8">
+                                {/* Event Details Section */}
+                                <div className="space-y-6">
+                                    <h3 className="text-lg font-bold text-slate-800 flex items-center gap-2 border-b border-slate-100 pb-2">
+                                        <div className="bg-cyan-100 p-2 rounded-lg text-cyan-600">
+                                            <FileText className="w-5 h-5" />
+                                        </div>
+                                        פרטי האירוע
+                                    </h3>
 
-                                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                                    <div className="col-span-2">
-                                        <label className="block text-sm font-medium text-stone-700 mb-2">שם האירוע</label>
-                                        <input
-                                            required
-                                            type="text"
-                                            name="name"
-                                            value={formData.name}
-                                            onChange={handleInputChange}
-                                            placeholder='לדוגמה: "החתונה של דנה ויוסי"'
-                                            className="block w-full border border-stone-300 rounded-lg p-3 focus:ring-amber-500 focus:border-amber-500"
-                                        />
-                                    </div>
-
-                                    <div className="col-span-2">
-                                        <label className="block text-sm font-medium text-stone-700 mb-2">תיאור קצר</label>
-                                        <textarea
-                                            name="description"
-                                            value={formData.description}
-                                            onChange={handleInputChange}
-                                            rows={2}
-                                            placeholder="תיאור שיופיע לאורחים..."
-                                            className="block w-full border border-stone-300 rounded-lg p-3 focus:ring-amber-500 focus:border-amber-500"
-                                        />
-                                    </div>
-
-                                    <div>
-                                        <label className="block text-sm font-medium text-stone-700 mb-2">תאריך</label>
-                                        <input
-                                            required
-                                            type="date"
-                                            name="date"
-                                            value={formData.date}
-                                            onChange={handleInputChange}
-                                            className="block w-full border border-stone-300 rounded-lg p-3 focus:ring-amber-500 focus:border-amber-500"
-                                        />
-                                    </div>
-
-                                    <div>
-                                        <label className="block text-sm font-medium text-stone-700 mb-2">מיקום</label>
-                                        <input
-                                            required
-                                            type="text"
-                                            name="location"
-                                            value={formData.location}
-                                            onChange={handleInputChange}
-                                            placeholder="שם האולם / מקום"
-                                            className="block w-full border border-stone-300 rounded-lg p-3 focus:ring-amber-500 focus:border-amber-500"
-                                        />
-                                    </div>
-                                </div>
-                            </div>
-
-                            <div className="border-t border-stone-100 pt-8 space-y-6">
-                                <h3 className="text-lg font-bold text-stone-800 flex items-center gap-2">
-                                    <ImageIcon className="w-5 h-5 text-amber-600" />
-                                    מדיה ותמונות
-                                </h3>
-
-                                {/* Cover Image */}
-                                <div>
-                                    <label className="block text-sm font-medium text-stone-700 mb-2">תמונת קאבר (Cover Image)</label>
-                                    <div className="flex items-center gap-6">
-                                        <div className="relative w-32 h-32 bg-stone-100 rounded-xl overflow-hidden border-2 border-dashed border-stone-300 flex items-center justify-center group hover:border-amber-500 transition-colors">
-                                            {coverPreview ? (
-                                                <img src={coverPreview} alt="Cover" className="w-full h-full object-cover" />
-                                            ) : (
-                                                <ImageIcon className="w-8 h-8 text-stone-400" />
-                                            )}
+                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                        <div className="col-span-2">
+                                            <label className="block text-sm font-medium text-slate-700 mb-2">שם האירוע</label>
                                             <input
-                                                type="file"
-                                                accept="image/*"
-                                                onChange={handleCoverImageChange}
-                                                className="absolute inset-0 opacity-0 cursor-pointer"
+                                                required
+                                                type="text"
+                                                name="name"
+                                                value={formData.name}
+                                                onChange={handleInputChange}
+                                                placeholder='לדוגמה: "החתונה של דנה ויוסי"'
+                                                className="block w-full border border-slate-200 rounded-xl p-3 focus:ring-2 focus:ring-cyan-500 focus:border-cyan-500 transition-colors"
                                             />
                                         </div>
-                                        <div className="text-sm text-stone-500">
-                                            <p>בחר תמונה ראשית שתופיע בראש הגלריה.</p>
-                                            <p>מומלץ להשתמש בתמונה רוחבית איכותית.</p>
+
+                                        <div className="col-span-2">
+                                            <label className="block text-sm font-medium text-slate-700 mb-2">תיאור קצר</label>
+                                            <textarea
+                                                name="description"
+                                                value={formData.description}
+                                                onChange={handleInputChange}
+                                                rows={2}
+                                                placeholder="תיאור שיופיע לאורחים..."
+                                                className="block w-full border border-slate-200 rounded-xl p-3 focus:ring-2 focus:ring-cyan-500 focus:border-cyan-500 transition-colors"
+                                            />
+                                        </div>
+
+                                        <div>
+                                            <label className="block text-sm font-medium text-slate-700 mb-2">תאריך</label>
+                                            <div className="relative">
+                                                <input
+                                                    required
+                                                    type="date"
+                                                    name="date"
+                                                    value={formData.date}
+                                                    onChange={handleInputChange}
+                                                    className="block w-full border border-slate-200 rounded-xl p-3 pl-10 focus:ring-2 focus:ring-cyan-500 focus:border-cyan-500 transition-colors"
+                                                />
+                                                <Calendar className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400 pointer-events-none" />
+                                            </div>
+                                        </div>
+
+                                        <div>
+                                            <label className="block text-sm font-medium text-slate-700 mb-2">מיקום</label>
+                                            <div className="relative">
+                                                <input
+                                                    required
+                                                    type="text"
+                                                    name="location"
+                                                    value={formData.location}
+                                                    onChange={handleInputChange}
+                                                    placeholder="שם האולם / מקום"
+                                                    className="block w-full border border-slate-200 rounded-xl p-3 pl-10 focus:ring-2 focus:ring-cyan-500 focus:border-cyan-500 transition-colors"
+                                                />
+                                                <MapPin className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400 pointer-events-none" />
+                                            </div>
                                         </div>
                                     </div>
                                 </div>
 
-                                {/* Gallery Upload */}
-                                <div>
-                                    <label className="block text-sm font-medium text-stone-700 mb-2">העלאת תמונות האירוע</label>
-                                    <div className="border-2 border-dashed border-stone-300 rounded-xl p-8 text-center hover:bg-stone-50 transition-colors relative">
-                                        <input
-                                            type="file"
-                                            multiple
-                                            accept="image/*"
-                                            onChange={handleGalleryFilesChange}
-                                            className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
-                                        />
-                                        <Upload className="w-10 h-10 text-stone-400 mx-auto mb-3" />
-                                        <p className="text-stone-900 font-medium">גרור תמונות לכאן או לחץ לבחירה</p>
-                                        <p className="text-stone-500 text-sm mt-1">ניתן לבחור מספר רב של תמונות</p>
-                                        {galleryFiles.length > 0 && (
-                                            <div className="mt-4 inline-flex items-center gap-2 bg-green-50 text-green-700 px-3 py-1 rounded-full text-sm font-medium">
-                                                <Check className="w-4 h-4" />
-                                                נבחרו {galleryFiles.length} תמונות
+                                <div className="space-y-6 pt-6">
+                                    <h3 className="text-lg font-bold text-slate-800 flex items-center gap-2 border-b border-slate-100 pb-2">
+                                        <div className="bg-cyan-100 p-2 rounded-lg text-cyan-600">
+                                            <ImageIcon className="w-5 h-5" />
+                                        </div>
+                                        מדיה ותמונות
+                                    </h3>
+
+                                    {/* Cover Image */}
+                                    <div>
+                                        <label className="block text-sm font-medium text-slate-700 mb-2">תמונת קאבר (Cover Image)</label>
+                                        <div className="flex flex-col sm:flex-row items-start sm:items-center gap-6">
+                                            <div className="relative w-full sm:w-48 h-32 bg-slate-50 rounded-xl overflow-hidden border-2 border-dashed border-slate-300 flex items-center justify-center group hover:border-cyan-500 transition-colors cursor-pointer">
+                                                {coverPreview ? (
+                                                    <img src={coverPreview} alt="Cover" className="w-full h-full object-cover" />
+                                                ) : (
+                                                    <div className="flex flex-col items-center gap-2 text-slate-400 group-hover:text-cyan-500">
+                                                        <ImageIcon className="w-8 h-8" />
+                                                        <span className="text-xs">לחץ להעלאה</span>
+                                                    </div>
+                                                )}
+                                                <input
+                                                    type="file"
+                                                    accept="image/*"
+                                                    onChange={handleCoverImageChange}
+                                                    className="absolute inset-0 opacity-0 cursor-pointer"
+                                                />
                                             </div>
-                                        )}
+                                            <div className="text-sm text-slate-500 space-y-1">
+                                                <p className="font-medium text-slate-700">תמונה ראשית לגלריה</p>
+                                                <p>מומלץ להשתמש בתמונה רוחבית איכותית (1920x1080).</p>
+                                                <p>תמונה זו תופיע בראש עמוד הגלריה ובשיתופים.</p>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    {/* Gallery Upload */}
+                                    <div>
+                                        <label className="block text-sm font-medium text-slate-700 mb-2">העלאת תמונות האירוע</label>
+                                        <div className="border-2 border-dashed border-slate-300 rounded-xl p-8 text-center hover:bg-slate-50 hover:border-cyan-500 transition-all relative group cursor-pointer">
+                                            <input
+                                                type="file"
+                                                multiple
+                                                accept="image/*"
+                                                onChange={handleGalleryFilesChange}
+                                                className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10"
+                                            />
+                                            <div className="bg-cyan-50 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4 group-hover:scale-110 transition-transform">
+                                                <Upload className="w-8 h-8 text-cyan-600" />
+                                            </div>
+                                            <p className="text-slate-900 font-bold text-lg mb-1">גרור תמונות לכאן או לחץ לבחירה</p>
+                                            <p className="text-slate-500 text-sm">ניתן לבחור מספר רב של תמונות (JPG, PNG)</p>
+                                            {galleryFiles.length > 0 && (
+                                                <div className="mt-6 inline-flex items-center gap-2 bg-green-50 text-green-700 px-4 py-2 rounded-full text-sm font-bold animate-pulse">
+                                                    <Check className="w-4 h-4" />
+                                                    נבחרו {galleryFiles.length} תמונות
+                                                </div>
+                                            )}
+                                        </div>
                                     </div>
                                 </div>
-                            </div>
 
-                            <div className="pt-4">
-                                <button
-                                    type="submit"
-                                    className="w-full bg-stone-900 text-white py-4 rounded-xl font-bold text-lg hover:bg-stone-800 transition-all shadow-lg hover:shadow-xl flex items-center justify-center gap-2"
-                                >
-                                    <span>צור אירוע והתחל עיבוד</span>
-                                    <ArrowRight className="w-5 h-5" />
-                                </button>
-                            </div>
-                        </form>
-                    )}
+                                <div className="pt-6">
+                                    <button
+                                        type="submit"
+                                        className="w-full bg-cyan-500 text-white py-4 rounded-xl font-bold text-lg hover:bg-cyan-600 transition-all shadow-lg hover:shadow-cyan-500/30 flex items-center justify-center gap-2 transform hover:-translate-y-1"
+                                    >
+                                        <span>צור אירוע והתחל עיבוד</span>
+                                        <ArrowRight className="w-5 h-5" />
+                                    </button>
+                                </div>
+                            </form>
+                        )}
 
-                    {step === 'processing' && (
-                        <div className="text-center py-12">
-                            <div className="relative w-24 h-24 mx-auto mb-8">
-                                <div className="absolute inset-0 border-4 border-stone-100 rounded-full"></div>
-                                <div
-                                    className="absolute inset-0 border-4 border-amber-500 rounded-full border-t-transparent animate-spin"
-                                ></div>
-                                <div className="absolute inset-0 flex items-center justify-center font-bold text-stone-700">
-                                    {uploadProgress}%
+                        {step === 'processing' && (
+                            <div className="text-center py-16">
+                                <div className="relative w-32 h-32 mx-auto mb-8">
+                                    <div className="absolute inset-0 border-8 border-slate-100 rounded-full"></div>
+                                    <div
+                                        className="absolute inset-0 border-8 border-cyan-500 rounded-full border-t-transparent animate-spin"
+                                    ></div>
+                                    <div className="absolute inset-0 flex items-center justify-center font-bold text-2xl text-slate-700">
+                                        {uploadProgress}%
+                                    </div>
+                                </div>
+                                <h3 className="text-2xl font-bold text-slate-900 mb-2">מעבד נתונים...</h3>
+                                <p className="text-slate-500 text-lg animate-pulse">{processingStage}</p>
+
+                                <div className="mt-10 max-w-md mx-auto bg-slate-100 rounded-full h-3 overflow-hidden">
+                                    <div
+                                        className="h-full bg-cyan-500 transition-all duration-500 ease-out rounded-full"
+                                        style={{ width: `${uploadProgress}%` }}
+                                    ></div>
                                 </div>
                             </div>
-                            <h3 className="text-2xl font-bold text-stone-900 mb-2">מעבד נתונים...</h3>
-                            <p className="text-stone-500 text-lg animate-pulse">{processingStage}</p>
+                        )}
 
-                            <div className="mt-8 max-w-md mx-auto bg-stone-100 rounded-full h-2 overflow-hidden">
-                                <div
-                                    className="h-full bg-amber-500 transition-all duration-500 ease-out"
-                                    style={{ width: `${uploadProgress}%` }}
-                                ></div>
-                            </div>
-                        </div>
-                    )}
+                        {step === 'done' && (
+                            <div className="text-center py-12">
+                                <div className="w-24 h-24 bg-green-100 text-green-600 rounded-full flex items-center justify-center mx-auto mb-6 animate-bounce">
+                                    <Check className="w-12 h-12" />
+                                </div>
+                                <h2 className="text-3xl font-bold text-slate-900 mb-4">האירוע נוצר בהצלחה! 🎉</h2>
+                                <p className="text-slate-600 mb-8 max-w-md mx-auto text-lg">
+                                    התמונות הועלו, עברו זיהוי פנים והגלריה מוכנה לשיתוף.
+                                </p>
 
-                    {step === 'done' && (
-                        <div className="text-center py-8">
-                            <div className="w-20 h-20 bg-green-100 text-green-600 rounded-full flex items-center justify-center mx-auto mb-6">
-                                <Check className="w-10 h-10" />
-                            </div>
-                            <h2 className="text-3xl font-bold text-stone-900 mb-4">האירוע נוצר בהצלחה! 🎉</h2>
-                            <p className="text-stone-600 mb-8 max-w-md mx-auto">
-                                התמונות הועלו, עברו זיהוי פנים והגלריה מוכנה לשיתוף.
-                                הנה הקישור הייחודי לאירוע:
-                            </p>
+                                <div className="bg-slate-50 p-6 rounded-2xl flex flex-col md:flex-row items-center justify-between max-w-xl mx-auto mb-10 border border-slate-200 gap-4">
+                                    <div className="text-right w-full overflow-hidden">
+                                        <p className="text-xs text-slate-500 mb-1">קישור לאירוע:</p>
+                                        <code className="text-cyan-700 font-mono text-lg truncate block w-full">
+                                            {createdEventLink}
+                                        </code>
+                                    </div>
+                                    <button
+                                        onClick={() => {
+                                            navigator.clipboard.writeText(createdEventLink);
+                                            alert('הקישור הועתק!');
+                                        }}
+                                        className="bg-white text-slate-700 px-6 py-3 rounded-xl text-sm font-bold hover:bg-slate-50 border border-slate-200 transition-colors shadow-sm w-full md:w-auto whitespace-nowrap"
+                                    >
+                                        העתק קישור
+                                    </button>
+                                </div>
 
-                            <div className="bg-stone-100 p-4 rounded-xl flex items-center justify-between max-w-lg mx-auto mb-8 border border-stone-200">
-                                <code className="text-amber-700 font-mono text-sm sm:text-base truncate px-2">
-                                    {createdEventLink}
-                                </code>
-                                <button
-                                    onClick={() => navigator.clipboard.writeText(createdEventLink)}
-                                    className="bg-white text-stone-700 px-4 py-2 rounded-lg text-sm font-medium hover:bg-stone-50 border border-stone-200 transition-colors"
-                                >
-                                    העתק
-                                </button>
+                                <div className="flex flex-col sm:flex-row justify-center gap-4">
+                                    <button
+                                        onClick={() => navigate('/admin')}
+                                        className="px-8 py-4 bg-slate-900 text-white rounded-xl font-bold hover:bg-slate-800 transition-colors shadow-lg"
+                                    >
+                                        חזרה לדשבורד
+                                    </button>
+                                    <button
+                                        onClick={() => window.open(createdEventLink, '_blank')}
+                                        className="px-8 py-4 bg-white text-cyan-600 border-2 border-cyan-100 rounded-xl font-bold hover:bg-cyan-50 transition-colors"
+                                    >
+                                        צפה בגלריה
+                                    </button>
+                                </div>
                             </div>
-
-                            <div className="flex justify-center gap-4">
-                                <button
-                                    onClick={() => navigate('/admin')}
-                                    className="px-6 py-3 bg-stone-900 text-white rounded-xl font-medium hover:bg-stone-800 transition-colors"
-                                >
-                                    חזרה לדשבורד
-                                </button>
-                                <button
-                                    onClick={() => window.open(createdEventLink, '_blank')}
-                                    className="px-6 py-3 bg-white text-stone-900 border border-stone-300 rounded-xl font-medium hover:bg-stone-50 transition-colors"
-                                >
-                                    צפה בגלריה
-                                </button>
-                            </div>
-                        </div>
-                    )}
+                        )}
+                    </div>
                 </div>
             </div>
-        </div>
+        </Layout>
     );
 };
 
