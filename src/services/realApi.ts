@@ -120,18 +120,19 @@ export const RealAuthAPI = {
 // ============================================
 export const RealProfileAPI = {
     getProfile: async (): Promise<PhotographerProfile | null> => {
-        const data = await apiRequest('/auth/me');
+        const response = await apiRequest('/auth/me');
+        const userData = response.data; // Backend returns {success: true, data: {...}}
 
         return {
-            name: data.profile.name,
-            bio: data.profile.short_description,
-            profileImageUrl: data.profile.logo_url || 'https://via.placeholder.com/150',
-            contactEmail: data.email,
-            phone: data.profile.phone,
-            instagramUrl: data.profile.instagram_url,
-            tiktokUrl: data.profile.tiktok_url,
-            facebookUrl: data.profile.facebook_url,
-            portfolio: data.profile.portfolio || [],
+            name: userData.profile.name,
+            bio: userData.profile.bio,
+            profileImageUrl: userData.profile.profileImageUrl || 'https://via.placeholder.com/150',
+            contactEmail: userData.profile.contactEmail,
+            phone: userData.profile.phone,
+            instagramUrl: userData.profile.instagramUrl,
+            tiktokUrl: userData.profile.tiktokUrl,
+            facebookUrl: userData.profile.facebookUrl,
+            portfolio: userData.profile.portfolio || [],
         };
     },
 
