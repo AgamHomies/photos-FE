@@ -15,7 +15,8 @@ import {
     Plus,
     Trash2,
     Camera,
-    Heart
+    Heart,
+    UserCheck
 } from 'lucide-react';
 
 const DashboardPage: React.FC = () => {
@@ -107,6 +108,13 @@ const DashboardPage: React.FC = () => {
                     >
                         <Calendar className="w-5 h-5" />
                         <span>ניהול אירועים</span>
+                    </button>
+                    <button
+                        onClick={() => navigate('/complete-profile')}
+                        className="w-full flex items-center gap-3 px-4 py-3 rounded-xl text-stone-600 hover:bg-stone-50 transition-colors"
+                    >
+                        <UserCheck className="w-5 h-5" />
+                        <span>השלמת פרופיל</span>
                     </button>
                     <button
                         onClick={() => setActiveTab('settings')}

@@ -99,8 +99,8 @@ const AuthPage: React.FC = () => {
                         facebookUrl: ''
                     });
 
-                    console.log('User account created successfully, redirecting to profile completion');
-                    navigate('/complete-profile');
+                    console.log('User account created successfully, redirecting to admin');
+                    navigate('/admin');
                 } catch (registerErr) {
                     console.error('Failed to register user:', registerErr);
                     alert('שגיאה ביצירת חשבון. אנא נסה שנית.');
@@ -215,9 +215,41 @@ const AuthPage: React.FC = () => {
                         return;
                     }
 
-                    // Redirect to profile completion page
-                    alert('הרשמה בוצעה בהצלחה! אנא השלם את הפרופיל שלך.');
-                    navigate('/complete-profile');
+                    console.log('Supabase signup successful:', { user: user?.email, hasSession: !!session });
+
+                    // Check if we have a session (required for backend registration)
+                    if (!session) {
+                        alert('הרשמה בוצעה בהצלחה! אנא בדוק את האימייל שלך לאימות החשבון.');
+                        return;
+                    }
+
+                    // Now register with backend to create user profile
+                    try {
+                        console.log('Calling backend registration with token...');
+                        await BackendService.register({
+                            email: formData.email,
+                            password: '', // Not needed for backend with Supabase auth
+                            fullName: '',
+                            description: '',
+                            address: '',
+                            phone: '',
+                            termsAccepted: formData.termsAccepted,
+                            logo: null,
+                            portfolio: [],
+                            instagramUrl: '',
+                            tiktokUrl: '',
+                            facebookUrl: ''
+                        });
+                        console.log('Backend registration successful');
+                    } catch (backendError: any) {
+                        console.error('Backend registration failed:', backendError);
+                        alert('הרשמה בוצעה בהצלחה, אך יש בעיה בשמירת הפרטים. אנא פנה לתמיכה.');
+                        return;
+                    }
+
+                    // Redirect to admin page
+                    alert('הרשמה בוצעה בהצלחה!');
+                    navigate('/admin');
                 }
             } catch (error: any) {
                 console.error(error);
@@ -287,6 +319,7 @@ const AuthPage: React.FC = () => {
                                     name="email"
                                     type="email"
                                     placeholder="אימייל"
+                                    autoComplete="email"
                                     className={`block w-full pr-10 border ${errors.email ? 'border-red-500' : 'border-stone-300'} rounded-lg p-3 focus:ring-amber-500 focus:border-amber-500`}
                                     value={formData.email}
                                     onChange={handleInputChange}
@@ -302,6 +335,7 @@ const AuthPage: React.FC = () => {
                                     name="password"
                                     type="password"
                                     placeholder="סיסמה"
+                                    autoComplete={isLogin ? "current-password" : "new-password"}
                                     className={`block w-full pr-10 border ${errors.password ? 'border-red-500' : 'border-stone-300'} rounded-lg p-3 focus:ring-amber-500 focus:border-amber-500`}
                                     value={formData.password}
                                     onChange={handleInputChange}
@@ -319,6 +353,7 @@ const AuthPage: React.FC = () => {
                                         name="confirmPassword"
                                         type="password"
                                         placeholder="אימות סיסמה"
+                                        autoComplete="new-password"
                                         className={`block w-full pr-10 border ${confirmPasswordError ? 'border-red-500' : 'border-stone-300'} rounded-lg p-3 focus:ring-amber-500 focus:border-amber-500`}
                                         value={confirmPassword}
                                         onChange={(e) => {

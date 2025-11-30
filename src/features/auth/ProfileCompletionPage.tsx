@@ -267,7 +267,7 @@ const ProfileCompletionPage: React.FC = () => {
                             onClick={() => navigate('/admin')}
                             className="w-full flex justify-center py-3 px-4 border border-stone-300 text-sm font-medium rounded-lg text-stone-700 bg-white hover:bg-stone-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-amber-500 transition-colors"
                         >
-                            השלם מאוחר יותר
+                            ביטול
                         </button>
                     </div>
                 </form>

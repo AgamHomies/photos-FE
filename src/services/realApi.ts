@@ -78,8 +78,15 @@ export const RealAuthAPI = {
         // Only send email and termsAccepted for basic registration
         formData.append('email', registrationData.email);
         formData.append('termsAccepted', registrationData.termsAccepted.toString());
+        console.log('Registration data:', formData.get('email'), formData.get('termsAccepted'));
 
         const token = await getAuthToken();
+        console.log('Auth token retrieved:', token ? `${token.substring(0, 20)}...` : 'NULL');
+
+        if (!token) {
+            throw new Error('No authentication token available. Please ensure you are logged in.');
+        }
+
         const response = await fetch(`${API_BASE_URL}/auth/register`, {
             method: 'POST',
             headers: {
@@ -89,7 +96,7 @@ export const RealAuthAPI = {
         });
 
         const data = await response.json();
-
+        console.log('Backend response:', data);
         if (!response.ok) {
             throw new Error(data.detail || 'Registration failed');
         }
