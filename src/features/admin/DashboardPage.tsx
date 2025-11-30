@@ -109,13 +109,16 @@ const DashboardPage: React.FC = () => {
                         <Calendar className="w-5 h-5" />
                         <span>ניהול אירועים</span>
                     </button>
-                    <button
-                        onClick={() => navigate('/complete-profile')}
-                        className="w-full flex items-center gap-3 px-4 py-3 rounded-xl text-stone-600 hover:bg-stone-50 transition-colors"
-                    >
-                        <UserCheck className="w-5 h-5" />
-                        <span>השלמת פרופיל</span>
-                    </button>
+                    {/* Only show profile completion button if profile is incomplete */}
+                    {(!profile?.name || !profile?.phone || !profile?.bio) && (
+                        <button
+                            onClick={() => navigate('/complete-profile')}
+                            className="w-full flex items-center gap-3 px-4 py-3 rounded-xl text-stone-600 hover:bg-stone-50 transition-colors"
+                        >
+                            <UserCheck className="w-5 h-5" />
+                            <span>השלמת פרופיל</span>
+                        </button>
+                    )}
                     <button
                         onClick={() => setActiveTab('settings')}
                         className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-colors ${activeTab === 'settings' ? 'bg-amber-50 text-amber-600 font-bold' : 'text-stone-600 hover:bg-stone-50'}`}

@@ -201,7 +201,25 @@ const AuthPage: React.FC = () => {
                     }
 
                     if (session) {
-                        navigate('/admin');
+                        // Check profile completion status
+                        try {
+                            const profile = await BackendService.getProfile();
+                            // Check if profile has real data
+                            const hasCompleteProfile = profile &&
+                                profile.name &&
+                                profile.phone &&
+                                profile.bio;
+
+                            if (hasCompleteProfile) {
+                                navigate('/admin');
+                            } else {
+                                navigate('/complete-profile');
+                            }
+                        } catch (error) {
+                            // If profile fetch fails, assume incomplete and redirect to profile completion
+                            console.log('Profile not found, redirecting to profile completion');
+                            navigate('/complete-profile');
+                        }
                     }
                 } else {
                     // Register with Supabase - only email and password

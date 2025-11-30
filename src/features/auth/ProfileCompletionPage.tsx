@@ -105,7 +105,7 @@ const ProfileCompletionPage: React.FC = () => {
                         השלמת פרופיל צלם
                     </h2>
                     <p className="mt-2 text-sm text-stone-600">
-                        אנא מלא את הפרטים הבאים כדי להשלים את הפרופיל שלך
+                        אנא מלא את הפרטים הבאים כדי להשלים את הפרופיל שלך (ניתן להשלים מאוחר יותר)
                     </p>
                 </div>
 
@@ -264,10 +264,13 @@ const ProfileCompletionPage: React.FC = () => {
 
                         <button
                             type="button"
-                            onClick={() => navigate('/admin')}
+                            onClick={() => {
+                                sessionStorage.setItem('skipProfileCompletion', 'true');
+                                navigate('/admin');
+                            }}
                             className="w-full flex justify-center py-3 px-4 border border-stone-300 text-sm font-medium rounded-lg text-stone-700 bg-white hover:bg-stone-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-amber-500 transition-colors"
                         >
-                            ביטול
+                            השלם מאוחר יותר
                         </button>
                     </div>
                 </form>
