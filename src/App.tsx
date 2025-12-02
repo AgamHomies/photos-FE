@@ -9,6 +9,7 @@ import ProfileCompletionPage from './features/auth/ProfileCompletionPage';
 import AuthCallbackPage from './features/auth/AuthCallbackPage';
 import ResetPasswordPage from './features/auth/ResetPasswordPage';
 import ContactPage from './features/home/ContactPage';
+import SettingsPage from './features/admin/SettingsPage';
 import { CONFIG } from './config';
 import ProtectedRoute from './components/ProtectedRoute';
 
@@ -40,6 +41,7 @@ function App() {
         {/* Protected Admin Routes */}
         <Route element={<ProtectedRoute />}>
           <Route path="admin" element={<DashboardPage />} />
+          <Route path="admin/settings" element={<SettingsPage />} />
           <Route path="admin/create-event" element={<CreateEventPage />} />
           <Route path="admin/events/:id" element={<EventManagePage />} />
         </Route>

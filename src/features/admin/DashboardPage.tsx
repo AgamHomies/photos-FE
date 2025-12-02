@@ -28,6 +28,8 @@ const DashboardPage: React.FC = () => {
         loadData();
     }, []);
 
+
+
     const loadData = async () => {
         setLoading(true);
         try {
@@ -195,11 +197,14 @@ const DashboardPage: React.FC = () => {
                                         <td className="px-6 py-4">
                                             <div className="flex items-center gap-2 text-cyan-600 bg-cyan-50 px-3 py-1 rounded-lg w-fit text-xs font-medium dir-ltr cursor-pointer hover:bg-cyan-100" onClick={(e) => {
                                                 e.stopPropagation();
-                                                navigator.clipboard.writeText(`c2p.io/${event.id}`);
+                                                // Use the uniqueLink from the event object which points to the guest gallery
+                                                const link = event.uniqueLink || `${window.location.origin}/gallery/${event.id}`;
+                                                navigator.clipboard.writeText(link);
                                                 alert('הקישור הועתק!');
                                             }}>
                                                 <ExternalLink className="w-3 h-3" />
-                                                c2p.io/{event.id.toString().slice(0, 6)}
+                                                {/* Display a friendly version, e.g. c2p.io/slug */}
+                                                c2p.io/{event.uniqueLink ? event.uniqueLink.split('/').pop()?.slice(0, 6) : event.id.toString().slice(0, 6)}
                                             </div>
                                         </td>
                                         <td className="px-6 py-4">

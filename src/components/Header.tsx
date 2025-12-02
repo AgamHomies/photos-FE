@@ -38,7 +38,7 @@ const Header: React.FC<HeaderProps> = ({ isAuthenticated }) => {
                             </button>
 
                             {/* Dropdown */}
-                            <div className="absolute left-0 mt-2 w-48 bg-white rounded-xl shadow-lg border border-slate-100 py-2 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 transform origin-top-left">
+                            <div className="absolute right-0 mt-2 w-48 bg-white rounded-xl shadow-lg border border-slate-100 py-2 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 transform origin-top-right">
                                 <button
                                     onClick={() => navigate('/admin/settings')}
                                     className="w-full text-right px-4 py-2 text-sm text-slate-600 hover:bg-slate-50 hover:text-cyan-600 transition-colors"
@@ -83,8 +83,8 @@ const Header: React.FC<HeaderProps> = ({ isAuthenticated }) => {
                             דשבורד
                         </button>
                         <button
-                            onClick={() => navigate('/admin/events')}
-                            className={`hover:text-cyan-500 transition-colors ${isActive('/admin/events') ? 'text-cyan-600 font-bold' : ''}`}
+                            onClick={() => navigate('/admin#events-section')}
+                            className={`hover:text-cyan-500 transition-colors ${isActive('/admin') ? 'text-cyan-600 font-bold' : ''}`}
                         >
                             האירועים שלך
                         </button>
@@ -95,8 +95,8 @@ const Header: React.FC<HeaderProps> = ({ isAuthenticated }) => {
                             צור אירוע חדש
                         </button>
                         <button
-                            onClick={() => navigate('/help')}
-                            className={`hover:text-cyan-500 transition-colors ${isActive('/help') ? 'text-cyan-600 font-bold' : ''}`}
+                            onClick={() => navigate('/contact')}
+                            className={`hover:text-cyan-500 transition-colors ${isActive('/contact') ? 'text-cyan-600 font-bold' : ''}`}
                         >
                             תמיכה
                         </button>

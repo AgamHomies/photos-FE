@@ -116,6 +116,16 @@ export class SupabaseAuthService {
     });
     return { error };
   }
+  /**
+   * Update user data
+   */
+  async updateUserData(attributes: any): Promise<{ user: User | null; error: AuthError | null }> {
+    const { data, error } = await supabase.auth.updateUser(attributes);
+    return {
+      user: data.user,
+      error,
+    };
+  }
 }
 
 export const supabaseAuthService = new SupabaseAuthService();

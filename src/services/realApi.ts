@@ -113,17 +113,22 @@ export const RealAuthAPI = {
 // ============================================
 export const RealProfileAPI = {
     getProfile: async (): Promise<PhotographerProfile | null> => {
-        const data = await apiRequest('/auth/me');
+        const response = await apiRequest('/auth/me');
+        const data = response.data; // Access the nested data object
+
+        if (!data || !data.profile) {
+            return null;
+        }
 
         return {
             name: data.profile.name,
-            bio: data.profile.short_description,
-            profileImageUrl: data.profile.logo_url || 'https://via.placeholder.com/150',
-            contactEmail: data.email,
+            bio: data.profile.bio,
+            profileImageUrl: data.profile.profileImageUrl || 'https://via.placeholder.com/150',
+            contactEmail: data.profile.contactEmail,
             phone: data.profile.phone,
-            instagramUrl: data.profile.instagram_url,
-            tiktokUrl: data.profile.tiktok_url,
-            facebookUrl: data.profile.facebook_url,
+            instagramUrl: data.profile.instagramUrl,
+            tiktokUrl: data.profile.tiktokUrl,
+            facebookUrl: data.profile.facebookUrl,
             portfolio: data.profile.portfolio || [],
         };
     },
@@ -133,7 +138,40 @@ export const RealProfileAPI = {
     },
 
     updateProfile: async (updates: Partial<PhotographerProfile>): Promise<void> => {
-        console.warn('Profile update not yet implemented in backend');
+        const formData = new FormData();
+
+        // Map fields to form data
+        if (updates.name) formData.append('fullName', updates.name);
+        if (updates.bio) formData.append('description', updates.bio);
+        if (updates.phone) formData.append('phone', updates.phone);
+        if (updates.contactEmail) formData.append('contactEmail', updates.contactEmail);
+
+        if (updates.instagramUrl) formData.append('instagramUrl', updates.instagramUrl);
+        if (updates.tiktokUrl) formData.append('tiktokUrl', updates.tiktokUrl);
+        if (updates.facebookUrl) formData.append('facebookUrl', updates.facebookUrl);
+
+        // Handle file uploads if they were passed (need to check how they are passed in updates)
+        // The current interface Partial<PhotographerProfile> doesn't include File objects, only URLs.
+        // We might need a different method or extended type for updates with files.
+        // For now, let's assume we are updating text fields. 
+        // If we need to update images, we should probably extend the type or use a different argument.
+
+        // However, looking at completeProfile, it takes Partial<PhotographerRegistration> which has File.
+        // Let's assume for now we just update text fields here.
+
+        const token = await getAuthToken();
+        const response = await fetch(`${API_BASE_URL}/auth/profile`, {
+            method: 'PATCH',
+            headers: {
+                'Authorization': `Bearer ${token}`,
+            },
+            body: formData,
+        });
+
+        if (!response.ok) {
+            const data = await response.json();
+            throw new Error(data.detail || 'Profile update failed');
+        }
     },
 
     completeProfile: async (profileData: Partial<PhotographerRegistration>): Promise<boolean> => {
@@ -191,12 +229,12 @@ export const RealEventAPI = {
             date: event.event_date.split('T')[0],
             location: event.location || '',
             coverImage: event.cover_image_url || 'https://via.placeholder.com/800x600',
-            photoCount: event.image_count || 0,
-            guestVisits: event.guest_visits || 0,
-            downloads: event.downloads || 0,
+            photoCount: event.images_count || 0,
+            guestVisits: event.stats?.views_count || 0,
+            downloads: event.stats?.downloads_count || 0,
             uniqueLink: `${window.location.origin}/gallery/${event.guest_slug}`,
             expiryDate: event.expiry_date || '',
-            status: event.is_active ? 'active' : 'expired',
+            status: (event.status === 'active' || event.status === 'ready' || event.status === 'processing') ? 'active' : 'expired',
         }));
     },
 

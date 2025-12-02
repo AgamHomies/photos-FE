@@ -4,6 +4,7 @@ export interface PhotographerProfile {
   profileImageUrl: string;
   contactEmail: string;
   phone?: string;
+  address?: string;
   instagramUrl?: string;
   tiktokUrl?: string;
   facebookUrl?: string;
