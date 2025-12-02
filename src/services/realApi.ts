@@ -106,6 +106,24 @@ export const RealAuthAPI = {
     getCurrentUserEmail: (): string | null => {
         return localStorage.getItem('current_user_email');
     },
+
+    syncUser: async (): Promise<any> => {
+        const token = await getAuthToken();
+        const response = await fetch(`${API_BASE_URL}/auth/sync`, {
+            method: 'POST',
+            headers: {
+                'Authorization': `Bearer ${token}`,
+            },
+        });
+
+        const data = await response.json();
+
+        if (!response.ok) {
+            throw new Error(data.detail || 'Sync failed');
+        }
+
+        return data;
+    },
 };
 
 // ============================================

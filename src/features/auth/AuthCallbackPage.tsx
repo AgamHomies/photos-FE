@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { supabaseAuthService } from '../../services/supabaseAuthService';
+import { RealAuthAPI } from '../../services/realApi';
 import { Camera, Loader2, CheckCircle2, XCircle } from 'lucide-react';
 import Layout from '../../components/Layout';
 
@@ -23,12 +24,22 @@ const AuthCallbackPage: React.FC = () => {
                 }
 
                 if (session) {
-                    setStatus('success');
-                    setMessage('אימות הצליח! מעביר לדף הראשי...');
+                    setStatus('loading');
+                    setMessage('מסנכרן נתוני משתמש...');
 
-                    // Check if user exists in backend, if not, redirect to complete profile
-                    // For now, just redirect to admin
-                    setTimeout(() => navigate('/admin'), 1500);
+                    try {
+                        // Sync user with backend (creates account if needed)
+                        await RealAuthAPI.syncUser();
+
+                        setStatus('success');
+                        setMessage('אימות הצליח! מעביר לדף הראשי...');
+                        setTimeout(() => navigate('/admin'), 1500);
+                    } catch (syncError: any) {
+                        console.error('Sync error:', syncError);
+                        setStatus('error');
+                        setMessage('שגיאה בסנכרון נתונים: ' + (syncError.message || 'Unknown error'));
+                        setTimeout(() => navigate('/auth'), 3000);
+                    }
                 } else {
                     setStatus('error');
                     setMessage('לא נמצא סשן פעיל');
