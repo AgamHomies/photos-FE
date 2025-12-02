@@ -33,12 +33,11 @@ const DashboardPage: React.FC = () => {
     const loadData = async () => {
         setLoading(true);
         try {
-            const [statsData, eventsData] = await Promise.all([
-                BackendService.getDashboardStats(),
-                BackendService.getEvents()
-            ]);
-            setStats(statsData);
+            const eventsData = await BackendService.getEvents();
             setEvents(eventsData);
+
+            const statsData = await BackendService.getDashboardStats(eventsData);
+            setStats(statsData);
         } catch (error) {
             console.error('Failed to load dashboard data:', error);
             if (error instanceof Error && error.message.includes('Not authenticated')) {

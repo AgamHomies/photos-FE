@@ -134,10 +134,10 @@ export const BackendService = {
     // ============================================
     // Dashboard
     // ============================================
-    getDashboardStats: async (): Promise<DashboardStats> => {
+    getDashboardStats: async (events?: Event[]): Promise<DashboardStats> => {
         return USE_MOCK
-            ? await MockS3Service.getDashboardStats()
-            : await RealDashboardAPI.getDashboardStats();
+            ? await MockS3Service.getDashboardStats(events)
+            : await RealDashboardAPI.getDashboardStats(events);
     },
 
     // ============================================

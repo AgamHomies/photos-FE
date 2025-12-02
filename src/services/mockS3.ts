@@ -261,13 +261,13 @@ export const MockS3Service = {
         return newPhoto;
     },
 
-    getDashboardStats: async (): Promise<DashboardStats> => {
+    getDashboardStats: async (events?: Event[]): Promise<DashboardStats> => {
         await new Promise(resolve => setTimeout(resolve, 600));
         const email = localStorage.getItem(CURRENT_USER_KEY);
         if (!email) throw new Error('Not authenticated');
 
         const s3Data = loadData();
-        const userEvents = s3Data.events[email] || [];
+        const userEvents = events || s3Data.events[email] || [];
 
         const stats: DashboardStats = {
             totalDownloads: userEvents.reduce((acc, curr) => acc + curr.downloads, 0),

@@ -402,15 +402,15 @@ export const RealPhotoAPI = {
 // Dashboard API
 // ============================================
 export const RealDashboardAPI = {
-    getDashboardStats: async (): Promise<DashboardStats> => {
-        const events = await RealEventAPI.getEvents();
+    getDashboardStats: async (events?: Event[]): Promise<DashboardStats> => {
+        const eventsList = events || await RealEventAPI.getEvents();
 
         return {
-            totalDownloads: events.reduce((acc, e) => acc + e.downloads, 0),
-            totalPageVisits: events.reduce((acc, e) => acc + e.guestVisits, 0),
-            phoneSaves: Math.floor(events.reduce((acc, e) => acc + e.guestVisits, 0) * 0.4),
-            activeEvents: events.filter(e => e.status === 'active').length,
-            expiredEvents: events.filter(e => e.status === 'expired').length,
+            totalDownloads: eventsList.reduce((acc, e) => acc + e.downloads, 0),
+            totalPageVisits: eventsList.reduce((acc, e) => acc + e.guestVisits, 0),
+            phoneSaves: Math.floor(eventsList.reduce((acc, e) => acc + e.guestVisits, 0) * 0.4),
+            activeEvents: eventsList.filter(e => e.status === 'active').length,
+            expiredEvents: eventsList.filter(e => e.status === 'expired').length,
         };
     },
 };
