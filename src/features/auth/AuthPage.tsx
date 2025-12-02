@@ -151,7 +151,7 @@ const AuthPage: React.FC = () => {
 
                     if (session) navigate('/admin');
                 } else {
-                    const { error } = await supabaseAuthService.signUpWithEmail(
+                    const { session, error } = await supabaseAuthService.signUpWithEmail(
                         formData.email,
                         formData.password
                     );
@@ -159,6 +159,30 @@ const AuthPage: React.FC = () => {
                     if (error) {
                         alert('שגיאה בהרשמה: ' + error.message);
                         return;
+                    }
+
+                    // Register user in backend database
+                    if (session) {
+                        try {
+                            await BackendService.register({
+                                email: formData.email,
+                                password: formData.password,
+                                fullName: '',
+                                description: '',
+                                address: '',
+                                phone: '',
+                                termsAccepted: formData.termsAccepted,
+                                logo: null,
+                                portfolio: [],
+                                instagramUrl: '',
+                                tiktokUrl: '',
+                                facebookUrl: ''
+                            });
+                        } catch (backendError) {
+                            console.error('Backend registration failed:', backendError);
+                            // We continue anyway, as the user might be able to complete profile later
+                            // or the error might be "User already exists" which is fine
+                        }
                     }
 
                     alert('הרשמה בוצעה בהצלחה! אנא השלם את הפרופיל שלך.');
