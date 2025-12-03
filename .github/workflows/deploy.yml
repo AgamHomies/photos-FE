@@ -3,7 +3,7 @@ name: Deploy the fucking react app to beanstalk
 on:
   push:
     branches:
-      - main  
+      - base-ui  
 
 jobs:
   build-and-deploy:
