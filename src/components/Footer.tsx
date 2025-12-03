@@ -12,14 +12,11 @@ const Footer: React.FC = () => {
                     <a href="https://instagram.com" target="_blank" rel="noopener noreferrer" aria-label="Instagram" className="hover:text-white transition-colors"><Instagram className="w-5 h-5" /></a>
                 </div>
 
-    
                 <div className="flex gap-6 text-sm">
                     <button onClick={() => {}} className="hover:text-white transition-colors">תנאי שימוש</button>
                     <button onClick={() => {}} className="hover:text-white transition-colors">מדיניות פרטיות</button>
-                    <button onClick={() => {}} className="hover:text-white transition-colors">שאלות נפוצות</button>
-                    <button onClick={() => {}} className="hover:text-white transition-colors">צור קשר</button>
+                    <button onClick={() => window.location.href = '/contact'} className="hover:text-white transition-colors">צור קשר</button>
                 </div>
-
 
                 <div className="text-sm">
                     © 2024 Click2Pic. כל הזכויות שמורות.

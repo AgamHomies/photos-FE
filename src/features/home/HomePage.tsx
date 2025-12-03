@@ -129,6 +129,10 @@ const HomePage: React.FC = () => {
                   <ArrowRight className="w-5 h-5" />
                 </button>
                 <button
+                  onClick={() => {
+                    const section = document.getElementById('how-it-works-section');
+                    section?.scrollIntoView({ behavior: 'smooth' });
+                  }}
                   className="bg-white hover:bg-slate-50 text-slate-700 border border-slate-200 text-lg font-bold py-3 px-8 rounded-xl transition-all shadow-sm hover:shadow-md flex items-center gap-2"
                 >
                   איך זה עובד?
@@ -193,7 +197,7 @@ const HomePage: React.FC = () => {
       </section>
 
       {/* How It Works Section */}
-      <section className="py-24 bg-white relative">
+      <section id="how-it-works-section" className="py-24 bg-white relative">
         <div className="container mx-auto px-4">
           <div className="text-center mb-20">
             <h2 className="text-3xl lg:text-5xl font-bold text-slate-900 mb-6">איך זה עובד? <span className="text-cyan-500">3 שלבים פשוטים</span></h2>
@@ -222,11 +226,11 @@ const HomePage: React.FC = () => {
       </section>
 
       {/* Benefits Section */}
-      <section className="py-24 bg-slate-50">
+      <section id="benefits-section" className="py-24 bg-slate-50">
         <div className="container mx-auto px-4">
           <div className="flex flex-col lg:flex-row gap-16 items-start max-w-7xl mx-auto">
             <div className="lg:w-1/3 sticky top-24">
-              <h2 className="text-4xl font-bold text-slate-900 mb-6">יתרונות לצלם</h2>
+              <h2 className="text-4xl font-bold text-slate-900 mb-6">למה לבחור בנו?</h2>
               <p className="text-xl text-slate-600 mb-8 leading-relaxed">
                 בואו להפוך כל אירוע להזדמנות לצמיחה. המערכת שלנו נותנת לכם את הכלים להצליח.
               </p>
@@ -266,7 +270,7 @@ const HomePage: React.FC = () => {
       </section>
 
       {/* FAQ Section */}
-      <section className="py-24 bg-white">
+      <section id="faq-section" className="py-24 bg-white">
         <div className="container mx-auto px-4 max-w-3xl">
           <div className="text-center mb-16">
             <h2 className="text-3xl font-bold text-slate-900 mb-4">שאלות נפוצות</h2>
@@ -322,7 +326,10 @@ const HomePage: React.FC = () => {
               <ArrowRight className="w-5 h-5" />
             </button>
 
-            <button className="text-white font-bold flex items-center gap-2 hover:text-cyan-100 transition-colors">
+            <button 
+              onClick={() => navigate('/contact')}
+              className="text-white font-bold flex items-center gap-2 hover:text-cyan-100 transition-colors"
+            >
               <MessageCircle className="w-5 h-5" />
               שאל שאלה
             </button>

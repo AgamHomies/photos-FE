@@ -14,7 +14,9 @@ import {
     MoreVertical,
     Calendar,
     Image as ImageIcon,
-    Filter
+    Filter,
+    Eye,
+    Edit
 } from 'lucide-react';
 
 const DashboardPage: React.FC = () => {
@@ -23,6 +25,9 @@ const DashboardPage: React.FC = () => {
     const [events, setEvents] = useState<Event[]>([]);
     const [loading, setLoading] = useState(true);
     const [searchTerm, setSearchTerm] = useState('');
+    const [showActiveOnly, setShowActiveOnly] = useState(false);
+    const [currentPage, setCurrentPage] = useState(1);
+    const itemsPerPage = 5;
 
     useEffect(() => {
         loadData();
@@ -51,15 +56,31 @@ const DashboardPage: React.FC = () => {
     const handleDeleteEvent = async (id: string, e: React.MouseEvent) => {
         e.stopPropagation();
         if (window.confirm('האם אתה בטוח שברצונך למחוק אירוע זה?')) {
-            await BackendService.deleteEvent(id);
-            loadData();
+            try {
+                await BackendService.deleteEvent(id);
+                await loadData();
+                alert('האירוע נמחק בהצלחה');
+            } catch (error) {
+                console.error('Failed to delete event:', error);
+                alert('שגיאה במחיקת האירוע. אנא נסה שנית.');
+            }
         }
     };
 
-    const filteredEvents = events.filter(event =>
+    let filteredEvents = events.filter(event =>
         event.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
         event.location?.toLowerCase().includes(searchTerm.toLowerCase())
     );
+
+    // Apply active filter
+    if (showActiveOnly) {
+        filteredEvents = filteredEvents.filter(event => event.status === 'active');
+    }
+
+    // Pagination
+    const totalPages = Math.ceil(filteredEvents.length / itemsPerPage);
+    const startIndex = (currentPage - 1) * itemsPerPage;
+    const paginatedEvents = filteredEvents.slice(startIndex, startIndex + itemsPerPage);
 
     if (loading && !stats) {
         return (
@@ -148,7 +169,14 @@ const DashboardPage: React.FC = () => {
                                     onChange={(e) => setSearchTerm(e.target.value)}
                                 />
                             </div>
-                            <button className="flex items-center gap-2 px-4 py-2 border border-slate-200 rounded-lg text-sm font-medium text-slate-600 hover:bg-slate-50">
+                            <button 
+                                onClick={() => setShowActiveOnly(!showActiveOnly)}
+                                className={`flex items-center gap-2 px-4 py-2 border rounded-lg text-sm font-medium transition-colors ${
+                                    showActiveOnly 
+                                        ? 'bg-cyan-500 text-white border-cyan-500' 
+                                        : 'border-slate-200 text-slate-600 hover:bg-slate-50'
+                                }`}
+                            >
                                 <Filter className="w-4 h-4" />
                                 <span>פעילים</span>
                             </button>
@@ -170,7 +198,7 @@ const DashboardPage: React.FC = () => {
                                 </tr>
                             </thead>
                             <tbody className="divide-y divide-slate-100">
-                                {filteredEvents.map((event) => (
+                                {paginatedEvents.map((event) => (
                                     <tr
                                         key={event.id}
                                         onClick={() => navigate(`/admin/events/${event.id}`)}
@@ -213,22 +241,33 @@ const DashboardPage: React.FC = () => {
                                             </span>
                                         </td>
                                         <td className="px-6 py-4">
-                                            <div className="flex items-center gap-2 opacity-0 group-hover:opacity-100 transition-opacity" onClick={(e) => e.stopPropagation()}>
+                                            <div className="flex items-center gap-2" onClick={(e) => e.stopPropagation()}>
+                                                <button
+                                                    onClick={() => navigate(`/admin/events/${event.id}`)}
+                                                    className="p-2 hover:bg-cyan-50 rounded-lg text-slate-400 hover:text-cyan-600 transition-colors"
+                                                    title="צפייה"
+                                                >
+                                                    <Eye className="w-4 h-4" />
+                                                </button>
+                                                <button
+                                                    onClick={() => navigate(`/admin/events/${event.id}/edit`)}
+                                                    className="p-2 hover:bg-blue-50 rounded-lg text-slate-400 hover:text-blue-600 transition-colors"
+                                                    title="עריכה"
+                                                >
+                                                    <Edit className="w-4 h-4" />
+                                                </button>
                                                 <button
                                                     onClick={(e) => handleDeleteEvent(event.id, e)}
                                                     className="p-2 hover:bg-red-50 rounded-lg text-slate-400 hover:text-red-500 transition-colors"
-                                                    title="מחק אירוע"
+                                                    title="מחיקה"
                                                 >
                                                     <Trash2 className="w-4 h-4" />
-                                                </button>
-                                                <button className="p-2 hover:bg-slate-100 rounded-lg text-slate-400 hover:text-slate-600 transition-colors">
-                                                    <MoreVertical className="w-4 h-4" />
                                                 </button>
                                             </div>
                                         </td>
                                     </tr>
                                 ))}
-                                {filteredEvents.length === 0 && (
+                                {paginatedEvents.length === 0 && (
                                     <tr>
                                         <td colSpan={8} className="px-6 py-16 text-center text-slate-500">
                                             <div className="flex flex-col items-center gap-4">
@@ -244,14 +283,37 @@ const DashboardPage: React.FC = () => {
                         </table>
                     </div>
 
-                    {/* Pagination (Mock) */}
+                    {/* Pagination */}
                     <div className="p-4 border-t border-slate-100 flex justify-between items-center text-sm text-slate-500">
-                        <div>מציג {filteredEvents.length} מתוך {events.length} אירועים</div>
+                        <div>מציג {paginatedEvents.length} מתוך {filteredEvents.length} אירועים</div>
                         <div className="flex gap-2">
-                            <button className="w-8 h-8 flex items-center justify-center border border-slate-200 rounded-lg hover:bg-slate-50 disabled:opacity-50" disabled>&lt;</button>
-                            <button className="w-8 h-8 flex items-center justify-center bg-cyan-500 text-white rounded-lg">1</button>
-                            <button className="w-8 h-8 flex items-center justify-center border border-slate-200 rounded-lg hover:bg-slate-50">2</button>
-                            <button className="w-8 h-8 flex items-center justify-center border border-slate-200 rounded-lg hover:bg-slate-50">&gt;</button>
+                            <button 
+                                className="w-8 h-8 flex items-center justify-center border border-slate-200 rounded-lg hover:bg-slate-50 disabled:opacity-50 disabled:cursor-not-allowed" 
+                                disabled={currentPage === 1}
+                                onClick={() => setCurrentPage(currentPage - 1)}
+                            >
+                                &lt;
+                            </button>
+                            {Array.from({ length: totalPages }, (_, i) => i + 1).map(page => (
+                                <button 
+                                    key={page}
+                                    onClick={() => setCurrentPage(page)}
+                                    className={`w-8 h-8 flex items-center justify-center rounded-lg ${
+                                        currentPage === page 
+                                            ? 'bg-cyan-500 text-white' 
+                                            : 'border border-slate-200 hover:bg-slate-50'
+                                    }`}
+                                >
+                                    {page}
+                                </button>
+                            ))}
+                            <button 
+                                className="w-8 h-8 flex items-center justify-center border border-slate-200 rounded-lg hover:bg-slate-50 disabled:opacity-50 disabled:cursor-not-allowed"
+                                disabled={currentPage === totalPages || totalPages === 0}
+                                onClick={() => setCurrentPage(currentPage + 1)}
+                            >
+                                &gt;
+                            </button>
                         </div>
                     </div>
                 </div>

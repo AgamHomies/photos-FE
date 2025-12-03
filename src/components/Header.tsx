@@ -94,18 +94,56 @@ const Header: React.FC<HeaderProps> = ({ isAuthenticated }) => {
                         >
                             צור אירוע חדש
                         </button>
-                        <button
-                            onClick={() => navigate('/contact')}
-                            className={`hover:text-cyan-500 transition-colors ${isActive('/contact') ? 'text-cyan-600 font-bold' : ''}`}
-                        >
-                            תמיכה
-                        </button>
                     </>
                 ) : (
                     <>
-                        <button onClick={() => navigate('/')} className="hover:text-cyan-500 transition-colors">דף הבית</button>
-                        <button onClick={() => navigate('/contact')} className="hover:text-cyan-500 transition-colors">אודות</button>
-                        <a href="#" className="hover:text-cyan-500 transition-colors">תמחור</a>
+                        <button 
+                            onClick={() => {
+                                navigate('/');
+                                setTimeout(() => {
+                                    window.scrollTo({ top: 0, behavior: 'smooth' });
+                                }, 100);
+                            }} 
+                            className="hover:text-cyan-500 transition-colors"
+                        >
+                            דף הבית
+                        </button>
+                        <button 
+                            onClick={() => {
+                                navigate('/');
+                                setTimeout(() => {
+                                    const section = document.getElementById('how-it-works-section');
+                                    section?.scrollIntoView({ behavior: 'smooth' });
+                                }, 100);
+                            }} 
+                            className="hover:text-cyan-500 transition-colors"
+                        >
+                            איך זה עובד
+                        </button>
+                        <button 
+                            onClick={() => {
+                                navigate('/');
+                                setTimeout(() => {
+                                    const section = document.getElementById('benefits-section');
+                                    section?.scrollIntoView({ behavior: 'smooth' });
+                                }, 100);
+                            }} 
+                            className="hover:text-cyan-500 transition-colors"
+                        >
+                            למה לבחור בנו?
+                        </button>
+                        <button 
+                            onClick={() => {
+                                navigate('/');
+                                setTimeout(() => {
+                                    const section = document.getElementById('faq-section');
+                                    section?.scrollIntoView({ behavior: 'smooth' });
+                                }, 100);
+                            }} 
+                            className="hover:text-cyan-500 transition-colors"
+                        >
+                            שאלות נפוצות
+                        </button>
                         <button onClick={() => navigate('/contact')} className="hover:text-cyan-500 transition-colors">צור קשר</button>
                     </>
                 )}
