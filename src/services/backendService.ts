@@ -97,6 +97,14 @@ export const BackendService = {
             : await RealEventAPI.deleteEvent(id);
     },
 
+    setCoverImage: async (eventId: string, imageId: string): Promise<void> => {
+        if (USE_MOCK) {
+            console.warn('setCoverImage not implemented for mock');
+            return;
+        }
+        return await RealEventAPI.setCoverImage(eventId, imageId);
+    },
+
     // ============================================
     // Photos
     // ============================================

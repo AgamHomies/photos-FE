@@ -55,7 +55,7 @@ const DashboardPage: React.FC = () => {
 
     const handleDeleteEvent = async (id: string, e: React.MouseEvent) => {
         e.stopPropagation();
-        if (window.confirm('האם אתה בטוח שברצונך למחוק אירוע זה?')) {
+        if (window.confirm('האם אתה בטוח שברצונך למחוק את האירוע? פעולה זו תמחק את כל הנתונים והתמונות לצמיתות ולא ניתן יהיה לשחזר אותם.')) {
             try {
                 await BackendService.deleteEvent(id);
                 await loadData();
@@ -242,20 +242,6 @@ const DashboardPage: React.FC = () => {
                                         </td>
                                         <td className="px-6 py-4">
                                             <div className="flex items-center gap-2" onClick={(e) => e.stopPropagation()}>
-                                                <button
-                                                    onClick={() => navigate(`/admin/events/${event.id}`)}
-                                                    className="p-2 hover:bg-cyan-50 rounded-lg text-slate-400 hover:text-cyan-600 transition-colors"
-                                                    title="צפייה"
-                                                >
-                                                    <Eye className="w-4 h-4" />
-                                                </button>
-                                                <button
-                                                    onClick={() => navigate(`/admin/events/${event.id}/edit`)}
-                                                    className="p-2 hover:bg-blue-50 rounded-lg text-slate-400 hover:text-blue-600 transition-colors"
-                                                    title="עריכה"
-                                                >
-                                                    <Edit className="w-4 h-4" />
-                                                </button>
                                                 <button
                                                     onClick={(e) => handleDeleteEvent(event.id, e)}
                                                     className="p-2 hover:bg-red-50 rounded-lg text-slate-400 hover:text-red-500 transition-colors"

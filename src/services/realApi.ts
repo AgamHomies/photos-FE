@@ -294,6 +294,16 @@ export const RealEventAPI = {
             method: 'DELETE',
         });
     },
+
+    setCoverImage: async (eventId: string, imageId: string): Promise<void> => {
+        await apiRequest(`/events/${eventId}/cover`, {
+            method: 'PUT',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({ image_id: parseInt(imageId) }), // Assuming backend expects image_id in body or query?
+        });
+    },
 };
 
 // ============================================
