@@ -51,6 +51,10 @@ export interface Event {
   uniqueLink: string;
   expiryDate: string;
   status: 'active' | 'expired';
+  phoneSaves?: number;
+  slug?: string;
+  coupleSlug?: string;
+  mode?: 'guest' | 'full';
 }
 
 export interface DashboardStats {

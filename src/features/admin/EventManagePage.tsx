@@ -188,7 +188,7 @@ const EventManagePage: React.FC = () => {
                         </div>
                         <div className="flex gap-3">
                             <button
-                                onClick={() => window.open(`/gallery/${event.id}`, '_blank')}
+                                onClick={() => window.open(`/gallery/${event.slug || event.id}`, '_blank')}
                                 className="px-4 py-2 text-sm font-bold text-slate-600 border border-slate-200 hover:bg-slate-50 rounded-xl transition-colors flex items-center gap-2"
                                 title="קישור לאורחים (זיהוי פנים)"
                             >
@@ -196,13 +196,14 @@ const EventManagePage: React.FC = () => {
                                 <span>לאורחים</span>
                             </button>
                             <button
-                                onClick={() => window.open(`/gallery/${event.id}/full`, '_blank')}
+                                onClick={() => window.open(`/gallery/${event.coupleSlug || event.id}`, '_blank')}
                                 className="px-4 py-2 text-sm font-bold text-cyan-600 bg-cyan-50 hover:bg-cyan-100 rounded-xl transition-colors flex items-center gap-2 border border-cyan-100"
                                 title="קישור לזוג (גלריה מלאה)"
                             >
                                 <Heart className="w-4 h-4" />
                                 <span>לזוג</span>
                             </button>
+
                         </div>
                     </div>
 
@@ -366,20 +367,20 @@ const EventManagePage: React.FC = () => {
                                                             setUploading(true);
                                                             // 1. Upload the file
                                                             await BackendService.uploadEventPhotos(id, [e.target.files[0]]);
-                                                            
+
                                                             // 2. Refresh photos to get the new image ID
                                                             const updatedPhotos = await BackendService.getEventPhotos(id);
                                                             setPhotos(updatedPhotos);
-                                                            
+
                                                             // 3. Find the new photo (assuming it's the last one or by name)
                                                             // Ideally backend returns the uploaded image object.
                                                             // For now, let's find by filename match or just take the latest.
                                                             const uploadedPhoto = updatedPhotos.find(p => p.title === e.target.files![0].name);
-                                                            
+
                                                             if (uploadedPhoto) {
                                                                 // 4. Set as cover
                                                                 await BackendService.setCoverImage(id, uploadedPhoto.id);
-                                                                
+
                                                                 // 5. Update local event state
                                                                 setEvent(prev => prev ? ({ ...prev, coverImage: uploadedPhoto.url }) : null);
                                                                 alert('תמונת קאבר עודכנה בהצלחה');

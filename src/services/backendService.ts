@@ -15,6 +15,7 @@ import {
     RealEventAPI,
     RealPhotoAPI,
     RealDashboardAPI,
+    RealGalleryAPI,
 } from './realApi';
 import { PhotographerRegistration, PhotographerProfile, Photo, Event, DashboardStats } from '../types';
 
@@ -74,9 +75,17 @@ export const BackendService = {
     },
 
     getEvent: async (id: string): Promise<Event | undefined> => {
-        return USE_MOCK
-            ? await MockS3Service.getEvent(id)
-            : await RealEventAPI.getEvent(id);
+        if (USE_MOCK) {
+            return await MockS3Service.getEvent(id);
+        }
+
+        // If id is numeric, assume it's an ID (for admin/photographer)
+        if (/^\d+$/.test(id)) {
+            return await RealEventAPI.getEvent(id);
+        }
+
+        // Otherwise, assume it's a slug (for public gallery)
+        return await RealGalleryAPI.getEventBySlug(id);
     },
 
     createEvent: async (eventData: Partial<Event>): Promise<Event> => {

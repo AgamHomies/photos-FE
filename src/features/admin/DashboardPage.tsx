@@ -226,7 +226,7 @@ const DashboardPage: React.FC = () => {
                                                 <button
                                                     onClick={(e) => {
                                                         e.stopPropagation();
-                                                        window.open(`/gallery/${event.id}`, '_blank');
+                                                        window.open(`/gallery/${event.slug || event.id}`, '_blank');
                                                     }}
                                                     className="px-3 py-1.5 text-xs font-bold text-slate-600 border border-slate-200 hover:bg-slate-50 rounded-lg transition-colors flex items-center gap-1.5"
                                                     title="קישור לאורחים"
@@ -234,10 +234,11 @@ const DashboardPage: React.FC = () => {
                                                     <Users className="w-3 h-3" />
                                                     <span>לאורחים</span>
                                                 </button>
+
                                                 <button
                                                     onClick={(e) => {
                                                         e.stopPropagation();
-                                                        window.open(`/gallery/${event.id}/full`, '_blank');
+                                                        window.open(`/gallery/${event.coupleSlug || event.id}`, '_blank');
                                                     }}
                                                     className="px-3 py-1.5 text-xs font-bold text-cyan-600 bg-cyan-50 hover:bg-cyan-100 rounded-lg transition-colors flex items-center gap-1.5 border border-cyan-100"
                                                     title="קישור לזוג"

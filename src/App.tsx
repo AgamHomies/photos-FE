@@ -31,7 +31,7 @@ function App() {
         <Route path="/" element={<HomePage />} />
         <Route path="/contact" element={<ContactPage />} />
         <Route path="gallery/:id" element={<GalleryPage mode="guest" />} />
-        <Route path="gallery/:id/full" element={<GalleryPage mode="full" />} />
+
         <Route path="auth" element={<AuthPage />} />
         <Route path="auth/callback" element={<AuthCallbackPage />} />
         <Route path="auth/reset-password" element={<ResetPasswordPage />} />

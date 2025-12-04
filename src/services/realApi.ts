@@ -122,15 +122,6 @@ export const RealProfileAPI = {
         if (updates.tiktokUrl) formData.append('tiktokUrl', updates.tiktokUrl);
         if (updates.facebookUrl) formData.append('facebookUrl', updates.facebookUrl);
 
-        // Handle file uploads if they were passed (need to check how they are passed in updates)
-        // The current interface Partial<PhotographerProfile> doesn't include File objects, only URLs.
-        // We might need a different method or extended type for updates with files.
-        // For now, let's assume we are updating text fields. 
-        // If we need to update images, we should probably extend the type or use a different argument.
-
-        // However, looking at completeProfile, it takes Partial<PhotographerRegistration> which has File.
-        // Let's assume for now we just update text fields here.
-
         const token = await getAuthToken();
         const response = await fetch(`${API_BASE_URL}/auth/profile`, {
             method: 'PATCH',
@@ -204,9 +195,12 @@ export const RealEventAPI = {
             photoCount: event.images_count || 0,
             guestVisits: event.stats?.views_count || 0,
             downloads: event.stats?.downloads_count || 0,
-            uniqueLink: `${window.location.origin}/gallery/${event.id}`,
+            phoneSaves: event.stats?.contact_saved_count || 0,
+            uniqueLink: `${window.location.origin}/gallery/${event.guest_slug || event.id}`,
             expiryDate: event.expiry_date || '',
             status: (event.status === 'active' || event.status === 'ready' || event.status === 'processing' || event.status === 'draft') ? 'active' : 'expired',
+            slug: event.guest_slug,
+            coupleSlug: event.couple_slug,
         }));
     },
 
@@ -224,9 +218,11 @@ export const RealEventAPI = {
                 photoCount: data.image_count || 0,
                 guestVisits: data.guest_visits || 0,
                 downloads: data.downloads || 0,
-                uniqueLink: `${window.location.origin}/gallery/${data.id}`,
+                uniqueLink: `${window.location.origin}/gallery/${data.guest_slug || data.id}`,
                 expiryDate: data.expiry_date || '',
                 status: (data.status === 'active' || data.status === 'ready' || data.status === 'processing' || data.status === 'draft') ? 'active' : 'expired',
+                slug: data.guest_slug,
+                coupleSlug: data.couple_slug,
             };
         } catch (error) {
             console.error('Failed to get event:', error);
@@ -258,9 +254,11 @@ export const RealEventAPI = {
             photoCount: 0,
             guestVisits: 0,
             downloads: 0,
-            uniqueLink: `${window.location.origin}/gallery/${data.id}`,
+            uniqueLink: `${window.location.origin}/gallery/${data.guest_slug || data.id}`,
             expiryDate: data.expiry_date || '',
             status: 'active',
+            slug: data.guest_slug,
+            coupleSlug: data.couple_slug,
         };
     },
 
@@ -287,9 +285,11 @@ export const RealEventAPI = {
             photoCount: data.image_count || 0,
             guestVisits: data.guest_visits || 0,
             downloads: data.downloads || 0,
-            uniqueLink: `${window.location.origin}/gallery/${data.id}`,
+            uniqueLink: `${window.location.origin}/gallery/${data.guest_slug || data.id}`,
             expiryDate: data.expiry_date || '',
             status: (data.status === 'active' || data.status === 'ready' || data.status === 'processing' || data.status === 'draft') ? 'active' : 'expired',
+            slug: data.guest_slug,
+            coupleSlug: data.couple_slug,
         };
     },
 
@@ -379,7 +379,7 @@ export const RealDashboardAPI = {
         return {
             totalDownloads: eventsList.reduce((acc, e) => acc + e.downloads, 0),
             totalPageVisits: eventsList.reduce((acc, e) => acc + e.guestVisits, 0),
-            phoneSaves: Math.floor(eventsList.reduce((acc, e) => acc + e.guestVisits, 0) * 0.4),
+            phoneSaves: eventsList.reduce((acc, e) => acc + (e.phoneSaves || 0), 0),
             activeEvents: eventsList.filter(e => e.status === 'active').length,
             expiredEvents: eventsList.filter(e => e.status === 'expired').length,
         };
@@ -393,20 +393,24 @@ export const RealGalleryAPI = {
     getEventBySlug: async (slug: string): Promise<Event | undefined> => {
         try {
             const data = await apiRequest(`/public/events/${slug}`);
+            const eventData = data.event;
 
             return {
-                id: data.id,
-                photographerId: data.photographer_id,
-                name: data.title,
-                date: data.event_date.split('T')[0],
-                location: data.location || '',
-                coverImage: data.cover_image_url || 'https://via.placeholder.com/800x600',
-                photoCount: data.image_count || 0,
-                guestVisits: data.guest_visits || 0,
-                downloads: data.downloads || 0,
-                uniqueLink: `${window.location.origin}/gallery/${data.id}`,
-                expiryDate: data.expiry_date || '',
-                status: (data.status === 'active' || data.status === 'ready' || data.status === 'processing' || data.status === 'draft') ? 'active' : 'expired',
+                id: eventData.id,
+                photographerId: eventData.photographer_id,
+                name: eventData.title,
+                date: eventData.event_date.split('T')[0],
+                location: eventData.location || '',
+                coverImage: eventData.cover_image_url || 'https://via.placeholder.com/800x600',
+                photoCount: eventData.image_count || 0,
+                guestVisits: eventData.guest_visits || 0,
+                downloads: eventData.downloads || 0,
+                uniqueLink: `${window.location.origin}/gallery/${eventData.guest_slug || eventData.id}`,
+                expiryDate: eventData.expiry_date || '',
+                status: (eventData.status === 'active' || eventData.status === 'ready' || eventData.status === 'processing' || eventData.status === 'draft') ? 'active' : 'expired',
+                slug: eventData.guest_slug,
+                coupleSlug: eventData.couple_slug,
+                mode: data.mode, // Map mode
             };
         } catch (error) {
             console.error('Failed to get event by slug:', error);

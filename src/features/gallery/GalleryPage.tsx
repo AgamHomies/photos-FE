@@ -1,6 +1,7 @@
 import React, { useEffect, useState, useRef } from 'react';
 import { useParams } from 'react-router-dom';
 import { BackendService } from '../../services/backendService';
+import { CONFIG } from '../../config';
 import { Event, Photo, PhotographerProfile } from '../../types';
 import {
   Camera,
@@ -17,18 +18,17 @@ import {
 } from 'lucide-react';
 
 interface GalleryPageProps {
-  mode: 'guest' | 'full';
+  mode?: 'guest' | 'full';
 }
 
-const GalleryPage: React.FC<GalleryPageProps> = ({ mode }) => {
+const GalleryPage: React.FC<GalleryPageProps> = ({ mode: propMode }) => {
   const { id } = useParams<{ id: string }>();
   const [event, setEvent] = useState<Event | null>(null);
   const [photographer, setPhotographer] = useState<PhotographerProfile | null>(null);
   const [loading, setLoading] = useState(true);
+  const [mode, setMode] = useState<'guest' | 'full'>(propMode || 'guest');
 
-  const [viewState, setViewState] = useState<'landing' | 'scanning' | 'results'>(
-    mode === 'full' ? 'results' : 'landing'
-  );
+  const [viewState, setViewState] = useState<'landing' | 'scanning' | 'results'>('landing');
 
   const [selectedImage, setSelectedImage] = useState<File | null>(null);
   const [photos, setPhotos] = useState<Photo[]>([]);
@@ -40,25 +40,34 @@ const GalleryPage: React.FC<GalleryPageProps> = ({ mode }) => {
     if (id) {
       loadData(id);
     }
-  }, [id, mode]);
+  }, [id]);
 
   const loadData = async (eventId: string) => {
     try {
-      const [eventData, eventPhotos] = await Promise.all([
-        BackendService.getEvent(eventId),
-        BackendService.getEventPhotos(eventId)
-      ]);
+      // First fetch the event to get the real numeric ID
+      const eventData = await BackendService.getEvent(eventId);
 
       if (eventData) {
         setEvent(eventData);
+
+        // Determine mode from event data if available
+        const currentMode = eventData.mode || propMode || 'guest';
+        setMode(currentMode);
+
+        // Now fetch photos using the real numeric ID
+        const eventPhotos = await BackendService.getEventPhotos(eventData.id);
+
         if (eventData.photographerId) {
           const profile = await BackendService.getPhotographerProfile(eventData.photographerId);
           setPhotographer(profile);
         }
-      }
 
-      if (mode === 'full') {
-        setPhotos(eventPhotos);
+        if (currentMode === 'full') {
+          setPhotos(eventPhotos);
+          setViewState('results');
+        } else {
+          setViewState('landing');
+        }
       }
     } catch (error) {
       console.error("Failed to load gallery data", error);
@@ -77,8 +86,8 @@ const GalleryPage: React.FC<GalleryPageProps> = ({ mode }) => {
 
   const simulateScanning = async () => {
     setTimeout(async () => {
-      if (id) {
-        const allPhotos = await BackendService.getEventPhotos(id);
+      if (event?.id) {
+        const allPhotos = await BackendService.getEventPhotos(event.id);
         const matches = allPhotos.filter(() => Math.random() > 0.6);
         setPhotos(matches);
         setViewState('results');
@@ -111,17 +120,26 @@ const GalleryPage: React.FC<GalleryPageProps> = ({ mode }) => {
     if (e) e.stopPropagation();
 
     try {
-      const response = await fetch(photo.url);
-      const blob = await response.blob();
-      const url = window.URL.createObjectURL(blob);
+      // Use the new download endpoint
+      const response = await fetch(`${CONFIG.API_BASE_URL}/public/events/${id}/images/${photo.id}/download-url`);
+
+      if (!response.ok) {
+        throw new Error('Download failed');
+      }
+
+      const data = await response.json();
+
+      // Trigger download via link
       const link = document.createElement('a');
-      link.href = url;
+      link.href = data.url;
       link.download = `photo-${photo.id}.jpg`;
       document.body.appendChild(link);
       link.click();
       document.body.removeChild(link);
-      window.URL.revokeObjectURL(url);
+
     } catch (error) {
+      console.error('Download error:', error);
+      // Fallback to direct URL if backend fails
       const link = document.createElement('a');
       link.href = photo.url;
       link.download = `photo-${photo.id}.jpg`;
@@ -132,8 +150,40 @@ const GalleryPage: React.FC<GalleryPageProps> = ({ mode }) => {
     }
   };
 
-  const handleDownloadAll = () => {
-    alert(`מוריד ${photos.length} תמונות...`);
+  const handleDownloadAll = async () => {
+    if (photos.length === 0) return;
+
+    if (mode === 'full') {
+      window.location.href = `${CONFIG.API_BASE_URL}/public/events/${id}/download-all`;
+    } else {
+      // Guest mode
+      const imageIds = photos.map(p => parseInt(p.id));
+
+      try {
+        const response = await fetch(`${CONFIG.API_BASE_URL}/public/events/${id}/download-zip`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ image_ids: imageIds })
+        });
+
+        if (response.ok) {
+          const blob = await response.blob();
+          const url = window.URL.createObjectURL(blob);
+          const link = document.createElement('a');
+          link.href = url;
+          link.download = 'photos.zip';
+          document.body.appendChild(link);
+          link.click();
+          document.body.removeChild(link);
+          window.URL.revokeObjectURL(url);
+        } else {
+          alert('שגיאה ביצירת קובץ ההורדה');
+        }
+      } catch (e) {
+        console.error(e);
+        alert('שגיאה בהורדה');
+      }
+    }
   };
 
   const handleSavePhone = () => {
@@ -308,24 +358,22 @@ const GalleryPage: React.FC<GalleryPageProps> = ({ mode }) => {
                     </div>
                   </div>
 
-                  {/* Action Overlay */}
-                  <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-all duration-300 flex flex-col justify-end p-6">
-                    <div className="flex gap-3 justify-end translate-y-4 group-hover:translate-y-0 transition-transform duration-300">
-                      <button
-                        onClick={(e) => handleDownload(photo, e)}
-                        className="p-3 bg-white/20 backdrop-blur-md text-white rounded-full hover:bg-white hover:text-slate-900 transition-colors shadow-lg"
-                        title="הורד תמונה"
-                      >
-                        <Download className="w-5 h-5" />
-                      </button>
-                      <button
-                        onClick={(e) => handleShare(photo, e)}
-                        className="p-3 bg-white/20 backdrop-blur-md text-white rounded-full hover:bg-white hover:text-slate-900 transition-colors shadow-lg"
-                        title="שתף"
-                      >
-                        <Share2 className="w-5 h-5" />
-                      </button>
-                    </div>
+                  {/* Action Buttons - Top Right */}
+                  <div className="absolute top-3 right-3 flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity duration-200 z-10">
+                    <button
+                      onClick={(e) => handleDownload(photo, e)}
+                      className="p-2.5 bg-white/90 backdrop-blur-sm text-slate-700 rounded-xl hover:bg-white hover:text-cyan-600 transition-all shadow-sm hover:shadow-md transform hover:scale-105"
+                      title="הורד תמונה"
+                    >
+                      <Download className="w-4 h-4" />
+                    </button>
+                    <button
+                      onClick={(e) => handleShare(photo, e)}
+                      className="p-2.5 bg-white/90 backdrop-blur-sm text-slate-700 rounded-xl hover:bg-white hover:text-cyan-600 transition-all shadow-sm hover:shadow-md transform hover:scale-105"
+                      title="שתף"
+                    >
+                      <Share2 className="w-4 h-4" />
+                    </button>
                   </div>
                 </div>
               ))}
