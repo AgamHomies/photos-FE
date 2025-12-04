@@ -115,22 +115,16 @@ const DashboardPage: React.FC = () => {
                 {stats && (
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-10">
                         <div className="bg-white p-6 rounded-2xl shadow-sm border border-slate-100 hover:shadow-md transition-shadow">
-                            <div className="flex items-center justify-between mb-4">
-                                <div className="p-3 bg-blue-50 text-blue-500 rounded-xl">
-                                    <Download className="w-6 h-6" />
-                                </div>
-                                <span className="text-green-500 text-xs font-bold bg-green-50 px-2 py-1 rounded-full">+12%</span>
+                            <div className="p-3 bg-blue-50 text-blue-500 rounded-xl w-fit mb-4">
+                                <Download className="w-6 h-6" />
                             </div>
                             <h3 className="text-3xl font-bold text-slate-900 mb-1">{stats.totalDownloads.toLocaleString()}</h3>
                             <p className="text-slate-500 text-sm font-medium">סה"כ הורדות</p>
                         </div>
 
                         <div className="bg-white p-6 rounded-2xl shadow-sm border border-slate-100 hover:shadow-md transition-shadow">
-                            <div className="flex items-center justify-between mb-4">
-                                <div className="p-3 bg-purple-50 text-purple-500 rounded-xl">
-                                    <Users className="w-6 h-6" />
-                                </div>
-                                <span className="text-green-500 text-xs font-bold bg-green-50 px-2 py-1 rounded-full">+5%</span>
+                            <div className="p-3 bg-purple-50 text-purple-500 rounded-xl w-fit mb-4">
+                                <Users className="w-6 h-6" />
                             </div>
                             <h3 className="text-3xl font-bold text-slate-900 mb-1">{stats.totalPageVisits.toLocaleString()}</h3>
                             <p className="text-slate-500 text-sm font-medium">כניסות לדפי אירועים</p>
@@ -148,7 +142,7 @@ const DashboardPage: React.FC = () => {
                             <div className="bg-orange-50 p-3 rounded-xl w-fit mb-4 text-orange-500">
                                 <Calendar className="w-6 h-6" />
                             </div>
-                            <h3 className="text-3xl font-bold text-slate-900 mb-1">{stats.activeEvents}</h3>
+                            <h3 className="text-3xl font-bold text-slate-900 mb-1">{stats.activeEvents}/{stats.activeEvents + stats.expiredEvents}</h3>
                             <p className="text-slate-500 text-sm font-medium">אירועים פעילים</p>
                         </div>
                     </div>

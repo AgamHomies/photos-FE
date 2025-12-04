@@ -59,7 +59,7 @@ const CreateEventPage: React.FC = () => {
 
             // 2. Uploading Gallery Photos
             if (galleryFiles.length > 0) {
-                setProcessingStage(`מעלה ${galleryFiles.length} תמונות ל-S3...`);
+                setProcessingStage(`שומר ${galleryFiles.length} תמונות...`);
                 setUploadProgress(30);
                 await BackendService.uploadEventPhotos(newEvent.id, galleryFiles);
             }
@@ -311,13 +311,10 @@ const CreateEventPage: React.FC = () => {
                                     </code>
                                 </div>
                                 <button
-                                    onClick={() => {
-                                        navigator.clipboard.writeText(createdEventLink);
-                                        alert('הקישור הועתק!');
-                                    }}
+                                    onClick={() => window.open(createdEventLink, '_blank')}
                                     className="bg-white text-slate-700 px-6 py-3 rounded-xl text-sm font-bold hover:bg-slate-50 border border-slate-200 transition-colors shadow-sm w-full md:w-auto whitespace-nowrap"
                                 >
-                                    העתק קישור
+                                    מעבר לאירוע
                                 </button>
                             </div>
 
