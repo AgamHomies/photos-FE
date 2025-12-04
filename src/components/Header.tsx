@@ -39,12 +39,7 @@ const Header: React.FC<HeaderProps> = ({ isAuthenticated }) => {
                         >
                             דשבורד
                         </button>
-                        <button
-                            onClick={() => navigate('/admin#events-section')}
-                            className={`hover:text-cyan-500 transition-colors ${isActive('/admin') ? 'text-cyan-600 font-bold' : ''}`}
-                        >
-                            האירועים שלך
-                        </button>
+
                         <button
                             onClick={() => navigate('/admin/create-event')}
                             className={`hover:text-cyan-500 transition-colors ${isActive('/admin/create-event') ? 'text-cyan-600 font-bold' : ''}`}

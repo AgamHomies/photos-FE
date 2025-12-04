@@ -5,6 +5,7 @@ export interface PhotographerProfile {
   contactEmail: string;
   phone?: string;
   address?: string;
+  websiteUrl?: string;
   instagramUrl?: string;
   tiktokUrl?: string;
   facebookUrl?: string;
@@ -27,6 +28,7 @@ export interface PhotographerRegistration {
   fullName: string;
   description: string;
   address: string;
+  websiteUrl?: string;
   phone: string;
   logo: File | null;
   portfolio: File[];

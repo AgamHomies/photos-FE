@@ -24,29 +24,16 @@ export const BackendService = {
     // ============================================
     // Authentication
     // ============================================
-    register: async (data: PhotographerRegistration): Promise<boolean> => {
-        return USE_MOCK
-            ? await MockS3Service.register(data)
-            : await RealAuthAPI.register(data);
+    syncUser: async (): Promise<any> => {
+        if (USE_MOCK) {
+            console.log('Mock sync user');
+            return { success: true };
+        }
+        return await RealAuthAPI.syncUser();
     },
 
-    login: async (email: string, password: string): Promise<boolean> => {
-        return USE_MOCK
-            ? await MockS3Service.login(email, password)
-            : await RealAuthAPI.login(email, password);
-    },
-
-    logout: () => {
-        USE_MOCK
-            ? MockS3Service.logout()
-            : RealAuthAPI.logout();
-    },
-
-    getCurrentUserEmail: (): string | null => {
-        return USE_MOCK
-            ? MockS3Service.getCurrentUserEmail()
-            : RealAuthAPI.getCurrentUserEmail();
-    },
+    // Deprecated methods removed to enforce Supabase Auth flow
+    // login, register, logout are handled by supabaseAuthService directly
 
     // ============================================
     // Profile

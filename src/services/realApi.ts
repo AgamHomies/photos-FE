@@ -48,81 +48,31 @@ const apiRequest = async (
 // Authentication API
 // ============================================
 export const RealAuthAPI = {
-    login: async (email: string, password: string): Promise<boolean> => {
-        const formData = new URLSearchParams();
-        formData.append('username', email);
-        formData.append('password', password);
-
-        const response = await fetch(`${API_BASE_URL}/auth/login`, {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/x-www-form-urlencoded',
-            },
-            body: formData,
-        });
-
-        const data = await response.json();
-
-        if (!response.ok) {
-            throw new Error(data.detail || 'Login failed');
-        }
-
-        localStorage.setItem('auth_token', data.access_token);
-        localStorage.setItem('current_user_email', email);
-        return true;
-    },
-
-    register: async (registrationData: PhotographerRegistration): Promise<boolean> => {
-        const formData = new FormData();
-
-        // Only send email and termsAccepted for basic registration
-        formData.append('email', registrationData.email);
-        formData.append('termsAccepted', registrationData.termsAccepted.toString());
-
-        const token = await getAuthToken();
-        const response = await fetch(`${API_BASE_URL}/auth/register`, {
-            method: 'POST',
-            headers: {
-                'Authorization': `Bearer ${token}`,
-            },
-            body: formData,
-        });
-
-        const data = await response.json();
-
-        if (!response.ok) {
-            throw new Error(data.detail || 'Registration failed');
-        }
-
-        // User created successfully, but profile not complete yet
-        return true;
-    },
-
-    logout: async (): Promise<void> => {
-        localStorage.removeItem('auth_token');
-        localStorage.removeItem('current_user_email');
-    },
-
-    getCurrentUserEmail: (): string | null => {
-        return localStorage.getItem('current_user_email');
-    },
+    // Login and Register are handled directly by Supabase client in the UI components
+    // We only need to sync the user with our backend after successful Supabase auth
 
     syncUser: async (): Promise<any> => {
         const token = await getAuthToken();
-        const response = await fetch(`${API_BASE_URL}/auth/sync`, {
-            method: 'POST',
-            headers: {
-                'Authorization': `Bearer ${token}`,
-            },
-        });
+        
+        try {
+            const response = await fetch(`${API_BASE_URL}/auth/sync`, {
+                method: 'POST',
+                headers: {
+                    'Authorization': `Bearer ${token}`,
+                },
+            });
 
-        const data = await response.json();
+            const data = await response.json();
 
-        if (!response.ok) {
-            throw new Error(data.detail || 'Sync failed');
+            if (!response.ok) {
+                throw new Error(data.detail || 'Sync failed');
+            }
+
+            return data;
+        } catch (error) {
+            console.error('Sync error:', error);
+            throw error;
         }
-
-        return data;
     },
 };
 
@@ -215,8 +165,8 @@ export const RealProfileAPI = {
         }
 
         const token = await getAuthToken();
-        const response = await fetch(`${API_BASE_URL}/auth/profile/complete`, {
-            method: 'POST',
+        const response = await fetch(`${API_BASE_URL}/auth/profile`, {
+            method: 'PATCH',
             headers: {
                 'Authorization': `Bearer ${token}`,
             },

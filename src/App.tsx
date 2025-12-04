@@ -6,6 +6,7 @@ import CreateEventPage from './features/admin/CreateEventPage';
 import EventManagePage from './features/admin/EventManagePage';
 import AuthPage from './features/auth/AuthPage';
 import ProfileCompletionPage from './features/auth/ProfileCompletionPage';
+import ProfileSuccessPage from './features/auth/ProfileSuccessPage';
 import AuthCallbackPage from './features/auth/AuthCallbackPage';
 import ResetPasswordPage from './features/auth/ResetPasswordPage';
 import ContactPage from './features/home/ContactPage';
@@ -37,6 +38,7 @@ function App() {
 
         {/* Profile Completion - Must be OUTSIDE ProtectedRoute */}
         <Route path="complete-profile" element={<ProfileCompletionPage />} />
+        <Route path="profile-success" element={<ProfileSuccessPage />} />
 
         {/* Protected Admin Routes */}
         <Route element={<ProtectedRoute />}>

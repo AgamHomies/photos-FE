@@ -9,7 +9,7 @@ import { supabaseAuthService } from '../../services/supabaseAuthService';
 const AuthPage: React.FC = () => {
     const navigate = useNavigate();
     const location = useLocation();
-    const { login } = useAuth();
+    const { login, user, isAuthenticated } = useAuth();
 
     // Check if we came from a registration button
     const initialMode = (location.state as any)?.mode === 'register' ? false : true;
@@ -37,53 +37,29 @@ const AuthPage: React.FC = () => {
     const [confirmPasswordError, setConfirmPasswordError] = useState('');
     const [rememberMe, setRememberMe] = useState(false);
 
-    // Check for OAuth callback
+    // Handle authenticated user (including OAuth callback)
     useEffect(() => {
-        let hasRun = false;
-
-        const handleOAuthCallback = async () => {
-            if (hasRun) return;
-            hasRun = true;
-
-            const { session, error } = await supabaseAuthService.getSession();
-
-            if (error || !session) return;
-
-            // Check if this is from an OAuth callback
-            const hasHash = window.location.hash.includes('access_token');
-            if (!hasHash) return;
-
-            const user = session.user;
-
-            try {
-                await BackendService.getProfile();
-                navigate('/admin');
-            } catch (err) {
+        const checkUserAndRedirect = async () => {
+            if (isAuthenticated && user) {
                 try {
-                    await BackendService.register({
-                        email: user.email || '',
-                        password: '',
-                        fullName: '',
-                        description: '',
-                        address: '',
-                        phone: '',
-                        termsAccepted: true,
-                        logo: null,
-                        portfolio: [],
-                        instagramUrl: '',
-                        tiktokUrl: '',
-                        facebookUrl: ''
-                    });
-                    navigate('/complete-profile');
-                } catch (registerErr) {
-                    console.error('Failed to register user:', registerErr);
-                    alert('שגיאה ביצירת חשבון. אנא נסה שנית.');
+                    // Sync user with backend
+                    const syncResponse = await BackendService.syncUser();
+                    
+                    // Check if profile is complete
+                    if (syncResponse?.data?.profileComplete) {
+                        navigate('/admin');
+                    } else {
+                        navigate('/complete-profile');
+                    }
+                } catch (err) {
+                    console.error('Failed to sync user:', err);
+                    // Don't alert here to avoid spamming if sync fails temporarily
                 }
             }
         };
 
-        handleOAuthCallback();
-    }, [navigate]);
+        checkUserAndRedirect();
+    }, [isAuthenticated, user, navigate]);
 
     const handleInputChange = (e: ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
         const { name, value } = e.target;
@@ -138,6 +114,8 @@ const AuthPage: React.FC = () => {
         if (validateForm()) {
             setIsSubmitting(true);
             try {
+                let sessionData;
+                
                 if (isLogin) {
                     const { session, error } = await supabaseAuthService.signInWithEmail(
                         formData.email,
@@ -148,8 +126,7 @@ const AuthPage: React.FC = () => {
                         alert('שגיאה בהתחברות: ' + error.message);
                         return;
                     }
-
-                    if (session) navigate('/admin');
+                    sessionData = session;
                 } else {
                     const { session, error } = await supabaseAuthService.signUpWithEmail(
                         formData.email,
@@ -160,34 +137,33 @@ const AuthPage: React.FC = () => {
                         alert('שגיאה בהרשמה: ' + error.message);
                         return;
                     }
-
-                    // Register user in backend database
-                    if (session) {
-                        try {
-                            await BackendService.register({
-                                email: formData.email,
-                                password: formData.password,
-                                fullName: '',
-                                description: '',
-                                address: '',
-                                phone: '',
-                                termsAccepted: formData.termsAccepted,
-                                logo: null,
-                                portfolio: [],
-                                instagramUrl: '',
-                                tiktokUrl: '',
-                                facebookUrl: ''
-                            });
-                        } catch (backendError) {
-                            console.error('Backend registration failed:', backendError);
-                            // We continue anyway, as the user might be able to complete profile later
-                            // or the error might be "User already exists" which is fine
-                        }
-                    }
-
-                    alert('הרשמה בוצעה בהצלחה! אנא השלם את הפרופיל שלך.');
-                    navigate('/complete-profile');
+                    sessionData = session;
                 }
+
+                // Sync user with backend database
+                if (sessionData) {
+                    try {
+                        const syncResponse = await BackendService.syncUser();
+                        console.log('Sync response:', syncResponse);
+                        
+                        // Check if profile is complete based on backend response
+                        const isProfileComplete = syncResponse?.data?.profileComplete;
+                        
+                        if (isProfileComplete) {
+                            navigate('/admin');
+                        } else {
+                            // If it's registration, show alert first
+                            if (!isLogin) {
+                                alert('הרשמה בוצעה בהצלחה! אנא השלם את הפרופיל שלך.');
+                            }
+                            navigate('/complete-profile');
+                        }
+                    } catch (backendError: any) {
+                        console.error('Backend sync failed:', backendError);
+                        alert(`שגיאה בסנכרון נתונים מול השרת: ${backendError.message}`);
+                    }
+                }
+
             } catch (error: any) {
                 console.error(error);
                 alert(error.message || 'אירעה שגיאה. אנא נסה שנית.');
@@ -200,16 +176,10 @@ const AuthPage: React.FC = () => {
     return (
         <div className="min-h-screen bg-slate-50 flex flex-col font-sans" dir="rtl">
             {/* Header */}
-            <header className="bg-white border-b border-gray-100 py-4 px-6 md:px-12 flex justify-between items-center">
-                <div className="flex items-center gap-8 cursor-pointer" onClick={() => navigate('/')}>
-                    <h1 className="text-2xl font-bold text-slate-800 tracking-tight">Click<span className="text-cyan-500">2</span>Pic</h1>
+            <header className="bg-white border-b border-gray-100 py-4 px-6 md:px-12 flex justify-center items-center">
+                <div className="cursor-pointer" onClick={() => navigate('/')}>
+                    <img src="/logo.png" alt="Click2Pic" className="h-8" />
                 </div>
-                <nav className="hidden md:flex items-center gap-8 text-sm font-medium text-slate-600">
-                    <button onClick={() => navigate('/')} className="hover:text-cyan-500 transition-colors">דף הבית</button>
-                    <button onClick={() => navigate('/contact')} className="hover:text-cyan-500 transition-colors">אודות</button>
-                    <a href="#" className="hover:text-cyan-500 transition-colors">תמחור</a>
-                    <button onClick={() => navigate('/contact')} className="hover:text-cyan-500 transition-colors">צור קשר</button>
-                </nav>
             </header>
 
             {/* Main Content */}
