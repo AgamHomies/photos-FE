@@ -256,7 +256,6 @@ const DashboardPage: React.FC = () => {
                                         <td className="px-6 py-4">
                                             <div className="flex items-center gap-2" onClick={(e) => e.stopPropagation()}>
                                                 <button
-<<<<<<< HEAD
                                                     onClick={() => navigate(`/admin/events/${event.id}`)}
                                                     className="p-2 hover:bg-cyan-50 rounded-lg text-slate-400 hover:text-cyan-600 transition-colors"
                                                     title="צפייה"
@@ -278,9 +277,6 @@ const DashboardPage: React.FC = () => {
                                                         e.stopPropagation();
                                                         navigate(`/admin/events/${event.id}?tab=details#delete-section`);
                                                     }}
-=======
-                                                    onClick={(e) => handleDeleteEvent(event.id, e)}
->>>>>>> 028579d080f8e77808b4ba20e94370cfcbe85d05
                                                     className="p-2 hover:bg-red-50 rounded-lg text-slate-400 hover:text-red-500 transition-colors"
                                                     title="מחיקה"
                                                 >
