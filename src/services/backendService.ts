@@ -91,6 +91,12 @@ export const BackendService = {
             : await RealEventAPI.updateEvent(id, updates);
     },
 
+    setCoverImage: async (id: string, imageId: string): Promise<void> => {
+        return USE_MOCK
+            ? await MockS3Service.setCoverImage(id, imageId)
+            : await RealEventAPI.setCoverImage(id, imageId);
+    },
+
     deleteEvent: async (id: string): Promise<void> => {
         return USE_MOCK
             ? await MockS3Service.deleteEvent(id)
@@ -106,7 +112,7 @@ export const BackendService = {
             : await RealPhotoAPI.getEventPhotos(eventId);
     },
 
-    uploadEventPhotos: async (eventId: string, files: File[]): Promise<void> => {
+    uploadEventPhotos: async (eventId: string, files: File[]): Promise<Photo[]> => {
         return USE_MOCK
             ? await MockS3Service.uploadEventPhotos(eventId, files)
             : await RealPhotoAPI.uploadEventPhotos(eventId, files);

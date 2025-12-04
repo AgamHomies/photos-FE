@@ -302,7 +302,7 @@ const GalleryPage: React.FC<GalleryPageProps> = ({ mode }) => {
                   />
 
                   {/* Watermark Overlay */}
-                  <div className="absolute inset-0 flex items-center justify-center opacity-30 pointer-events-none select-none">
+                  <div className="absolute inset-0 flex items-center justify-center opacity-0 pointer-events-none select-none">
                     <div className="transform -rotate-45 text-white font-bold text-2xl border-2 border-white px-4 py-1 rounded-lg">
                       {photographer?.name || 'PREVIEW'}
                     </div>

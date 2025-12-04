@@ -16,7 +16,8 @@ import {
     Image as ImageIcon,
     Filter,
     Eye,
-    Edit
+    Edit,
+    Heart
 } from 'lucide-react';
 
 const DashboardPage: React.FC = () => {
@@ -169,13 +170,12 @@ const DashboardPage: React.FC = () => {
                                     onChange={(e) => setSearchTerm(e.target.value)}
                                 />
                             </div>
-                            <button 
+                            <button
                                 onClick={() => setShowActiveOnly(!showActiveOnly)}
-                                className={`flex items-center gap-2 px-4 py-2 border rounded-lg text-sm font-medium transition-colors ${
-                                    showActiveOnly 
-                                        ? 'bg-cyan-500 text-white border-cyan-500' 
-                                        : 'border-slate-200 text-slate-600 hover:bg-slate-50'
-                                }`}
+                                className={`flex items-center gap-2 px-4 py-2 border rounded-lg text-sm font-medium transition-colors ${showActiveOnly
+                                    ? 'bg-cyan-500 text-white border-cyan-500'
+                                    : 'border-slate-200 text-slate-600 hover:bg-slate-50'
+                                    }`}
                             >
                                 <Filter className="w-4 h-4" />
                                 <span>פעילים</span>
@@ -222,16 +222,29 @@ const DashboardPage: React.FC = () => {
                                         <td className="px-6 py-4 text-slate-600 text-sm font-medium">{event.guestVisits}</td>
                                         <td className="px-6 py-4 text-slate-600 text-sm font-medium">{event.downloads}</td>
                                         <td className="px-6 py-4">
-                                            <div className="flex items-center gap-2 text-cyan-600 bg-cyan-50 px-3 py-1 rounded-lg w-fit text-xs font-medium dir-ltr cursor-pointer hover:bg-cyan-100" onClick={(e) => {
-                                                e.stopPropagation();
-                                                // Use the uniqueLink from the event object which points to the guest gallery
-                                                const link = event.uniqueLink || `${window.location.origin}/gallery/${event.id}`;
-                                                navigator.clipboard.writeText(link);
-                                                alert('הקישור הועתק!');
-                                            }}>
-                                                <ExternalLink className="w-3 h-3" />
-                                                {/* Display a friendly version, e.g. c2p.io/slug */}
-                                                c2p.io/{event.uniqueLink ? event.uniqueLink.split('/').pop()?.slice(0, 6) : event.id.toString().slice(0, 6)}
+                                            <div className="flex gap-2">
+                                                <button
+                                                    onClick={(e) => {
+                                                        e.stopPropagation();
+                                                        window.open(`/gallery/${event.id}`, '_blank');
+                                                    }}
+                                                    className="px-3 py-1.5 text-xs font-bold text-slate-600 border border-slate-200 hover:bg-slate-50 rounded-lg transition-colors flex items-center gap-1.5"
+                                                    title="קישור לאורחים"
+                                                >
+                                                    <Users className="w-3 h-3" />
+                                                    <span>לאורחים</span>
+                                                </button>
+                                                <button
+                                                    onClick={(e) => {
+                                                        e.stopPropagation();
+                                                        window.open(`/gallery/${event.id}/full`, '_blank');
+                                                    }}
+                                                    className="px-3 py-1.5 text-xs font-bold text-cyan-600 bg-cyan-50 hover:bg-cyan-100 rounded-lg transition-colors flex items-center gap-1.5 border border-cyan-100"
+                                                    title="קישור לזוג"
+                                                >
+                                                    <Heart className="w-3 h-3" />
+                                                    <span>לזוג</span>
+                                                </button>
                                             </div>
                                         </td>
                                         <td className="px-6 py-4">
@@ -250,14 +263,20 @@ const DashboardPage: React.FC = () => {
                                                     <Eye className="w-4 h-4" />
                                                 </button>
                                                 <button
-                                                    onClick={() => navigate(`/admin/events/${event.id}/edit`)}
+                                                    onClick={(e) => {
+                                                        e.stopPropagation();
+                                                        navigate(`/admin/events/${event.id}?tab=details`);
+                                                    }}
                                                     className="p-2 hover:bg-blue-50 rounded-lg text-slate-400 hover:text-blue-600 transition-colors"
                                                     title="עריכה"
                                                 >
                                                     <Edit className="w-4 h-4" />
                                                 </button>
                                                 <button
-                                                    onClick={(e) => handleDeleteEvent(event.id, e)}
+                                                    onClick={(e) => {
+                                                        e.stopPropagation();
+                                                        navigate(`/admin/events/${event.id}?tab=details#delete-section`);
+                                                    }}
                                                     className="p-2 hover:bg-red-50 rounded-lg text-slate-400 hover:text-red-500 transition-colors"
                                                     title="מחיקה"
                                                 >
@@ -287,27 +306,26 @@ const DashboardPage: React.FC = () => {
                     <div className="p-4 border-t border-slate-100 flex justify-between items-center text-sm text-slate-500">
                         <div>מציג {paginatedEvents.length} מתוך {filteredEvents.length} אירועים</div>
                         <div className="flex gap-2">
-                            <button 
-                                className="w-8 h-8 flex items-center justify-center border border-slate-200 rounded-lg hover:bg-slate-50 disabled:opacity-50 disabled:cursor-not-allowed" 
+                            <button
+                                className="w-8 h-8 flex items-center justify-center border border-slate-200 rounded-lg hover:bg-slate-50 disabled:opacity-50 disabled:cursor-not-allowed"
                                 disabled={currentPage === 1}
                                 onClick={() => setCurrentPage(currentPage - 1)}
                             >
                                 &lt;
                             </button>
                             {Array.from({ length: totalPages }, (_, i) => i + 1).map(page => (
-                                <button 
+                                <button
                                     key={page}
                                     onClick={() => setCurrentPage(page)}
-                                    className={`w-8 h-8 flex items-center justify-center rounded-lg ${
-                                        currentPage === page 
-                                            ? 'bg-cyan-500 text-white' 
-                                            : 'border border-slate-200 hover:bg-slate-50'
-                                    }`}
+                                    className={`w-8 h-8 flex items-center justify-center rounded-lg ${currentPage === page
+                                        ? 'bg-cyan-500 text-white'
+                                        : 'border border-slate-200 hover:bg-slate-50'
+                                        }`}
                                 >
                                     {page}
                                 </button>
                             ))}
-                            <button 
+                            <button
                                 className="w-8 h-8 flex items-center justify-center border border-slate-200 rounded-lg hover:bg-slate-50 disabled:opacity-50 disabled:cursor-not-allowed"
                                 disabled={currentPage === totalPages || totalPages === 0}
                                 onClick={() => setCurrentPage(currentPage + 1)}

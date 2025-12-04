@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import { BackendService } from '../../services/backendService';
 import { Event, Photo } from '../../types';
 import Layout from '../../components/Layout';
@@ -22,7 +22,22 @@ const EventManagePage: React.FC = () => {
     const [event, setEvent] = useState<Event | null>(null);
     const [photos, setPhotos] = useState<Photo[]>([]);
     const [loading, setLoading] = useState(true);
-    const [activeTab, setActiveTab] = useState<'photos' | 'details'>('photos');
+    const location = useLocation();
+    const queryParams = new URLSearchParams(location.search);
+    const initialTab = (queryParams.get('tab') as 'photos' | 'details') || 'photos';
+    const [activeTab, setActiveTab] = useState<'photos' | 'details'>(initialTab);
+
+    useEffect(() => {
+        if (location.hash === '#delete-section' && activeTab === 'details' && !loading) {
+            // Small timeout to ensure rendering
+            setTimeout(() => {
+                const element = document.getElementById('delete-section');
+                if (element) {
+                    element.scrollIntoView({ behavior: 'smooth' });
+                }
+            }, 100);
+        }
+    }, [location.hash, activeTab, loading]);
     const [uploading, setUploading] = useState(false);
 
     // Edit form state
@@ -351,7 +366,7 @@ const EventManagePage: React.FC = () => {
                             </form>
                         </div>
 
-                        <div className="mt-8 bg-red-50 rounded-3xl border border-red-100 p-8">
+                        <div id="delete-section" className="mt-8 bg-red-50 rounded-3xl border border-red-100 p-8">
                             <div className="flex items-start gap-4">
                                 <div className="bg-red-100 p-3 rounded-xl text-red-600">
                                     <Trash2 className="w-6 h-6" />

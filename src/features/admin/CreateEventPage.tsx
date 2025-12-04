@@ -13,6 +13,7 @@ const CreateEventPage: React.FC = () => {
         date: '',
         location: ''
     });
+    const [coverImageFile, setCoverImageFile] = useState<File | null>(null);
     const [coverPreview, setCoverPreview] = useState<string | null>(null);
     const [galleryFiles, setGalleryFiles] = useState<File[]>([]);
     const [uploadProgress, setUploadProgress] = useState(0);
@@ -28,6 +29,7 @@ const CreateEventPage: React.FC = () => {
         if (e.target.files && e.target.files[0]) {
             const file = e.target.files[0];
             setCoverPreview(URL.createObjectURL(file));
+            setCoverImageFile(file);
         }
     };
 
@@ -45,34 +47,45 @@ const CreateEventPage: React.FC = () => {
             // 1. Creating Event
             setProcessingStage('יוצר אירוע במערכת...');
             setUploadProgress(10);
-            await new Promise(resolve => setTimeout(resolve, 800));
-
-            // 2. Uploading Cover
-            setProcessingStage('מעלה תמונת קאבר...');
-            setUploadProgress(30);
-            await new Promise(resolve => setTimeout(resolve, 800));
-
-            // 3. Uploading Gallery Photos
-            setProcessingStage(`מעלה ${galleryFiles.length} תמונות ל-S3...`);
-            setUploadProgress(60);
-            await new Promise(resolve => setTimeout(resolve, 1500));
-
-            // 4. AI Processing
-            setProcessingStage('מבצע זיהוי פנים (Face Indexing)...');
-            setUploadProgress(85);
-            await new Promise(resolve => setTimeout(resolve, 2000));
-
-            // 5. Finalizing
-            setProcessingStage('בונה אוספים ומפיק קישור ייחודי...');
-            setUploadProgress(100);
 
             const newEvent = await BackendService.createEvent({
                 name: formData.name,
                 date: formData.date,
                 location: formData.location,
-                coverImage: coverPreview || 'https://images.unsplash.com/photo-1511795409834-ef04bbd61622?ixlib=rb-1.0.3&auto=format&fit=crop&w=800&q=80',
+                // We'll set the real cover image later
+                coverImage: '',
                 expiryDate: new Date(new Date().setFullYear(new Date().getFullYear() + 1)).toISOString().split('T')[0]
             });
+
+            // 2. Uploading Gallery Photos
+            if (galleryFiles.length > 0) {
+                setProcessingStage(`מעלה ${galleryFiles.length} תמונות ל-S3...`);
+                setUploadProgress(30);
+                await BackendService.uploadEventPhotos(newEvent.id, galleryFiles);
+            }
+
+            // 3. Uploading Cover Image
+            if (coverImageFile) {
+                setProcessingStage('מעלה תמונת קאבר...');
+                setUploadProgress(60);
+
+                // Upload cover as a regular photo first
+                const uploadedCover = await BackendService.uploadEventPhotos(newEvent.id, [coverImageFile]);
+
+                if (uploadedCover && uploadedCover.length > 0) {
+                    // Set it as the cover image
+                    await BackendService.setCoverImage(newEvent.id, uploadedCover[0].id);
+                }
+            }
+
+            // 4. AI Processing
+            setProcessingStage('מבצע זיהוי פנים (Face Indexing)...');
+            setUploadProgress(85);
+            await new Promise(resolve => setTimeout(resolve, 1000));
+
+            // 5. Finalizing
+            setProcessingStage('בונה אוספים ומפיק קישור ייחודי...');
+            setUploadProgress(100);
 
             setCreatedEventLink(newEvent.uniqueLink);
             setStep('done');
@@ -88,7 +101,7 @@ const CreateEventPage: React.FC = () => {
         <Layout>
             <div className="min-h-screen bg-slate-50 py-12 px-4 sm:px-6 lg:px-8" dir="rtl">
                 <div className="max-w-4xl mx-auto space-y-8">
-                    
+
                     {/* Page Header */}
                     <div className="text-center space-y-2">
                         <h1 className="text-3xl font-bold text-slate-900">יצירת אירוע חדש</h1>
@@ -101,14 +114,14 @@ const CreateEventPage: React.FC = () => {
 
                     {step === 'details' && (
                         <form onSubmit={handleSubmit} className="space-y-6">
-                            
+
                             {/* Card 1: Event Details */}
                             <div className="bg-white rounded-2xl shadow-sm border border-slate-100 p-8">
                                 <div className="flex items-center gap-2 mb-6 text-slate-800 font-bold text-lg">
                                     <Calendar className="w-5 h-5 text-cyan-500" />
                                     <h2>פרטי האירוע</h2>
                                 </div>
-                                
+
                                 <div className="space-y-6">
                                     <div>
                                         <label className="block text-sm font-medium text-slate-700 mb-2 text-right">שם האירוע</label>
@@ -331,7 +344,7 @@ const CreateEventPage: React.FC = () => {
                             <h3 className="text-xl font-bold text-slate-900">איך זה עובד? המדריך לתהליך הסלפי</h3>
                             <div className="bg-cyan-500 text-white rounded-full w-5 h-5 flex items-center justify-center text-xs font-bold">i</div>
                         </div>
-                        
+
                         <div className="grid grid-cols-1 md:grid-cols-3 gap-8 text-center">
                             <div className="flex flex-col items-center">
                                 <div className="w-12 h-12 bg-white rounded-full flex items-center justify-center text-cyan-600 font-bold text-xl shadow-sm mb-4">1</div>

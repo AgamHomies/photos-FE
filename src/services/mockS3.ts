@@ -347,6 +347,11 @@ export const MockS3Service = {
         return events[index];
     },
 
+    setCoverImage: async (id: string, imageId: string): Promise<void> => {
+        await new Promise(resolve => setTimeout(resolve, 500));
+        // Mock implementation
+    },
+
     getEventPhotos: async (eventId: string): Promise<Photo[]> => {
         await new Promise(resolve => setTimeout(resolve, 600));
         return Array.from({ length: 12 }).map((_, i) => ({
@@ -360,17 +365,27 @@ export const MockS3Service = {
         }));
     },
 
-    uploadEventPhotos: async (eventId: string, files: File[]): Promise<void> => {
+    uploadEventPhotos: async (eventId: string, files: File[]): Promise<Photo[]> => {
         await new Promise(resolve => setTimeout(resolve, 2000));
         const s3Data = loadData();
         const email = localStorage.getItem(CURRENT_USER_KEY);
-        if (!email) return;
+        if (!email) return [];
 
         const event = s3Data.events[email]?.find(e => e.id === eventId);
         if (event) {
             event.photoCount += files.length;
             saveData(s3Data);
         }
+
+        return files.map((file, i) => ({
+            id: `mock-photo-${Date.now()}-${i}`,
+            url: URL.createObjectURL(file),
+            thumbnailUrl: URL.createObjectURL(file),
+            title: file.name,
+            date: new Date().toISOString(),
+            width: 800,
+            height: 600
+        }));
     },
 
     deleteEventPhoto: async (eventId: string, photoId: string): Promise<void> => {

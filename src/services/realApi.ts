@@ -35,6 +35,10 @@ const apiRequest = async (
         headers,
     });
 
+    if (response.status === 204) {
+        return null;
+    }
+
     const data = await response.json();
 
     if (!response.ok) {
@@ -53,7 +57,7 @@ export const RealAuthAPI = {
 
     syncUser: async (): Promise<any> => {
         const token = await getAuthToken();
-        
+
         try {
             const response = await fetch(`${API_BASE_URL}/auth/sync`, {
                 method: 'POST',
@@ -200,9 +204,9 @@ export const RealEventAPI = {
             photoCount: event.images_count || 0,
             guestVisits: event.stats?.views_count || 0,
             downloads: event.stats?.downloads_count || 0,
-            uniqueLink: `${window.location.origin}/gallery/${event.guest_slug}`,
+            uniqueLink: `${window.location.origin}/gallery/${event.id}`,
             expiryDate: event.expiry_date || '',
-            status: (event.status === 'active' || event.status === 'ready' || event.status === 'processing') ? 'active' : 'expired',
+            status: (event.status === 'active' || event.status === 'ready' || event.status === 'processing' || event.status === 'draft') ? 'active' : 'expired',
         }));
     },
 
@@ -220,9 +224,9 @@ export const RealEventAPI = {
                 photoCount: data.image_count || 0,
                 guestVisits: data.guest_visits || 0,
                 downloads: data.downloads || 0,
-                uniqueLink: `${window.location.origin}/gallery/${data.guest_slug}`,
+                uniqueLink: `${window.location.origin}/gallery/${data.id}`,
                 expiryDate: data.expiry_date || '',
-                status: data.is_active ? 'active' : 'expired',
+                status: (data.status === 'active' || data.status === 'ready' || data.status === 'processing' || data.status === 'draft') ? 'active' : 'expired',
             };
         } catch (error) {
             console.error('Failed to get event:', error);
@@ -254,7 +258,7 @@ export const RealEventAPI = {
             photoCount: 0,
             guestVisits: 0,
             downloads: 0,
-            uniqueLink: `${window.location.origin}/gallery/${data.guest_slug}`,
+            uniqueLink: `${window.location.origin}/gallery/${data.id}`,
             expiryDate: data.expiry_date || '',
             status: 'active',
         };
@@ -283,15 +287,21 @@ export const RealEventAPI = {
             photoCount: data.image_count || 0,
             guestVisits: data.guest_visits || 0,
             downloads: data.downloads || 0,
-            uniqueLink: `${window.location.origin}/gallery/${data.guest_slug}`,
+            uniqueLink: `${window.location.origin}/gallery/${data.id}`,
             expiryDate: data.expiry_date || '',
-            status: data.is_active ? 'active' : 'expired',
+            status: (data.status === 'active' || data.status === 'ready' || data.status === 'processing' || data.status === 'draft') ? 'active' : 'expired',
         };
     },
 
     deleteEvent: async (id: string): Promise<void> => {
         await apiRequest(`/events/${id}`, {
             method: 'DELETE',
+        });
+    },
+
+    setCoverImage: async (id: string, imageId: string): Promise<void> => {
+        await apiRequest(`/events/${id}/cover?image_id=${imageId}`, {
+            method: 'PUT',
         });
     },
 };
@@ -319,7 +329,7 @@ export const RealPhotoAPI = {
         }
     },
 
-    uploadEventPhotos: async (eventId: string, files: File[]): Promise<void> => {
+    uploadEventPhotos: async (eventId: string, files: File[]): Promise<Photo[]> => {
         const formData = new FormData();
 
         files.forEach((file) => {
@@ -339,6 +349,17 @@ export const RealPhotoAPI = {
             const data = await response.json();
             throw new Error(data.detail || 'Upload failed');
         }
+
+        const data = await response.json();
+        return data.map((img: any) => ({
+            id: img.id,
+            url: img.url,
+            thumbnailUrl: img.thumbnail_url || img.url,
+            title: img.filename || 'Photo',
+            date: img.created_at,
+            width: img.width,
+            height: img.height,
+        }));
     },
 
     deleteEventPhoto: async (eventId: string, photoId: string): Promise<void> => {
@@ -383,9 +404,9 @@ export const RealGalleryAPI = {
                 photoCount: data.image_count || 0,
                 guestVisits: data.guest_visits || 0,
                 downloads: data.downloads || 0,
-                uniqueLink: `${window.location.origin}/gallery/${data.guest_slug}`,
+                uniqueLink: `${window.location.origin}/gallery/${data.id}`,
                 expiryDate: data.expiry_date || '',
-                status: data.is_active ? 'active' : 'expired',
+                status: (data.status === 'active' || data.status === 'ready' || data.status === 'processing' || data.status === 'draft') ? 'active' : 'expired',
             };
         } catch (error) {
             console.error('Failed to get event by slug:', error);
