@@ -56,7 +56,7 @@ const DashboardPage: React.FC = () => {
 
     const handleDeleteEvent = async (id: string, e: React.MouseEvent) => {
         e.stopPropagation();
-        if (window.confirm('האם אתה בטוח שברצונך למחוק אירוע זה?')) {
+        if (window.confirm('האם אתה בטוח שברצונך למחוק את האירוע? פעולה זו תמחק את כל הנתונים והתמונות לצמיתות ולא ניתן יהיה לשחזר אותם.')) {
             try {
                 await BackendService.deleteEvent(id);
                 await loadData();
@@ -256,6 +256,7 @@ const DashboardPage: React.FC = () => {
                                         <td className="px-6 py-4">
                                             <div className="flex items-center gap-2" onClick={(e) => e.stopPropagation()}>
                                                 <button
+<<<<<<< HEAD
                                                     onClick={() => navigate(`/admin/events/${event.id}`)}
                                                     className="p-2 hover:bg-cyan-50 rounded-lg text-slate-400 hover:text-cyan-600 transition-colors"
                                                     title="צפייה"
@@ -277,6 +278,9 @@ const DashboardPage: React.FC = () => {
                                                         e.stopPropagation();
                                                         navigate(`/admin/events/${event.id}?tab=details#delete-section`);
                                                     }}
+=======
+                                                    onClick={(e) => handleDeleteEvent(event.id, e)}
+>>>>>>> 028579d080f8e77808b4ba20e94370cfcbe85d05
                                                     className="p-2 hover:bg-red-50 rounded-lg text-slate-400 hover:text-red-500 transition-colors"
                                                     title="מחיקה"
                                                 >

@@ -140,7 +140,7 @@ const EventManagePage: React.FC = () => {
     };
 
     const handleDeleteEvent = async () => {
-        if (window.confirm('האם אתה בטוח שברצונך למחוק את האירוע לצמיתות? פעולה זו אינה הפיכה.')) {
+        if (window.confirm('האם אתה בטוח שברצונך למחוק את האירוע? פעולה זו תמחק את כל הנתונים והתמונות לצמיתות ולא ניתן יהיה לשחזר אותם.')) {
             if (id) {
                 try {
                     await BackendService.deleteEvent(id);
@@ -351,6 +351,80 @@ const EventManagePage: React.FC = () => {
                                             onChange={e => setEditForm({ ...editForm, location: e.target.value })}
                                             className="block w-full border border-slate-200 rounded-xl p-3 focus:ring-2 focus:ring-cyan-500 focus:border-cyan-500 transition-colors"
                                         />
+                                    </div>
+
+                                    {/* Cover Image Upload */}
+                                    <div className="md:col-span-2 mb-6">
+                                        <label className="block text-sm font-medium text-slate-700 mb-2">תמונת קאבר</label>
+                                        <div className="border-2 border-dashed border-slate-200 rounded-xl p-6 text-center hover:border-cyan-500 transition-colors cursor-pointer relative group bg-slate-50">
+                                            <input
+                                                type="file"
+                                                accept="image/*"
+                                                onChange={async (e) => {
+                                                    if (e.target.files && e.target.files[0] && id) {
+                                                        try {
+                                                            setUploading(true);
+                                                            // 1. Upload the file
+                                                            await BackendService.uploadEventPhotos(id, [e.target.files[0]]);
+                                                            
+                                                            // 2. Refresh photos to get the new image ID
+                                                            const updatedPhotos = await BackendService.getEventPhotos(id);
+                                                            setPhotos(updatedPhotos);
+                                                            
+                                                            // 3. Find the new photo (assuming it's the last one or by name)
+                                                            // Ideally backend returns the uploaded image object.
+                                                            // For now, let's find by filename match or just take the latest.
+                                                            const uploadedPhoto = updatedPhotos.find(p => p.title === e.target.files![0].name);
+                                                            
+                                                            if (uploadedPhoto) {
+                                                                // 4. Set as cover
+                                                                await BackendService.setCoverImage(id, uploadedPhoto.id);
+                                                                
+                                                                // 5. Update local event state
+                                                                setEvent(prev => prev ? ({ ...prev, coverImage: uploadedPhoto.url }) : null);
+                                                                alert('תמונת קאבר עודכנה בהצלחה');
+                                                            } else {
+                                                                // Fallback: just refresh event to see if cover updated (if backend auto-sets it?)
+                                                                // But we need to explicitly set it.
+                                                                // If we can't find it, maybe just alert success of upload.
+                                                                alert('התמונה הועלתה. אנא בחר אותה כתמונת קאבר מלשונית התמונות.');
+                                                            }
+                                                        } catch (error) {
+                                                            console.error(error);
+                                                            alert('שגיאה בהעלאת תמונת קאבר');
+                                                        } finally {
+                                                            setUploading(false);
+                                                        }
+                                                    }
+                                                }}
+                                                className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10"
+                                                disabled={uploading}
+                                            />
+                                            {event.coverImage ? (
+                                                <div className="relative h-48 w-full rounded-lg overflow-hidden">
+                                                    <img src={event.coverImage} alt="Cover" className="w-full h-full object-cover" />
+                                                    <div className="absolute inset-0 bg-black/40 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+                                                        <div className="text-white font-medium flex items-center gap-2">
+                                                            <Upload className="w-5 h-5" />
+                                                            <span>לחץ להחלפה</span>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            ) : (
+                                                <div className="flex flex-col items-center justify-center py-8">
+                                                    <div className="w-12 h-12 bg-white rounded-full flex items-center justify-center mb-3 text-slate-400 group-hover:text-cyan-500 transition-colors shadow-sm">
+                                                        <ImageIcon className="w-6 h-6" />
+                                                    </div>
+                                                    <p className="text-slate-600 font-medium">לחץ להעלאת תמונת קאבר</p>
+                                                    <p className="text-slate-400 text-sm mt-1">או גרור תמונה לכאן</p>
+                                                </div>
+                                            )}
+                                            {uploading && (
+                                                <div className="absolute inset-0 bg-white/80 flex items-center justify-center z-20">
+                                                    <Loader2 className="w-8 h-8 text-cyan-500 animate-spin" />
+                                                </div>
+                                            )}
+                                        </div>
                                     </div>
                                 </div>
 
