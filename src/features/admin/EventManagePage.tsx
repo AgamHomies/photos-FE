@@ -47,6 +47,10 @@ const EventManagePage: React.FC = () => {
         location: ''
     });
 
+    const [page, setPage] = useState(1);
+    const [hasMore, setHasMore] = useState(true);
+    const ITEMS_PER_PAGE = 50;
+
     useEffect(() => {
         if (id) {
             loadEventData(id);
@@ -58,7 +62,7 @@ const EventManagePage: React.FC = () => {
         try {
             const [eventData, photosData] = await Promise.all([
                 BackendService.getEvent(eventId),
-                BackendService.getEventPhotos(eventId)
+                BackendService.getEventPhotos(eventId, 1, ITEMS_PER_PAGE)
             ]);
 
             if (eventData) {
@@ -69,6 +73,8 @@ const EventManagePage: React.FC = () => {
                     location: eventData.location
                 });
                 setPhotos(photosData);
+                setPage(1);
+                setHasMore(photosData.length === ITEMS_PER_PAGE);
             } else {
                 navigate('/admin');
             }
@@ -76,6 +82,25 @@ const EventManagePage: React.FC = () => {
             console.error("Failed to load event", error);
         } finally {
             setLoading(false);
+        }
+    };
+
+    const loadMorePhotos = async () => {
+        if (!id || !hasMore) return;
+
+        try {
+            const nextPage = page + 1;
+            const newPhotos = await BackendService.getEventPhotos(id, nextPage, ITEMS_PER_PAGE);
+
+            if (newPhotos.length > 0) {
+                setPhotos(prev => [...prev, ...newPhotos]);
+                setPage(nextPage);
+                setHasMore(newPhotos.length === ITEMS_PER_PAGE);
+            } else {
+                setHasMore(false);
+            }
+        } catch (error) {
+            console.error("Failed to load more photos", error);
         }
     };
 
@@ -108,11 +133,11 @@ const EventManagePage: React.FC = () => {
                 // Process in batches
                 for (let i = 0; i < totalFiles; i += BATCH_SIZE) {
                     const chunk = files.slice(i, i + BATCH_SIZE);
-                    
+
                     // 1. Get presigned URLs for this batch
                     const fileInfos = chunk.map(f => ({ filename: f.name, contentType: f.type }));
                     const { urls } = await BackendService.getPresignedUrls(id, fileInfos);
-                    
+
                     // 2. Upload to S3 with concurrency limit
                     const uploadTasks = urls.map((urlInfo, index) => async () => {
                         const file = chunk[index];
@@ -124,14 +149,14 @@ const EventManagePage: React.FC = () => {
 
                     // 3. Confirm uploads for this batch
                     await BackendService.confirmUploads(id, uploadedPhotoIds);
-                    
+
                     processedCount += chunk.length;
                 }
 
                 // 4. Refresh photos
                 const updatedPhotos = await BackendService.getEventPhotos(id);
                 setPhotos(updatedPhotos);
-                
+
                 alert(`הועלו בהצלחה ${totalFiles} תמונות`);
             } catch (error) {
                 console.error(error);
@@ -347,6 +372,18 @@ const EventManagePage: React.FC = () => {
                                     </div>
                                 ))}
                             </div>
+
+                            {hasMore && (
+                                <div className="mt-8 flex justify-center">
+                                    <button
+                                        onClick={loadMorePhotos}
+                                        className="bg-white border border-slate-200 text-slate-600 px-6 py-3 rounded-xl font-bold hover:bg-slate-50 transition-colors shadow-sm hover:shadow-md flex items-center gap-2"
+                                    >
+                                        <ArrowRight className="w-4 h-4 rotate-90" />
+                                        <span>טען עוד תמונות</span>
+                                    </button>
+                                </div>
+                            )}
                         </div>
                     </div>
                 )}
@@ -425,7 +462,7 @@ const EventManagePage: React.FC = () => {
                                                             if (updatedEvent) {
                                                                 setEvent(updatedEvent);
                                                             }
-                                                            
+
                                                             alert('תמונת קאבר עודכנה בהצלחה');
                                                         } catch (error) {
                                                             console.error(error);

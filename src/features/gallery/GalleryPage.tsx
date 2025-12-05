@@ -34,6 +34,10 @@ const GalleryPage: React.FC<GalleryPageProps> = ({ mode: propMode }) => {
   const [photos, setPhotos] = useState<Photo[]>([]);
   const [lightboxPhoto, setLightboxPhoto] = useState<Photo | null>(null);
 
+  const [page, setPage] = useState(1);
+  const [hasMore, setHasMore] = useState(true);
+  const ITEMS_PER_PAGE = 50;
+
   const resultsRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -55,7 +59,7 @@ const GalleryPage: React.FC<GalleryPageProps> = ({ mode: propMode }) => {
         setMode(currentMode);
 
         // Now fetch photos using the real numeric ID
-        const eventPhotos = await BackendService.getEventPhotos(eventData.id);
+        const eventPhotos = await BackendService.getEventPhotos(eventData.id, 1, ITEMS_PER_PAGE);
 
         if (eventData.photographerId) {
           const profile = await BackendService.getPhotographerProfile(eventData.photographerId);
@@ -64,6 +68,8 @@ const GalleryPage: React.FC<GalleryPageProps> = ({ mode: propMode }) => {
 
         if (currentMode === 'full') {
           setPhotos(eventPhotos);
+          setPage(1);
+          setHasMore(eventPhotos.length === ITEMS_PER_PAGE);
           setViewState('results');
         } else {
           setViewState('landing');
@@ -73,6 +79,25 @@ const GalleryPage: React.FC<GalleryPageProps> = ({ mode: propMode }) => {
       console.error("Failed to load gallery data", error);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const loadMorePhotos = async () => {
+    if (!event || !hasMore) return;
+
+    try {
+      const nextPage = page + 1;
+      const newPhotos = await BackendService.getEventPhotos(event.id, nextPage, ITEMS_PER_PAGE);
+
+      if (newPhotos.length > 0) {
+        setPhotos(prev => [...prev, ...newPhotos]);
+        setPage(nextPage);
+        setHasMore(newPhotos.length === ITEMS_PER_PAGE);
+      } else {
+        setHasMore(false);
+      }
+    } catch (error) {
+      console.error("Failed to load more photos", error);
     }
   };
 
@@ -378,6 +403,20 @@ const GalleryPage: React.FC<GalleryPageProps> = ({ mode: propMode }) => {
                 </div>
               ))}
             </div>
+
+            {hasMore && mode === 'full' && (
+              <div className="mt-12 flex justify-center">
+                <button
+                  onClick={loadMorePhotos}
+                  className="bg-white border border-slate-200 text-slate-600 px-8 py-4 rounded-2xl font-bold hover:bg-slate-50 transition-all shadow-sm hover:shadow-md flex items-center gap-3 group"
+                >
+                  <div className="w-8 h-8 rounded-full bg-slate-100 flex items-center justify-center group-hover:bg-slate-200 transition-colors">
+                    <Download className="w-4 h-4 rotate-180" />
+                  </div>
+                  <span className="text-lg">טען עוד תמונות</span>
+                </button>
+              </div>
+            )}
 
             {photos.length === 0 && (
               <div className="text-center py-24 bg-white rounded-3xl border border-slate-100 shadow-sm">

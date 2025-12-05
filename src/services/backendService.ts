@@ -122,10 +122,10 @@ export const BackendService = {
     // ============================================
     // Photos
     // ============================================
-    getEventPhotos: async (eventId: string): Promise<Photo[]> => {
+    getEventPhotos: async (eventId: string, page: number = 1, limit: number = 50): Promise<Photo[]> => {
         return USE_MOCK
             ? await MockS3Service.getEventPhotos(eventId)
-            : await RealPhotoAPI.getEventPhotos(eventId);
+            : await RealPhotoAPI.getEventPhotos(eventId, page, limit);
     },
 
     uploadEventPhotos: async (eventId: string, files: File[]): Promise<Photo[]> => {
