@@ -35,6 +35,7 @@ const AuthPage: React.FC = () => {
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [confirmPassword, setConfirmPassword] = useState('');
     const [confirmPasswordError, setConfirmPasswordError] = useState('');
+    const [showConfirmPassword, setShowConfirmPassword] = useState(false);
     const [rememberMe, setRememberMe] = useState(false);
 
     // Handle authenticated user (including OAuth callback)
@@ -44,7 +45,7 @@ const AuthPage: React.FC = () => {
                 try {
                     // Sync user with backend
                     const syncResponse = await BackendService.syncUser();
-                    
+
                     // Check if profile is complete
                     if (syncResponse?.data?.profileComplete) {
                         navigate('/admin');
@@ -114,27 +115,34 @@ const AuthPage: React.FC = () => {
         if (validateForm()) {
             setIsSubmitting(true);
             try {
+                const cleanEmail = formData.email.trim();
+                const cleanPassword = formData.password.trim();
+
                 let sessionData;
-                
+
+                console.log(`Attempting ${isLogin ? 'login' : 'signup'} with email:`, cleanEmail);
+
                 if (isLogin) {
                     const { session, error } = await supabaseAuthService.signInWithEmail(
-                        formData.email,
-                        formData.password
+                        cleanEmail,
+                        cleanPassword
                     );
 
                     if (error) {
-                        alert('שגיאה בהתחברות: ' + error.message);
+                        console.error('Login error:', error);
+                        alert('שגיאה בהתחברות: ' + (error.message || 'פרטים חסרים'));
                         return;
                     }
                     sessionData = session;
                 } else {
                     const { session, error } = await supabaseAuthService.signUpWithEmail(
-                        formData.email,
-                        formData.password
+                        cleanEmail,
+                        cleanPassword
                     );
 
                     if (error) {
-                        alert('שגיאה בהרשמה: ' + error.message);
+                        console.error('Signup error:', error);
+                        alert('שגיאה בהרשמה: ' + (error.message || 'פרטים חסרים'));
                         return;
                     }
                     sessionData = session;
@@ -145,10 +153,10 @@ const AuthPage: React.FC = () => {
                     try {
                         const syncResponse = await BackendService.syncUser();
                         console.log('Sync response:', syncResponse);
-                        
+
                         // Check if profile is complete based on backend response
                         const isProfileComplete = syncResponse?.data?.profileComplete;
-                        
+
                         if (isProfileComplete) {
                             navigate('/admin');
                         } else {
@@ -266,18 +274,27 @@ const AuthPage: React.FC = () => {
                                     <div>
                                         <label htmlFor="confirmPassword"
                                             className="block text-sm font-medium text-slate-700 mb-1">אימות סיסמה</label>
-                                        <input
-                                            id="confirmPassword"
-                                            name="confirmPassword"
-                                            type="password"
-                                            placeholder="••••••••"
-                                            className={`block w-full border ${confirmPasswordError ? 'border-red-500' : 'border-slate-200'} rounded-xl px-4 py-3 focus:ring-2 focus:ring-cyan-500 focus:border-cyan-500 transition-colors bg-slate-50/50`}
-                                            value={confirmPassword}
-                                            onChange={(e) => {
-                                                setConfirmPassword(e.target.value);
-                                                if (confirmPasswordError) setConfirmPasswordError('');
-                                            }}
-                                        />
+                                        <div className="relative">
+                                            <input
+                                                id="confirmPassword"
+                                                name="confirmPassword"
+                                                type={showConfirmPassword ? "text" : "password"}
+                                                placeholder="••••••••"
+                                                className={`block w-full border ${confirmPasswordError ? 'border-red-500' : 'border-slate-200'} rounded-xl px-4 py-3 focus:ring-2 focus:ring-cyan-500 focus:border-cyan-500 transition-colors bg-slate-50/50`}
+                                                value={confirmPassword}
+                                                onChange={(e) => {
+                                                    setConfirmPassword(e.target.value);
+                                                    if (confirmPasswordError) setConfirmPasswordError('');
+                                                }}
+                                            />
+                                            <button
+                                                type="button"
+                                                onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                                                className="absolute inset-y-0 left-0 pl-3 flex items-center text-slate-400 hover:text-slate-600"
+                                            >
+                                                {showConfirmPassword ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
+                                            </button>
+                                        </div>
                                         {confirmPasswordError && <p className="text-red-500 text-xs mt-1">{confirmPasswordError}</p>}
                                     </div>
                                 )}
