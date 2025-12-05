@@ -261,20 +261,21 @@ export const MockS3Service = {
         return newPhoto;
     },
 
-    getDashboardStats: async (events?: Event[]): Promise<DashboardStats> => {
+    getDashboardStats: async (): Promise<DashboardStats> => {
         await new Promise(resolve => setTimeout(resolve, 600));
         const email = localStorage.getItem(CURRENT_USER_KEY);
         if (!email) throw new Error('Not authenticated');
 
         const s3Data = loadData();
-        const userEvents = events || s3Data.events[email] || [];
+        const userEvents = s3Data.events[email] || [];
 
         const stats: DashboardStats = {
             totalDownloads: userEvents.reduce((acc, curr) => acc + curr.downloads, 0),
             totalPageVisits: userEvents.reduce((acc, curr) => acc + curr.guestVisits, 0),
             phoneSaves: Math.floor(userEvents.reduce((acc, curr) => acc + curr.guestVisits, 0) * 0.4),
             activeEvents: userEvents.filter(e => e.status === 'active').length,
-            expiredEvents: userEvents.filter(e => e.status === 'expired').length
+            expiredEvents: userEvents.filter(e => e.status === 'expired').length,
+            totalSocialTraffic: 0
         };
 
         return stats;

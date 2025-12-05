@@ -17,7 +17,8 @@ import {
     Filter,
     Eye,
     Edit,
-    Heart
+    Heart,
+    Share2
 } from 'lucide-react';
 
 const DashboardPage: React.FC = () => {
@@ -28,6 +29,8 @@ const DashboardPage: React.FC = () => {
     const [searchTerm, setSearchTerm] = useState('');
     const [showActiveOnly, setShowActiveOnly] = useState(false);
     const [currentPage, setCurrentPage] = useState(1);
+    const [deleteModalOpen, setDeleteModalOpen] = useState(false);
+    const [eventToDelete, setEventToDelete] = useState<Event | null>(null);
     const itemsPerPage = 5;
 
     useEffect(() => {
@@ -42,7 +45,7 @@ const DashboardPage: React.FC = () => {
             const eventsData = await BackendService.getEvents();
             setEvents(eventsData);
 
-            const statsData = await BackendService.getDashboardStats(eventsData);
+            const statsData = await BackendService.getDashboardStats();
             setStats(statsData);
         } catch (error) {
             console.error('Failed to load dashboard data:', error);
@@ -54,17 +57,23 @@ const DashboardPage: React.FC = () => {
         }
     };
 
-    const handleDeleteEvent = async (id: string, e: React.MouseEvent) => {
+    const openDeleteModal = (event: Event, e: React.MouseEvent) => {
         e.stopPropagation();
-        if (window.confirm('האם אתה בטוח שברצונך למחוק את האירוע? פעולה זו תמחק את כל הנתונים והתמונות לצמיתות ולא ניתן יהיה לשחזר אותם.')) {
-            try {
-                await BackendService.deleteEvent(id);
-                await loadData();
-                alert('האירוע נמחק בהצלחה');
-            } catch (error) {
-                console.error('Failed to delete event:', error);
-                alert('שגיאה במחיקת האירוע. אנא נסה שנית.');
-            }
+        setEventToDelete(event);
+        setDeleteModalOpen(true);
+    };
+
+    const handleConfirmDelete = async () => {
+        if (!eventToDelete) return;
+        
+        try {
+            await BackendService.deleteEvent(eventToDelete.id);
+            setDeleteModalOpen(false);
+            setEventToDelete(null);
+            await loadData();
+        } catch (error) {
+            console.error('Failed to delete event:', error);
+            alert('שגיאה במחיקת האירוע. אנא נסה שנית.');
         }
     };
 
@@ -113,7 +122,8 @@ const DashboardPage: React.FC = () => {
 
                 {/* Stats Grid */}
                 {stats && (
-                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-10">
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-6 mb-10">
+                        {/* 1. סה"כ הורדות */}
                         <div className="bg-white p-6 rounded-2xl shadow-sm border border-slate-100 hover:shadow-md transition-shadow">
                             <div className="p-3 bg-blue-50 text-blue-500 rounded-xl w-fit mb-4">
                                 <Download className="w-6 h-6" />
@@ -122,6 +132,7 @@ const DashboardPage: React.FC = () => {
                             <p className="text-slate-500 text-sm font-medium">סה"כ הורדות</p>
                         </div>
 
+                        {/* 2. כניסות לדפי אירועים */}
                         <div className="bg-white p-6 rounded-2xl shadow-sm border border-slate-100 hover:shadow-md transition-shadow">
                             <div className="p-3 bg-purple-50 text-purple-500 rounded-xl w-fit mb-4">
                                 <Users className="w-6 h-6" />
@@ -130,6 +141,17 @@ const DashboardPage: React.FC = () => {
                             <p className="text-slate-500 text-sm font-medium">כניסות לדפי אירועים</p>
                         </div>
 
+                        {/* 3. כניסה לפרופיל שלך */}
+                        <div className="bg-white p-6 rounded-2xl shadow-sm border border-slate-100 hover:shadow-md transition-shadow">
+                            <div className="bg-pink-50 p-3 rounded-xl w-fit mb-4 text-pink-500">
+                                <Share2 className="w-6 h-6" />
+                            </div>
+                            <h3 className="text-3xl font-bold text-slate-900 mb-1">{stats.totalSocialTraffic.toLocaleString()}</h3>
+                            <p className="text-slate-500 text-sm font-medium leading-tight">כניסות מהפרופיל שלך</p>
+                            <p className="text-slate-400 text-xs mt-1">פייסבוק • אינסטגרם • טיקטוק • אתר</p>
+                        </div>
+
+                        {/* 4. שמרו את המספר שלך */}
                         <div className="bg-white p-6 rounded-2xl shadow-sm border border-slate-100 hover:shadow-md transition-shadow">
                             <div className="bg-green-50 p-3 rounded-xl w-fit mb-4 text-green-500">
                                 <Smartphone className="w-6 h-6" />
@@ -138,6 +160,7 @@ const DashboardPage: React.FC = () => {
                             <p className="text-slate-500 text-sm font-medium">שמרו את המספר שלך</p>
                         </div>
 
+                        {/* 5. אירועים פעילים */}
                         <div className="bg-white p-6 rounded-2xl shadow-sm border border-slate-100 hover:shadow-md transition-shadow">
                             <div className="bg-orange-50 p-3 rounded-xl w-fit mb-4 text-orange-500">
                                 <Calendar className="w-6 h-6" />
@@ -195,7 +218,7 @@ const DashboardPage: React.FC = () => {
                                 {paginatedEvents.map((event) => (
                                     <tr
                                         key={event.id}
-                                        onClick={() => navigate(`/admin/events/${event.id}`)}
+                                        onClick={() => navigate(`/admin/events/${event.id}?tab=details`)}
                                         className="hover:bg-slate-50/80 transition-colors cursor-pointer group"
                                     >
                                         <td className="px-6 py-4">
@@ -251,13 +274,6 @@ const DashboardPage: React.FC = () => {
                                         <td className="px-6 py-4">
                                             <div className="flex items-center gap-2" onClick={(e) => e.stopPropagation()}>
                                                 <button
-                                                    onClick={() => navigate(`/admin/events/${event.id}`)}
-                                                    className="p-2 hover:bg-cyan-50 rounded-lg text-slate-400 hover:text-cyan-600 transition-colors"
-                                                    title="צפייה"
-                                                >
-                                                    <Eye className="w-4 h-4" />
-                                                </button>
-                                                <button
                                                     onClick={(e) => {
                                                         e.stopPropagation();
                                                         navigate(`/admin/events/${event.id}?tab=details`);
@@ -268,10 +284,7 @@ const DashboardPage: React.FC = () => {
                                                     <Edit className="w-4 h-4" />
                                                 </button>
                                                 <button
-                                                    onClick={(e) => {
-                                                        e.stopPropagation();
-                                                        navigate(`/admin/events/${event.id}?tab=details#delete-section`);
-                                                    }}
+                                                    onClick={(e) => openDeleteModal(event, e)}
                                                     className="p-2 hover:bg-red-50 rounded-lg text-slate-400 hover:text-red-500 transition-colors"
                                                     title="מחיקה"
                                                 >
@@ -330,6 +343,45 @@ const DashboardPage: React.FC = () => {
                         </div>
                     </div>
                 </div>
+
+                {/* Delete Confirmation Modal */}
+                {deleteModalOpen && eventToDelete && (
+                    <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+                        <div className="bg-white rounded-3xl shadow-2xl max-w-md w-full p-8 animate-fade-in">
+                            <div className="flex flex-col items-center text-center">
+                                <div className="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mb-4">
+                                    <Trash2 className="w-8 h-8 text-red-600" />
+                                </div>
+                                <h3 className="text-2xl font-bold text-slate-900 mb-2">מחיקת אירוע</h3>
+                                <p className="text-slate-600 mb-6">
+                                    האם אתה בטוח שברצונך למחוק את האירוע <span className="font-bold text-slate-900">"{eventToDelete.name}"</span>?
+                                </p>
+                                <div className="bg-red-50 border border-red-100 rounded-xl p-4 mb-6 w-full">
+                                    <p className="text-sm text-red-800 font-medium">
+                                        ⚠️ פעולה זו תמחק לצמיתות את כל התמונות והנתונים ולא ניתן יהיה לשחזר אותם.
+                                    </p>
+                                </div>
+                                <div className="flex gap-3 w-full">
+                                    <button
+                                        onClick={() => {
+                                            setDeleteModalOpen(false);
+                                            setEventToDelete(null);
+                                        }}
+                                        className="flex-1 px-6 py-3 border border-slate-200 text-slate-700 hover:bg-slate-50 rounded-xl font-bold transition-all"
+                                    >
+                                        ביטול
+                                    </button>
+                                    <button
+                                        onClick={handleConfirmDelete}
+                                        className="flex-1 px-6 py-3 bg-red-500 hover:bg-red-600 text-white rounded-xl font-bold transition-all shadow-lg hover:shadow-red-500/30"
+                                    >
+                                        מחק לצמיתות
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                )}
             </div>
         </Layout>
     );

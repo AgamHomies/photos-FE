@@ -299,16 +299,20 @@ export const RealEventAPI = {
         });
     },
 
-    setCoverImage: async (id: string, imageId: string): Promise<void> => {
-        await apiRequest(`/events/${id}/cover?image_id=${imageId}`, {
+    setCoverImage: async (eventId: string, imageId: string): Promise<void> => {
+         await apiRequest(`/events/${eventId}/cover?image_id=${imageId}`, {
             method: 'PUT',
+        });
+    },
+
+    getPresignedCoverUrl: async (eventId: string, filename: string, contentType: string): Promise<{ photoId: number; uploadUrl: string }> => {
+        return await apiRequest(`/events/${eventId}/cover/presign`, {
+            method: 'POST',
+            body: JSON.stringify({ filename, contentType: contentType }),
         });
     },
 };
 
-// ============================================
-// Photos API
-// ============================================
 export const RealPhotoAPI = {
     getEventPhotos: async (eventId: string): Promise<Photo[]> => {
         try {
@@ -367,22 +371,38 @@ export const RealPhotoAPI = {
             method: 'DELETE',
         });
     },
+
+    getPresignedUrls: async (eventId: string, files: { filename: string; contentType: string }[]): Promise<{ urls: { photoId: string; uploadUrl: string }[] }> => {
+        return await apiRequest(`/events/${eventId}/photos/presign`, {
+            method: 'POST',
+            body: JSON.stringify({ files }),
+        });
+    },
+
+    confirmUploads: async (eventId: string, photoIds: string[]): Promise<void> => {
+        await apiRequest(`/events/${eventId}/photos/confirm`, {
+            method: 'POST',
+            body: JSON.stringify({ photoIds: photoIds }),
+        });
+    },
+
+    uploadToS3: async (uploadUrl: string, file: File): Promise<void> => {
+        await fetch(uploadUrl, {
+            method: 'PUT',
+            body: file,
+            headers: {
+                'Content-Type': file.type,
+            },
+        });
+    },
 };
 
 // ============================================
 // Dashboard API
 // ============================================
 export const RealDashboardAPI = {
-    getDashboardStats: async (events?: Event[]): Promise<DashboardStats> => {
-        const eventsList = events || await RealEventAPI.getEvents();
-
-        return {
-            totalDownloads: eventsList.reduce((acc, e) => acc + e.downloads, 0),
-            totalPageVisits: eventsList.reduce((acc, e) => acc + e.guestVisits, 0),
-            phoneSaves: eventsList.reduce((acc, e) => acc + (e.phoneSaves || 0), 0),
-            activeEvents: eventsList.filter(e => e.status === 'active').length,
-            expiredEvents: eventsList.filter(e => e.status === 'expired').length,
-        };
+    getDashboardStats: async (): Promise<DashboardStats> => {
+        return await apiRequest('/events/stats');
     },
 };
 

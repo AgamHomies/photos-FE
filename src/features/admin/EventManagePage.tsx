@@ -83,19 +83,58 @@ const EventManagePage: React.FC = () => {
         if (e.target.files && e.target.files.length > 0 && id) {
             setUploading(true);
             try {
-                await BackendService.uploadEventPhotos(id, Array.from(e.target.files));
-                const newPhotos = Array.from(e.target.files).map((file, i) => ({
-                    id: `new-${Date.now()}-${i}`,
-                    url: URL.createObjectURL(file),
-                    thumbnailUrl: URL.createObjectURL(file),
-                    title: file.name,
-                    date: new Date().toISOString(),
-                    width: 800,
-                    height: 600
-                }));
-                setPhotos(prev => [...newPhotos, ...prev]);
-                alert('התמונות הועלו בהצלחה');
+                const files = Array.from(e.target.files);
+                const BATCH_SIZE = 50;
+                const CONCURRENCY_LIMIT = 5;
+                const totalFiles = files.length;
+                let processedCount = 0;
+
+                // Helper for concurrency control
+                const uploadWithConcurrency = async (tasks: (() => Promise<any>)[], limit: number) => {
+                    const results = [];
+                    const executing: Promise<any>[] = [];
+                    for (const task of tasks) {
+                        const p = Promise.resolve().then(() => task());
+                        results.push(p);
+                        const e: Promise<any> = p.then(() => executing.splice(executing.indexOf(e), 1));
+                        executing.push(e);
+                        if (executing.length >= limit) {
+                            await Promise.race(executing);
+                        }
+                    }
+                    return Promise.all(results);
+                };
+
+                // Process in batches
+                for (let i = 0; i < totalFiles; i += BATCH_SIZE) {
+                    const chunk = files.slice(i, i + BATCH_SIZE);
+                    
+                    // 1. Get presigned URLs for this batch
+                    const fileInfos = chunk.map(f => ({ filename: f.name, contentType: f.type }));
+                    const { urls } = await BackendService.getPresignedUrls(id, fileInfos);
+                    
+                    // 2. Upload to S3 with concurrency limit
+                    const uploadTasks = urls.map((urlInfo, index) => async () => {
+                        const file = chunk[index];
+                        await BackendService.uploadToS3(urlInfo.uploadUrl, file);
+                        return urlInfo.photoId;
+                    });
+
+                    const uploadedPhotoIds = await uploadWithConcurrency(uploadTasks, CONCURRENCY_LIMIT);
+
+                    // 3. Confirm uploads for this batch
+                    await BackendService.confirmUploads(id, uploadedPhotoIds);
+                    
+                    processedCount += chunk.length;
+                }
+
+                // 4. Refresh photos
+                const updatedPhotos = await BackendService.getEventPhotos(id);
+                setPhotos(updatedPhotos);
+                
+                alert(`הועלו בהצלחה ${totalFiles} תמונות`);
             } catch (error) {
+                console.error(error);
                 alert('שגיאה בהעלאת תמונות');
             } finally {
                 setUploading(false);
@@ -365,31 +404,29 @@ const EventManagePage: React.FC = () => {
                                                     if (e.target.files && e.target.files[0] && id) {
                                                         try {
                                                             setUploading(true);
-                                                            // 1. Upload the file
-                                                            await BackendService.uploadEventPhotos(id, [e.target.files[0]]);
+                                                            const file = e.target.files[0];
 
-                                                            // 2. Refresh photos to get the new image ID
-                                                            const updatedPhotos = await BackendService.getEventPhotos(id);
-                                                            setPhotos(updatedPhotos);
+                                                            // 1. Get presigned URL
+                                                            const coverInfo = await BackendService.getPresignedCoverUrl(
+                                                                id,
+                                                                file.name,
+                                                                file.type
+                                                            );
 
-                                                            // 3. Find the new photo (assuming it's the last one or by name)
-                                                            // Ideally backend returns the uploaded image object.
-                                                            // For now, let's find by filename match or just take the latest.
-                                                            const uploadedPhoto = updatedPhotos.find(p => p.title === e.target.files![0].name);
+                                                            // 2. Upload to S3
+                                                            await BackendService.uploadToS3(coverInfo.uploadUrl, file);
 
-                                                            if (uploadedPhoto) {
-                                                                // 4. Set as cover
-                                                                await BackendService.setCoverImage(id, uploadedPhoto.id);
+                                                            // 3. Set as cover
+                                                            await BackendService.setCoverImage(id, coverInfo.photoId.toString());
 
-                                                                // 5. Update local event state
-                                                                setEvent(prev => prev ? ({ ...prev, coverImage: uploadedPhoto.url }) : null);
-                                                                alert('תמונת קאבר עודכנה בהצלחה');
-                                                            } else {
-                                                                // Fallback: just refresh event to see if cover updated (if backend auto-sets it?)
-                                                                // But we need to explicitly set it.
-                                                                // If we can't find it, maybe just alert success of upload.
-                                                                alert('התמונה הועלתה. אנא בחר אותה כתמונת קאבר מלשונית התמונות.');
+                                                            // 4. Update local state
+                                                            // We might need to refresh the event to get the new cover URL properly if it's computed
+                                                            const updatedEvent = await BackendService.getEvent(id);
+                                                            if (updatedEvent) {
+                                                                setEvent(updatedEvent);
                                                             }
+                                                            
+                                                            alert('תמונת קאבר עודכנה בהצלחה');
                                                         } catch (error) {
                                                             console.error(error);
                                                             alert('שגיאה בהעלאת תמונת קאבר');

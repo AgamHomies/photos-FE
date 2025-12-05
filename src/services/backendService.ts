@@ -106,6 +106,11 @@ export const BackendService = {
             : await RealEventAPI.setCoverImage(id, imageId);
     },
 
+    getPresignedCoverUrl: async (eventId: string, filename: string, contentType: string): Promise<{ photoId: number; uploadUrl: string }> => {
+        if (USE_MOCK) throw new Error('Not implemented for mock');
+        return await RealEventAPI.getPresignedCoverUrl(eventId, filename, contentType);
+    },
+
     deleteEvent: async (id: string): Promise<void> => {
         return USE_MOCK
             ? await MockS3Service.deleteEvent(id)
@@ -135,13 +140,28 @@ export const BackendService = {
             : await RealPhotoAPI.deleteEventPhoto(eventId, photoId);
     },
 
+    getPresignedUrls: async (eventId: string, files: { filename: string; contentType: string }[]): Promise<{ urls: { photoId: string; uploadUrl: string }[] }> => {
+        if (USE_MOCK) throw new Error('Not implemented for mock');
+        return await RealPhotoAPI.getPresignedUrls(eventId, files);
+    },
+
+    confirmUploads: async (eventId: string, photoIds: string[]): Promise<void> => {
+        if (USE_MOCK) throw new Error('Not implemented for mock');
+        return await RealPhotoAPI.confirmUploads(eventId, photoIds);
+    },
+
+    uploadToS3: async (uploadUrl: string, file: File): Promise<void> => {
+        if (USE_MOCK) throw new Error('Not implemented for mock');
+        return await RealPhotoAPI.uploadToS3(uploadUrl, file);
+    },
+
     // ============================================
     // Dashboard
     // ============================================
-    getDashboardStats: async (events?: Event[]): Promise<DashboardStats> => {
+    getDashboardStats: async (): Promise<DashboardStats> => {
         return USE_MOCK
-            ? await MockS3Service.getDashboardStats(events)
-            : await RealDashboardAPI.getDashboardStats(events);
+            ? await MockS3Service.getDashboardStats()
+            : await RealDashboardAPI.getDashboardStats();
     },
 
     // ============================================

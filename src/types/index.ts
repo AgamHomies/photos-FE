@@ -63,4 +63,5 @@ export interface DashboardStats {
   phoneSaves: number;
   activeEvents: number;
   expiredEvents: number;
+  totalSocialTraffic: number;
 }
