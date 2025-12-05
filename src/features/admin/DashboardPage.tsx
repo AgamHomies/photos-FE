@@ -65,7 +65,7 @@ const DashboardPage: React.FC = () => {
 
     const handleConfirmDelete = async () => {
         if (!eventToDelete) return;
-        
+
         try {
             await BackendService.deleteEvent(eventToDelete.id);
             setDeleteModalOpen(false);
@@ -223,9 +223,17 @@ const DashboardPage: React.FC = () => {
                                     >
                                         <td className="px-6 py-4">
                                             <div className="flex items-center gap-3">
-                                                <div className="w-10 h-10 bg-cyan-100 rounded-lg flex items-center justify-center text-cyan-600">
-                                                    <ImageIcon className="w-5 h-5" />
-                                                </div>
+                                                {event.coverImage && !event.coverImage.includes('placeholder') ? (
+                                                    <img
+                                                        src={event.coverImage}
+                                                        alt={event.name}
+                                                        className="w-10 h-10 rounded-lg object-cover bg-slate-100"
+                                                    />
+                                                ) : (
+                                                    <div className="w-10 h-10 bg-cyan-100 rounded-lg flex items-center justify-center text-cyan-600">
+                                                        <ImageIcon className="w-5 h-5" />
+                                                    </div>
+                                                )}
                                                 <div>
                                                     <div className="font-bold text-slate-900 group-hover:text-cyan-600 transition-colors">
                                                         {event.name}
