@@ -98,6 +98,7 @@ export const RealProfileAPI = {
             profileImageUrl: data.profile.profileImageUrl || 'https://via.placeholder.com/150',
             contactEmail: data.profile.contactEmail,
             phone: data.profile.phone,
+            address: data.profile.address,
             instagramUrl: data.profile.instagramUrl,
             tiktokUrl: data.profile.tiktokUrl,
             facebookUrl: data.profile.facebookUrl,
@@ -121,6 +122,12 @@ export const RealProfileAPI = {
         if (updates.instagramUrl) formData.append('instagramUrl', updates.instagramUrl);
         if (updates.tiktokUrl) formData.append('tiktokUrl', updates.tiktokUrl);
         if (updates.facebookUrl) formData.append('facebookUrl', updates.facebookUrl);
+
+        // Add address
+        if (updates.address) formData.append('address', updates.address);
+
+        // Add logo if present
+        if (updates.logo) formData.append('logo', updates.logo);
 
         const token = await getAuthToken();
         const response = await fetch(`${API_BASE_URL}/auth/profile`, {
@@ -300,7 +307,7 @@ export const RealEventAPI = {
     },
 
     setCoverImage: async (eventId: string, imageId: string): Promise<void> => {
-         await apiRequest(`/events/${eventId}/cover?image_id=${imageId}`, {
+        await apiRequest(`/events/${eventId}/cover?image_id=${imageId}`, {
             method: 'PUT',
         });
     },

@@ -9,6 +9,7 @@ export interface PhotographerProfile {
   instagramUrl?: string;
   tiktokUrl?: string;
   facebookUrl?: string;
+  logo?: File;
   portfolio?: File[];
 }
 

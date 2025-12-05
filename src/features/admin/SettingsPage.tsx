@@ -32,7 +32,7 @@ const SettingsPage: React.FC = () => {
         const fetchProfile = async () => {
             try {
                 const profile = await BackendService.getProfile();
-                
+
                 if (profile) {
                     setFormData({
                         fullName: profile.name || user?.user_metadata?.full_name || '',
@@ -116,11 +116,12 @@ const SettingsPage: React.FC = () => {
                     instagramUrl: formData.instagramUrl,
                     tiktokUrl: formData.tiktokUrl,
                     facebookUrl: formData.facebookUrl,
+                    logo: formData.logo || undefined,
                 };
 
                 // Note: File upload for logo needs to be handled if supported by backend update
                 // Currently assuming text updates only for this iteration or separate endpoint
-                
+
                 await BackendService.updateProfile(updates);
 
                 // Update Supabase user metadata
