@@ -350,7 +350,7 @@ const GalleryPage: React.FC<GalleryPageProps> = ({ mode: propMode }) => {
                 <h2 className="text-2xl font-bold text-slate-900 flex items-center gap-3">
                   {mode === 'full' ? 'כל התמונות' : 'התמונות שלך'}
                   <span className="bg-slate-100 text-slate-600 text-sm px-3 py-1 rounded-full font-medium">
-                    {photos.length}
+                    {mode === 'full' ? (event?.photoCount || photos.length) : photos.length}
                   </span>
                 </h2>
               </div>

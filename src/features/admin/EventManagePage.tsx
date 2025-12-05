@@ -154,8 +154,10 @@ const EventManagePage: React.FC = () => {
                 }
 
                 // 4. Refresh photos
+                // We reload the first page to show the new photos, and update the total count
                 const updatedPhotos = await BackendService.getEventPhotos(id);
                 setPhotos(updatedPhotos);
+                setEvent(prev => prev ? ({ ...prev, photoCount: prev.photoCount + totalFiles }) : null);
 
                 alert(`הועלו בהצלחה ${totalFiles} תמונות`);
             } catch (error) {
@@ -172,6 +174,7 @@ const EventManagePage: React.FC = () => {
             try {
                 await BackendService.deleteEventPhoto(id, photoId);
                 setPhotos(prev => prev.filter(p => p.id !== photoId));
+                setEvent(prev => prev ? ({ ...prev, photoCount: Math.max(0, prev.photoCount - 1) }) : null);
             } catch (error) {
                 alert('שגיאה במחיקת תמונה');
             }
@@ -331,7 +334,7 @@ const EventManagePage: React.FC = () => {
                             <div className="flex justify-between items-center mb-6">
                                 <h2 className="text-xl font-bold text-slate-900 flex items-center gap-2">
                                     <div className="w-2 h-8 bg-cyan-500 rounded-full"></div>
-                                    כל התמונות ({photos.length})
+                                    כל התמונות ({event.photoCount || photos.length})
                                 </h2>
                             </div>
 

@@ -222,7 +222,7 @@ export const RealEventAPI = {
                 date: data.event_date.split('T')[0],
                 location: data.location || '',
                 coverImage: data.cover_image_url || 'https://via.placeholder.com/800x600',
-                photoCount: data.image_count || 0,
+                photoCount: data.images_count || 0,
                 guestVisits: data.guest_visits || 0,
                 downloads: data.downloads || 0,
                 uniqueLink: `${window.location.origin}/gallery/${data.guest_slug || data.id}`,
