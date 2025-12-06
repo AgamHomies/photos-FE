@@ -618,7 +618,7 @@ const GalleryPage: React.FC<GalleryPageProps> = ({ mode: propMode }) => {
           <p className="text-[#8B7355] mb-8 font-medium">חכו שתראו איך נצלם את האירוע שלכם :)</p>
           <p className="text-xs text-[#A89680] mb-8">שמרו את הפרטים שלנו או עברו לאתר שלנו לפרטים נוספים</p>
 
-          <div className="flex flex-col gap-4 max-w-lg mx-auto">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 max-w-lg mx-auto">
             {/* Save Phone Button */}
             <button
               onClick={handleSavePhone}

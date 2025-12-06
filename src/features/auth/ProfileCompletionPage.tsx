@@ -112,7 +112,7 @@ const ProfileCompletionPage: React.FC = () => {
                 <div className="cursor-pointer" onClick={() => navigate('/')}>
                     <img src="/logo.png" alt="Click2Pic" className="h-8" />
                 </div>
-                
+
                 <div className="flex items-center gap-4">
                     <div className="relative group">
                         <button className="flex items-center gap-2 focus:outline-none">
@@ -147,7 +147,7 @@ const ProfileCompletionPage: React.FC = () => {
                         <p className="text-slate-500 mb-4">
                             מלא את פרטי הצלם והמותג שלך כדי שהמערכת תתייג אותך כראוי בכל הורדה ובכל אירוע.
                         </p>
-                        
+
                         {/* First Time Alert */}
                         <div className="bg-blue-50 border border-blue-100 rounded-xl p-4 text-sm text-blue-700 inline-block">
                             שים לב: הגדרת הפרטים הראשונית מתבצעת באופן חד-פעמי בעת הכניסה הראשונה למערכת.
