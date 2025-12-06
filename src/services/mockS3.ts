@@ -225,10 +225,10 @@ export const MockS3Service = {
         return s3Data.profiles[email] || null;
     },
 
-    getPhotographerProfile: async (email: string): Promise<PhotographerProfile | null> => {
+    getPhotographerProfile: async (id: string): Promise<PhotographerProfile | null> => {
         await new Promise(resolve => setTimeout(resolve, 500));
         const s3Data = loadData();
-        return s3Data.profiles[email] || null;
+        return s3Data.profiles[id] || null;
     },
 
     getGallery: async (): Promise<Photo[]> => {

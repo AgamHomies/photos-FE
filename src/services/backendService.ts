@@ -45,10 +45,10 @@ export const BackendService = {
             : await RealProfileAPI.getProfile();
     },
 
-    getPhotographerProfile: async (email: string): Promise<PhotographerProfile | null> => {
+    getPhotographerProfile: async (id: string): Promise<PhotographerProfile | null> => {
         return USE_MOCK
-            ? await MockS3Service.getPhotographerProfile(email)
-            : await RealProfileAPI.getPhotographerProfile(email);
+            ? await MockS3Service.getPhotographerProfile(id)
+            : await RealProfileAPI.getPhotographerProfile(id);
     },
 
     updateProfile: async (updates: Partial<PhotographerProfile>): Promise<void> => {

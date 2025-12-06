@@ -19,7 +19,9 @@ import {
   XCircle,
   Globe,
   Copy,
-  Heart
+  Heart,
+  ChevronLeft,
+  ChevronRight
 } from 'lucide-react';
 
 interface GalleryPageProps {
@@ -37,14 +39,56 @@ const GalleryPage: React.FC<GalleryPageProps> = ({ mode: propMode }) => {
 
   const [selectedImage, setSelectedImage] = useState<File | null>(null);
   const [photos, setPhotos] = useState<Photo[]>([]);
+  const [searchResults, setSearchResults] = useState<Photo[]>([]); // Store all search results for client-side pagination
   const [lightboxPhoto, setLightboxPhoto] = useState<Photo | null>(null);
   const [selectedPhotos, setSelectedPhotos] = useState<Set<string>>(new Set());
 
+  // Pagination State
   const [page, setPage] = useState(1);
-  const [hasMore, setHasMore] = useState(true);
-  const ITEMS_PER_PAGE = 50;
+  const [itemsPerPage, setItemsPerPage] = useState(12); // Default for desktop
+  
+  // Calculate total pages based on mode
+  const totalItems = viewState === 'results' ? searchResults.length : (event?.photoCount || 0);
+  const totalPages = Math.ceil(totalItems / itemsPerPage);
 
   const resultsRef = useRef<HTMLDivElement>(null);
+
+  // Responsive itemsPerPage logic
+  useEffect(() => {
+    const handleResize = () => {
+      if (window.innerWidth < 768) {
+        setItemsPerPage(6); // Mobile: 2 cols * 3 rows = 6
+      } else if (window.innerWidth < 1024) {
+        setItemsPerPage(9); // Tablet: 3 cols * 3 rows = 9
+      } else {
+        setItemsPerPage(12); // Desktop: 4 cols * 3 rows = 12
+      }
+    };
+
+    // Initial call
+    handleResize();
+
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
+
+  // Update displayed photos when page, itemsPerPage, or searchResults change
+  useEffect(() => {
+    if (viewState === 'results') {
+      // Client-side pagination for results
+      const start = (page - 1) * itemsPerPage;
+      const end = start + itemsPerPage;
+      setPhotos(searchResults.slice(start, end));
+    } else if (mode === 'full' && event) {
+      // Server-side pagination for full mode is handled by loadData/handlePageChange
+      // Only trigger re-fetch if itemsPerPage changed significantly to affect view?
+      // For simplicity, we might just reload data if itemsPerPage changes, 
+      // but to avoid loops, let's rely on handlePageChange for explicit actions.
+      // However, if we resize, we might want to re-fetch to fill the grid? 
+      // Let's stick to explicit page changes for now to minimize API calls during resize.
+    }
+  }, [page, itemsPerPage, searchResults, viewState, mode, event]);
+
 
   // Toast notification state
   const [showToast, setShowToast] = useState(false);
@@ -63,23 +107,33 @@ const GalleryPage: React.FC<GalleryPageProps> = ({ mode: propMode }) => {
 
       if (eventData) {
         setEvent(eventData);
-
         // Determine mode from event data if available
         const currentMode = eventData.mode || propMode || 'guest';
         setMode(currentMode);
 
-        // Now fetch photos using the real numeric ID
-        const eventPhotos = await BackendService.getEventPhotos(eventData.id, 1, ITEMS_PER_PAGE);
+        console.log('Event loaded:', { id: eventData.id, photographerId: eventData.photographerId });
 
         if (eventData.photographerId) {
-          const profile = await BackendService.getPhotographerProfile(eventData.photographerId);
-          setPhotographer(profile);
+          console.log('Fetching photographer profile for:', eventData.photographerId);
+          try {
+            const profile = await BackendService.getPhotographerProfile(eventData.photographerId);
+            console.log('Photographer profile fetched:', profile);
+            setPhotographer(profile);
+          } catch (err) {
+            console.error('Error fetching photographer profile:', err);
+          }
+        } else {
+            console.warn('No photographerId found on event');
         }
 
+        // Now fetch photos using the real numeric ID
+        // Note: For full mode, we stick to fetching the specific page
+        // For guest (landing), we don't show photos initially
+        
         if (currentMode === 'full') {
+          const eventPhotos = await BackendService.getEventPhotos(eventData.id, 1, itemsPerPage);
           setPhotos(eventPhotos);
           setPage(1);
-          setHasMore(eventPhotos.length === ITEMS_PER_PAGE);
           setViewState('results');
         } else {
           setViewState('landing');
@@ -92,22 +146,29 @@ const GalleryPage: React.FC<GalleryPageProps> = ({ mode: propMode }) => {
     }
   };
 
-  const loadMorePhotos = async () => {
-    if (!event || !hasMore) return;
-
-    try {
-      const nextPage = page + 1;
-      const newPhotos = await BackendService.getEventPhotos(event.id, nextPage, ITEMS_PER_PAGE);
-
-      if (newPhotos.length > 0) {
-        setPhotos(prev => [...prev, ...newPhotos]);
-        setPage(nextPage);
-        setHasMore(newPhotos.length === ITEMS_PER_PAGE);
-      } else {
-        setHasMore(false);
-      }
-    } catch (error) {
-      console.error("Failed to load more photos", error);
+  const handlePageChange = async (newPage: number) => {
+    if (newPage < 1 || newPage > totalPages) return;
+    
+    if (viewState === 'results') {
+       // Client-side pagination (update triggered by useEffect)
+       setPage(newPage);
+    } else if (mode === 'full' && event) {
+       // Server-side pagination
+       setLoading(true);
+       try {
+          const newPhotos = await BackendService.getEventPhotos(event.id, newPage, itemsPerPage);
+          setPhotos(newPhotos);
+          setPage(newPage);
+       } catch (error) {
+          console.error("Failed to change page", error);
+       } finally {
+          setLoading(false);
+       }
+    }
+    
+    // Scroll to top of results
+    if (resultsRef.current) {
+       resultsRef.current.scrollIntoView({ behavior: 'smooth', block: 'start' });
     }
   };
 
@@ -129,7 +190,9 @@ const GalleryPage: React.FC<GalleryPageProps> = ({ mode: propMode }) => {
       // Call the real face search API
       const matches = await BackendService.searchFaces(id, selfieFile);
 
-      setPhotos(matches);
+      setSearchResults(matches); // Store all matches
+      setPage(1); // Reset to first page
+      // Photos will be updated by useEffect based on page 1 and itemsPerPage
       setViewState('results');
 
       setTimeout(() => {
@@ -343,7 +406,7 @@ END:VCARD`;
          </div>
          
          <h1 className="text-3xl font-bold text-[#4A3B2C] mb-1">
-            {photographer?.name || 'גל הפקות צילום אירועים'}
+            {photographer?.name || 'שם הצלם'}
          </h1>
          <p className="text-xs tracking-[0.2em] text-[#A89680] uppercase mb-4">
             PHOTOGRAPHY STUDIO
@@ -582,39 +645,72 @@ END:VCARD`;
       )}
 
       {/* 4. Footer & Contact */}
-      <footer className="mt-20 py-12 bg-[#F0E8DD]">
-         <div className="max-w-xl mx-auto px-6 text-center">
-            
-            <h2 className="text-2xl font-bold text-[#4A3B2C] mb-2">היום אתם אורחים, מחר אתם בעלי האירוע!</h2>
-            <p className="text-[#8B7355] mb-8 text-sm">שמרו את הפרטים שלנו או עברו לאתר שלנו לפרטים נוספים</p>
+      {/* 4. Footer & Contact */}
+      <footer className="mt-12">
+         {/* Top Section - Darker */}
+         <div className="bg-[#F0E8DD] py-10 px-6 relative overflow-hidden">
+            {/* Decorative top border */}
+            <div className="absolute top-0 left-0 right-0 h-px bg-[#D4C4B0]/50"></div>
 
-            <div className="flex flex-col sm:flex-row items-center gap-4 justify-center">
+            <div className="max-w-2xl mx-auto text-center relative z-10">
                
-               {/* Save Phone */}
-               <button
-                  onClick={handleSavePhone}
-                  className="w-full sm:w-auto min-w-[200px] bg-[#C4A882] text-white py-3.5 px-6 rounded-full font-bold shadow-md hover:bg-[#B39872] transition-all flex items-center justify-center gap-2"
-               >
-                  <span>שמור מספר טלפון</span>
-                  <Phone className="w-4 h-4 fill-current" />
-               </button>
-
-               {/* Website Link */}
-               {photographer?.websiteUrl && (
-                  <button
-                     onClick={() => window.open(photographer.websiteUrl, '_blank')}
-                     className="w-full sm:w-auto min-w-[200px] bg-white text-[#4A3B2C] py-3.5 px-6 rounded-full font-bold shadow-sm border border-[#E8DFD3] hover:bg-gray-50 transition-all flex items-center justify-center gap-2"
-                  >
-                     <Globe className="w-4 h-4" />
-                     <span>מעבר לאתר הצלם</span>
-                  </button>
+               {viewState === 'results' ? (
+                  <div className="animate-fade-in">
+                     <h2 className="text-3xl font-bold text-[#4A3B2C] mb-3 leading-tight">
+                        אהבתם את התמונות?
+                        <br/>
+                        חכו שתראו איך נצלם את האירוע שלכם (:
+                     </h2>
+                     <p className="text-[#8B7355] mb-6 text-base">
+                        שמרו את הפרטים שלנו או עברו לאתר שלנו לפרטים נוספים
+                     </p>
+                  </div>
+               ) : (
+                  <div className="animate-fade-in">
+                     <h2 className="text-3xl font-bold text-[#4A3B2C] mb-3 leading-tight">
+                        היום אתם אורחים -<br/>מחר אתם בעלי האירוע!
+                     </h2>
+                     <p className="text-[#8B7355] mb-6 text-base">
+                        שמרו את הפרטים שלנו או עברו לאתר שלנו לפרטים נוספים
+                     </p>
+                  </div>
                )}
-            </div>
 
-            <div className="mt-12 pt-6 border-t border-[#D4C4B0]/30 text-[10px] text-[#A89680]">
-               Powered by Click2Pic
-            </div>
+               <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-4 justify-center">
+                  
+                  {/* Save Phone */}
+                  <button
+                     onClick={handleSavePhone}
+                     className="group relative overflow-hidden bg-[#C4A882] text-white py-4 px-8 rounded-full font-bold shadow-lg hover:shadow-xl hover:bg-[#B39872] transition-all transform hover:-translate-y-0.5 active:translate-y-0"
+                  >
+                     <div className="flex items-center justify-center gap-3 relative z-10">
+                        <span>שמור מספר טלפון</span>
+                        <Phone className="w-4 h-4 fill-current group-hover:rotate-12 transition-transform" />
+                     </div>
+                  </button>
 
+                  {/* Website Link */}
+                  {photographer?.websiteUrl && (
+                     <button
+                        onClick={() => handleSocialClick(photographer.websiteUrl!, 'website')}
+                        className="group relative overflow-hidden bg-white text-[#4A3B2C] py-4 px-8 rounded-full font-bold shadow-md border border-[#E8DFD3] hover:border-[#C4A882] hover:bg-gray-50 transition-all transform hover:-translate-y-0.5 active:translate-y-0"
+                     >
+                        <div className="flex items-center justify-center gap-3 relative z-10">
+                           <Globe className="w-4 h-4 text-[#C4A882] group-hover:scale-110 transition-transform" />
+                           <span>מעבר לאתר הצלם</span>
+                        </div>
+                     </button>
+                  )}
+               </div>
+            </div>
+         </div>
+
+         {/* Bottom Section - Lighter */}
+         <div className="bg-[#FDFBF7] py-4 text-center border-t border-[#D4C4B0]/20">
+            <div className="flex flex-col items-center gap-1">
+               <p className="text-[10px] uppercase tracking-[0.2em] text-[#A89680]">Powered by</p>
+               <span className="font-bold text-[#C4A882] text-sm">Click2Pic</span>
+            </div>
          </div>
       </footer>
 

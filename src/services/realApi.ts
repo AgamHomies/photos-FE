@@ -107,8 +107,31 @@ export const RealProfileAPI = {
         };
     },
 
-    getPhotographerProfile: async (email: string): Promise<PhotographerProfile | null> => {
-        return RealProfileAPI.getProfile();
+    getPhotographerProfile: async (id: string): Promise<PhotographerProfile | null> => {
+        try {
+            console.log('RealProfileAPI: Fetching public profile for id:', id);
+            const response = await apiRequest(`/photographers/${id}`);
+            console.log('RealProfileAPI: Raw data received:', response);
+            
+            const data = response.data;
+
+            return {
+                name: data.name,
+                bio: data.bio,
+                profileImageUrl: data.profileImageUrl || '',
+                contactEmail: data.contactEmail || '',
+                phone: data.phone,
+                address: '', // Not returned by public API
+                websiteUrl: data.websiteUrl,
+                instagramUrl: data.instagramUrl,
+                tiktokUrl: data.tiktokUrl,
+                facebookUrl: data.facebookUrl,
+                portfolio: [], // Not returned by public API
+            };
+        } catch (error) {
+            console.error('Failed to get public photographer profile:', error);
+            return null;
+        }
     },
 
     updateProfile: async (updates: Partial<PhotographerProfile>): Promise<void> => {

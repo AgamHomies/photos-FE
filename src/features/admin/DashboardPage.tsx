@@ -147,7 +147,7 @@ const DashboardPage: React.FC = () => {
                                 <Share2 className="w-6 h-6" />
                             </div>
                             <h3 className="text-3xl font-bold text-slate-900 mb-1">{stats.totalSocialTraffic.toLocaleString()}</h3>
-                            <p className="text-slate-500 text-sm font-medium leading-tight">כניסות מהפרופיל שלך</p>
+                            <p className="text-slate-500 text-sm font-medium leading-tight">כניסות לפרופיל שלך</p>
                             <p className="text-slate-400 text-xs mt-1">פייסבוק • אינסטגרם • טיקטוק • אתר</p>
                         </div>
 
