@@ -548,35 +548,35 @@ END:VCARD`;
                   <span>|</span>
                   <span>{event.location}</span>
                </div>
-            </div>
+             </div>
+             
+             {/* Actions Bar */}
+             <div className="flex flex-wrap items-center justify-between mb-6 gap-4 bg-white p-4 rounded-2xl shadow-sm border border-[#F0EBE3]">
+                <div className="flex items-center gap-2">
+                   <h3 className="font-bold text-[#4A3B2C] flex items-center gap-2">
+                      {mode === 'full' ? 'כל התמונות' : 'התמונות שנמצאו'}
+                      <span className="bg-[#F0EBE3] px-2 py-0.5 rounded-full text-xs text-[#8B7355]">
+                         {totalItems}
+                      </span>
+                   </h3>
+                </div>
 
-            {/* Actions Bar */}
-            <div className="flex flex-wrap items-center justify-between mb-6 gap-4 bg-white p-4 rounded-2xl shadow-sm border border-[#F0EBE3]">
-               <div className="flex items-center gap-2">
-                  <h3 className="font-bold text-[#4A3B2C] flex items-center gap-2">
-                     {mode === 'full' ? 'כל התמונות' : 'התמונות שנמצאו'}
-                     <span className="bg-[#F0EBE3] px-2 py-0.5 rounded-full text-xs text-[#8B7355]">
-                        {photos.length}
-                     </span>
-                  </h3>
-               </div>
-
-               <div className="flex items-center gap-3">
-                  <button
-                     onClick={selectedPhotos.size === photos.length ? deselectAllPhotos : selectAllPhotos}
-                     className="text-sm font-medium text-[#8B7355] hover:text-[#C4A882]"
-                  >
-                     {selectedPhotos.size === photos.length ? 'נקה בחירה' : 'בחר הכל'}
-                  </button>
-                  <button 
-                     onClick={handleDownloadAll}
-                     className="bg-[#C4A882] text-white px-5 py-2.5 rounded-full text-sm font-bold shadow-sm hover:bg-[#B39872] transition-all flex items-center gap-2"
-                  >
-                     <Download className="w-4 h-4" />
-                     {selectedPhotos.size > 0 ? `הורד (${selectedPhotos.size})` : 'הורד הכל'}
-                  </button>
-               </div>
-            </div>
+                <div className="flex items-center gap-3">
+                   <button
+                      onClick={selectedPhotos.size === photos.length ? deselectAllPhotos : selectAllPhotos}
+                      className="text-sm font-medium text-[#8B7355] hover:text-[#C4A882]"
+                   >
+                      {selectedPhotos.size === photos.length ? 'נקה בחירה' : 'בחר הכל'}
+                   </button>
+                   <button 
+                      onClick={handleDownloadAll}
+                      className="bg-[#C4A882] text-white px-5 py-2.5 rounded-full text-sm font-bold shadow-sm hover:bg-[#B39872] transition-all flex items-center gap-2"
+                   >
+                      <Download className="w-4 h-4" />
+                      {selectedPhotos.size > 0 ? `הורד (${selectedPhotos.size})` : 'הורד הכל'}
+                   </button>
+                </div>
+             </div>
 
             {/* Grid */}
             <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
@@ -632,6 +632,35 @@ END:VCARD`;
                   );
                })}
             </div>
+
+            {/* Pagination Controls */}
+            {totalPages > 1 && (
+               <div className="flex justify-center items-center gap-4 mt-8" dir="rtl">
+                  {/* Previous Button (Right in RTL) */}
+                  <button
+                     onClick={() => handlePageChange(page - 1)}
+                     disabled={page === 1}
+                     className="p-2 rounded-full hover:bg-[#E8DFD3] disabled:opacity-30 disabled:cursor-not-allowed text-[#8B7355] transition-all bg-white shadow-sm border border-[#E8DFD3]"
+                     title="הקודם"
+                  >
+                     <ChevronRight className="w-6 h-6" />
+                  </button>
+                  
+                  <span className="text-sm font-medium text-[#8B7355]">
+                     עמוד {page} מתוך {totalPages}
+                  </span>
+                  
+                  {/* Next Button (Left in RTL) */}
+                  <button
+                     onClick={() => handlePageChange(page + 1)}
+                     disabled={page === totalPages}
+                     className="p-2 rounded-full hover:bg-[#E8DFD3] disabled:opacity-30 disabled:cursor-not-allowed text-[#8B7355] transition-all bg-white shadow-sm border border-[#E8DFD3]"
+                     title="הבא"
+                  >
+                     <ChevronLeft className="w-6 h-6" />
+                  </button>
+               </div>
+            )}
 
             {photos.length === 0 && (
                <div className="text-center py-20 bg-white rounded-3xl border border-[#F0EBE3] mt-8">
