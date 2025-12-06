@@ -15,7 +15,9 @@ import {
   Loader2,
   X,
   CheckCircle2,
-  Facebook
+  Facebook,
+  XCircle,
+  Globe
 } from 'lucide-react';
 
 interface GalleryPageProps {
@@ -34,6 +36,7 @@ const GalleryPage: React.FC<GalleryPageProps> = ({ mode: propMode }) => {
   const [selectedImage, setSelectedImage] = useState<File | null>(null);
   const [photos, setPhotos] = useState<Photo[]>([]);
   const [lightboxPhoto, setLightboxPhoto] = useState<Photo | null>(null);
+  const [selectedPhotos, setSelectedPhotos] = useState<Set<string>>(new Set());
 
   const [page, setPage] = useState(1);
   const [hasMore, setHasMore] = useState(true);
@@ -192,11 +195,17 @@ const GalleryPage: React.FC<GalleryPageProps> = ({ mode: propMode }) => {
   const handleDownloadAll = async () => {
     if (photos.length === 0) return;
 
-    if (mode === 'full') {
+    // If photos are selected, download only selected ones
+    const photosToDownload = selectedPhotos.size > 0
+      ? photos.filter(p => selectedPhotos.has(p.id))
+      : photos;
+
+    if (mode === 'full' && selectedPhotos.size === 0) {
+      // Full mode with no selection - download all from server
       window.location.href = `${CONFIG.API_BASE_URL}/public/events/${id}/download-all`;
     } else {
-      // Guest mode
-      const imageIds = photos.map(p => parseInt(p.id));
+      // Guest mode or selected photos
+      const imageIds = photosToDownload.map(p => parseInt(p.id));
 
       try {
         const response = await fetch(`${CONFIG.API_BASE_URL}/public/events/${id}/download-zip`, {
@@ -267,57 +276,107 @@ const GalleryPage: React.FC<GalleryPageProps> = ({ mode: propMode }) => {
     window.open(url, '_blank', 'noopener,noreferrer');
   };
 
+  const togglePhotoSelection = (photoId: string) => {
+    setSelectedPhotos(prev => {
+      const newSet = new Set(prev);
+      if (newSet.has(photoId)) {
+        newSet.delete(photoId);
+      } else {
+        newSet.add(photoId);
+      }
+      return newSet;
+    });
+  };
+
+  const selectAllPhotos = () => {
+    const allPhotoIds = new Set(photos.map(p => p.id));
+    setSelectedPhotos(allPhotoIds);
+  };
+
+  const deselectAllPhotos = () => {
+    setSelectedPhotos(new Set());
+  };
+
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-white">
+      <div className="min-h-screen flex items-center justify-center bg-[#F5F1EB]">
         <div className="text-center">
-          <Loader2 className="w-10 h-10 animate-spin text-cyan-500 mx-auto mb-4" />
-          <p className="text-slate-500">טוען גלריה...</p>
+          <Loader2 className="w-10 h-10 animate-spin text-[#C4A882] mx-auto mb-4" />
+          <p className="text-[#8B7355]">טוען גלריה...</p>
         </div>
       </div>
     );
   }
 
   if (!event) {
-    return <div className="min-h-screen flex items-center justify-center text-slate-500">אירוע לא נמצא</div>;
+    return <div className="min-h-screen flex items-center justify-center text-[#8B7355]">אירוע לא נמצא</div>;
   }
 
   return (
-    <div className="min-h-screen bg-slate-50 font-sans text-slate-800" dir="rtl">
+    <div className="min-h-screen bg-[#F5F1EB] font-sans text-[#5C4A3A]" dir="rtl">
 
       {/* Photographer Branding Header */}
-      <header className="bg-white border-b border-slate-100 sticky top-0 z-20 shadow-sm">
+      <header className="bg-[#FAF8F5] border-b border-[#E8DFD3] sticky top-0 z-20 shadow-sm">
         <div className="max-w-6xl mx-auto px-4 h-16 flex items-center justify-between">
           <div className="flex items-center gap-3">
             {photographer?.profileImageUrl ? (
-              <img src={photographer.profileImageUrl} alt="Photographer" className="w-10 h-10 rounded-full object-cover border border-slate-200" />
+              <img src={photographer.profileImageUrl} alt="Photographer" className="w-10 h-10 rounded-full object-cover border border-[#D4C4B0]" />
             ) : (
-              <div className="w-10 h-10 bg-slate-100 rounded-full flex items-center justify-center text-slate-400">
+              <div className="w-10 h-10 bg-[#EAE2D6] rounded-full flex items-center justify-center text-[#A89680]">
                 <Camera className="w-5 h-5" />
               </div>
             )}
             <div>
-              <h2 className="font-bold text-sm leading-tight text-slate-900">{photographer?.name || 'הצלם שלך'}</h2>
-              <p className="text-[11px] text-slate-500 font-medium">צילום אירועים מקצועי</p>
+              <h2 className="font-bold text-sm leading-tight text-[#5C4A3A]">{photographer?.name || 'הצלם שלך'}</h2>
+              <p className="text-[11px] text-[#8B7355] font-medium">צילום אירועים מקצועי</p>
             </div>
           </div>
           <div className="flex items-center gap-3">
+            {/* Phone button moved to footer */}
+          </div>
+        </div>
+      </header>
+
+      {/* Hero / Event Info */}
+      <div className="relative bg-[#8B7355] text-white overflow-hidden">
+        <div className="absolute inset-0">
+          <img src={event.coverImage} alt="Cover" className="w-full h-full object-cover opacity-50 blur-sm scale-105" />
+          <div className="absolute inset-0 bg-gradient-to-t from-[#8B7355] via-[#8B7355]/50 to-transparent"></div>
+        </div>
+
+        <div className="relative max-w-3xl mx-auto px-6 py-24 text-center">
+          <div className="inline-flex items-center gap-3 bg-white/10 backdrop-blur-md px-4 py-1.5 rounded-full text-xs font-medium mb-8 border border-white/20 shadow-lg">
+            <Calendar className="w-3 h-3 text-[#F5D5A8]" />
+            <span>{new Date(event.date).toLocaleDateString('he-IL')}</span>
+            <span className="w-1 h-1 bg-white/40 rounded-full"></span>
+            <MapPin className="w-3 h-3 text-[#F5D5A8]" />
+            <span>{event.location}</span>
+          </div>
+          <h1 className="text-4xl md:text-6xl font-bold mb-6 leading-tight tracking-tight">{event.name}</h1>
+          <p className="text-[#F5F1EB] text-lg md:text-xl max-w-xl mx-auto leading-relaxed font-light">
+            {mode === 'full'
+              ? 'ברוכים הבאים לגלריה המלאה. כל הרגעים היפים מהאירוע במקום אחד.'
+              : 'ברוכים הבאים לגלריה הרשמית. כאן תוכלו למצוא את כל הרגעים היפים מהאירוע.'}
+          </p>
+
+          {/* Social Media Buttons */}
+          <div className="flex items-center justify-center gap-4 mt-8">
             {photographer?.instagramUrl && (
               <button
                 onClick={() => handleSocialClick(photographer.instagramUrl!, 'instagram')}
-                className="p-2 text-slate-400 hover:text-pink-600 transition-colors bg-slate-50 rounded-full"
+                className="p-3 text-white/70 hover:text-pink-400 transition-colors bg-white/10 backdrop-blur-md rounded-full border border-white/20 hover:border-pink-400/50"
                 title="Instagram"
               >
-                <Instagram className="w-5 h-5" />
+                <Instagram className="w-6 h-6" />
               </button>
             )}
             {photographer?.tiktokUrl && (
               <button
                 onClick={() => handleSocialClick(photographer.tiktokUrl!, 'tiktok')}
-                className="p-2 text-slate-400 hover:text-slate-900 transition-colors bg-slate-50 rounded-full"
+                className="p-3 text-white/70 hover:text-white transition-colors bg-white/10 backdrop-blur-md rounded-full border border-white/20 hover:border-white/50"
                 title="TikTok"
               >
-                <svg className="w-5 h-5" viewBox="0 0 24 24" fill="currentColor">
+                <svg className="w-6 h-6" viewBox="0 0 24 24" fill="currentColor">
                   <path d="M19.59 6.69a4.83 4.83 0 0 1-3.77-4.25V2h-3.45v13.67a2.89 2.89 0 0 1-5.2 1.74 2.89 2.89 0 0 1 2.31-4.64 2.93 2.93 0 0 1 .88.13V9.4a6.84 6.84 0 0 0-1-.05A6.33 6.33 0 0 0 5 20.1a6.34 6.34 0 0 0 10.86-4.43v-7a8.16 8.16 0 0 0 4.77 1.52v-3.4a4.85 4.85 0 0 1-1-.1z" />
                 </svg>
               </button>
@@ -325,44 +384,13 @@ const GalleryPage: React.FC<GalleryPageProps> = ({ mode: propMode }) => {
             {photographer?.facebookUrl && (
               <button
                 onClick={() => handleSocialClick(photographer.facebookUrl!, 'facebook')}
-                className="p-2 text-slate-400 hover:text-blue-600 transition-colors bg-slate-50 rounded-full"
+                className="p-3 text-white/70 hover:text-blue-400 transition-colors bg-white/10 backdrop-blur-md rounded-full border border-white/20 hover:border-blue-400/50"
                 title="Facebook"
               >
-                <Facebook className="w-5 h-5" />
+                <Facebook className="w-6 h-6" />
               </button>
             )}
-            <button
-              onClick={handleSavePhone}
-              className="bg-slate-900 text-white text-xs px-4 py-2.5 rounded-full flex items-center gap-2 hover:bg-slate-800 transition-colors font-medium shadow-sm"
-            >
-              <Phone className="w-3 h-3" />
-              <span>שמור טלפון</span>
-            </button>
           </div>
-        </div>
-      </header>
-
-      {/* Hero / Event Info */}
-      <div className="relative bg-slate-900 text-white overflow-hidden">
-        <div className="absolute inset-0">
-          <img src={event.coverImage} alt="Cover" className="w-full h-full object-cover opacity-50 blur-sm scale-105" />
-          <div className="absolute inset-0 bg-gradient-to-t from-slate-900 via-slate-900/50 to-transparent"></div>
-        </div>
-
-        <div className="relative max-w-3xl mx-auto px-6 py-24 text-center">
-          <div className="inline-flex items-center gap-3 bg-white/10 backdrop-blur-md px-4 py-1.5 rounded-full text-xs font-medium mb-8 border border-white/20 shadow-lg">
-            <Calendar className="w-3 h-3 text-cyan-400" />
-            <span>{new Date(event.date).toLocaleDateString('he-IL')}</span>
-            <span className="w-1 h-1 bg-white/40 rounded-full"></span>
-            <MapPin className="w-3 h-3 text-cyan-400" />
-            <span>{event.location}</span>
-          </div>
-          <h1 className="text-4xl md:text-6xl font-bold mb-6 leading-tight tracking-tight">{event.name}</h1>
-          <p className="text-slate-200 text-lg md:text-xl max-w-xl mx-auto leading-relaxed font-light">
-            {mode === 'full'
-              ? 'ברוכים הבאים לגלריה המלאה. כל הרגעים היפים מהאירוע במקום אחד.'
-              : 'ברוכים הבאים לגלריה הרשמית. כאן תוכלו למצוא את כל הרגעים היפים מהאירוע.'}
-          </p>
         </div>
       </div>
 
@@ -371,22 +399,22 @@ const GalleryPage: React.FC<GalleryPageProps> = ({ mode: propMode }) => {
 
         {/* Guest Mode: Landing State */}
         {mode === 'guest' && viewState === 'landing' && (
-          <div className="bg-white rounded-3xl shadow-xl p-8 md:p-16 text-center max-w-2xl mx-auto border border-slate-100">
-            <div className="w-20 h-20 bg-cyan-50 rounded-full flex items-center justify-center mx-auto mb-8 ring-8 ring-cyan-50/50">
-              <Search className="w-10 h-10 text-cyan-600" />
+          <div className="bg-[#FAF8F5] rounded-3xl shadow-xl p-8 md:p-16 text-center max-w-2xl mx-auto border border-[#E8DFD3]">
+            <div className="w-20 h-20 bg-[#F5E6D3] rounded-full flex items-center justify-center mx-auto mb-8 ring-8 ring-[#F5E6D3]/50">
+              <Search className="w-10 h-10 text-[#C4A882]" />
             </div>
-            <h2 className="text-3xl font-bold mb-4 text-slate-900">מצא את התמונות שלי</h2>
-            <p className="text-slate-500 mb-10 max-w-md mx-auto text-lg leading-relaxed">
+            <h2 className="text-3xl font-bold mb-4 text-[#5C4A3A]">מצא את התמונות שלי</h2>
+            <p className="text-[#8B7355] mb-10 max-w-md mx-auto text-lg leading-relaxed">
               העלה תמונת סלפי קצרה, והמערכת החכמה שלנו תמצא את כל התמונות שלך מהאירוע תוך שניות.
             </p>
 
             <div className="flex flex-col gap-4 max-w-sm mx-auto">
-              <label className="bg-cyan-500 text-white py-4 px-8 rounded-2xl font-bold text-lg cursor-pointer hover:bg-cyan-600 transition-all transform hover:-translate-y-1 shadow-lg hover:shadow-cyan-500/30 flex items-center justify-center gap-3">
+              <label className="bg-[#C4A882] text-white py-4 px-8 rounded-2xl font-bold text-lg cursor-pointer hover:bg-[#B39872] transition-all transform hover:-translate-y-1 shadow-lg hover:shadow-[#C4A882]/30 flex items-center justify-center gap-3">
                 <Camera className="w-6 h-6" />
                 <span>העלה סלפי לחיפוש</span>
                 <input type="file" accept="image/*" className="hidden" onChange={handleImageUpload} />
               </label>
-              <p className="text-xs text-slate-400 mt-2 flex items-center justify-center gap-1">
+              <p className="text-xs text-[#A89680] mt-2 flex items-center justify-center gap-1">
                 <CheckCircle2 className="w-3 h-3" />
                 פרטיות מובטחת. התמונה משמשת לחיפוש בלבד.
               </p>
@@ -396,20 +424,20 @@ const GalleryPage: React.FC<GalleryPageProps> = ({ mode: propMode }) => {
 
         {/* Guest Mode: Scanning State */}
         {mode === 'guest' && viewState === 'scanning' && (
-          <div className="bg-white rounded-3xl shadow-xl p-16 text-center max-w-2xl mx-auto border border-slate-100">
+          <div className="bg-[#FAF8F5] rounded-3xl shadow-xl p-16 text-center max-w-2xl mx-auto border border-[#E8DFD3]">
             <div className="relative w-32 h-32 mx-auto mb-8">
               {selectedImage && (
                 <img
                   src={URL.createObjectURL(selectedImage)}
                   alt="Selfie"
-                  className="w-full h-full object-cover rounded-full border-4 border-white shadow-xl relative z-10"
+                  className="w-full h-full object-cover rounded-full border-4 border-[#FAF8F5] shadow-xl relative z-10"
                 />
               )}
-              <div className="absolute inset-0 border-4 border-cyan-500 rounded-full animate-ping opacity-20"></div>
-              <div className="absolute -inset-4 border border-cyan-200 rounded-full animate-spin border-t-cyan-500"></div>
+              <div className="absolute inset-0 border-4 border-[#C4A882] rounded-full animate-ping opacity-20"></div>
+              <div className="absolute -inset-4 border border-[#E8DFD3] rounded-full animate-spin border-t-[#C4A882]"></div>
             </div>
-            <h2 className="text-2xl font-bold mb-2 animate-pulse text-slate-900">מחפש אותך בתמונות...</h2>
-            <p className="text-slate-500">סורק אלפי תמונות באמצעות בינה מלאכותית</p>
+            <h2 className="text-2xl font-bold mb-2 animate-pulse text-[#5C4A3A]">מחפש אותך בתמונות...</h2>
+            <p className="text-[#8B7355]">סורק אלפי תמונות באמצעות בינה מלאכותית</p>
           </div>
         )}
 
@@ -417,98 +445,149 @@ const GalleryPage: React.FC<GalleryPageProps> = ({ mode: propMode }) => {
         {viewState === 'results' && (
           <div ref={resultsRef} className="animate-fade-in-up">
             <div className="flex items-center justify-between mb-8 mt-12 px-2">
-              <div>
-                <h2 className="text-2xl font-bold text-slate-900 flex items-center gap-3">
+              <div className="flex items-center gap-4">
+                <h2 className="text-2xl font-bold text-[#5C4A3A] flex items-center gap-3">
                   {mode === 'full' ? 'כל התמונות' : 'התמונות שלך'}
-                  <span className="bg-slate-100 text-slate-600 text-sm px-3 py-1 rounded-full font-medium">
+                  <span className="bg-[#EAE2D6] text-[#8B7355] text-sm px-3 py-1 rounded-full font-medium">
                     {mode === 'full' ? (event?.photoCount || photos.length) : photos.length}
                   </span>
                 </h2>
+
+                {/* Selection Counter */}
+                {selectedPhotos.size > 0 && (
+                  <div className="bg-[#C4A882] text-white px-4 py-2 rounded-full text-sm font-bold flex items-center gap-2 shadow-lg animate-fade-in">
+                    <CheckCircle2 className="w-4 h-4" />
+                    <span>{selectedPhotos.size} נבחרו</span>
+                  </div>
+                )}
               </div>
-              <button
-                onClick={handleDownloadAll}
-                className="bg-slate-900 text-white px-6 py-3 rounded-xl text-sm font-bold flex items-center gap-2 hover:bg-slate-800 transition-all shadow-lg hover:shadow-xl transform hover:-translate-y-0.5"
-              >
-                <Download className="w-4 h-4" />
-                <span className="hidden sm:inline">הורד הכל</span>
-              </button>
+
+              <div className="flex items-center gap-3">
+                {/* Clear Selection Button - Rightmost in RTL */}
+                <div className="w-[140px] flex justify-end">
+                  {selectedPhotos.size > 0 && (
+                    <button
+                      onClick={deselectAllPhotos}
+                      className="bg-[#FAF8F5] border border-[#D4C4B0] text-[#8B7355] px-4 py-2.5 rounded-xl text-sm font-bold hover:bg-[#F5F1EB] transition-all shadow-sm hover:shadow-md flex items-center justify-center gap-2 w-full animate-fade-in"
+                    >
+                      <XCircle className="w-4 h-4" />
+                      <span>נקה בחירה</span>
+                    </button>
+                  )}
+                </div>
+
+                {/* Select All Button - Middle */}
+                {photos.length > 0 && (
+                  <button
+                    onClick={selectAllPhotos}
+                    disabled={selectedPhotos.size === photos.length}
+                    className={`w-[130px] border px-4 py-2.5 rounded-xl text-sm font-bold transition-all shadow-sm flex items-center justify-center gap-2 ${selectedPhotos.size === photos.length
+                      ? 'bg-[#F5F1EB] border-transparent text-[#D4C4B0] cursor-default'
+                      : 'bg-[#FAF8F5] border-[#D4C4B0] text-[#8B7355] hover:bg-[#F5F1EB] hover:shadow-md'
+                      }`}
+                  >
+                    <CheckCircle2 className="w-4 h-4" />
+                    <span>בחר הכל</span>
+                  </button>
+                )}
+
+                <button
+                  onClick={handleDownloadAll}
+                  className="bg-[#8B7355] text-white px-6 py-3 rounded-xl text-sm font-bold flex items-center justify-center gap-2 hover:bg-[#6F5940] transition-all shadow-lg hover:shadow-xl transform hover:-translate-y-0.5 min-w-[170px]"
+                >
+                  <Download className="w-4 h-4" />
+                  <span className="hidden sm:inline">
+                    {selectedPhotos.size > 0 ? `הורד ${selectedPhotos.size} נבחרו` : 'הורד הכל'}
+                  </span>
+                  <span className="sm:hidden">הורד</span>
+                </button>
+              </div>
             </div>
 
             <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
-              {photos.map((photo) => (
-                <div
-                  key={photo.id}
-                  onClick={() => setLightboxPhoto(photo)}
-                  className="group relative aspect-[2/3] bg-slate-200 rounded-2xl overflow-hidden shadow-sm hover:shadow-xl transition-all cursor-pointer"
-                >
-                  <img
-                    src={photo.url}
-                    alt="Event"
-                    className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
-                  />
+              {photos.map((photo) => {
+                const isSelected = selectedPhotos.has(photo.id);
+                return (
+                  <div
+                    key={photo.id}
+                    className={`group relative aspect-[2/3] rounded-2xl overflow-hidden shadow-sm hover:shadow-xl transition-all ${isSelected ? 'shadow-md' : ''}`}
+                  >
+                    <img
+                      src={photo.url}
+                      alt="Event"
+                      className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
+                      onClick={() => setLightboxPhoto(photo)}
+                    />
 
-                  {/* Watermark Overlay */}
-                  <div className="absolute inset-0 flex items-center justify-center opacity-0 pointer-events-none select-none">
-                    <div className="transform -rotate-45 text-white font-bold text-2xl border-2 border-white px-4 py-1 rounded-lg">
-                      {photographer?.name || 'PREVIEW'}
+                    {/* Selection Checkmark - Top Right */}
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        togglePhotoSelection(photo.id);
+                      }}
+                      className={`absolute top-3 right-3 z-20 rounded-full w-8 h-8 flex items-center justify-center transition-all duration-200 ${isSelected
+                        ? 'bg-white text-black shadow-lg scale-100 opacity-100'
+                        : 'bg-black/20 text-white/50 hover:bg-white/90 hover:text-black hover:scale-105 opacity-0 group-hover:opacity-100'
+                        }`}
+                    >
+                      {isSelected ? (
+                        <CheckCircle2 className="w-5 h-5 fill-none" />
+                      ) : (
+                        <div className="w-5 h-5 rounded-full border-2 border-white/70" />
+                      )}
+                    </button>
+
+                    {/* Watermark Overlay */}
+                    <div className="absolute inset-0 flex items-center justify-center opacity-0 pointer-events-none select-none">
+                      <div className="transform -rotate-45 text-white font-bold text-2xl border-2 border-white px-4 py-1 rounded-lg">
+                        {photographer?.name || 'PREVIEW'}
+                      </div>
+                    </div>
+
+                    {/* Action Buttons - Top Left (Moved from Right) */}
+                    <div className="absolute top-3 left-3 flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity duration-200 z-10">
+                      <button
+                        onClick={(e) => handleDownload(photo, e)}
+                        className="p-2.5 bg-white/90 backdrop-blur-sm text-[#8B7355] rounded-xl hover:bg-white hover:text-[#C4A882] transition-all shadow-sm hover:shadow-md transform hover:scale-105"
+                        title="הורד תמונה"
+                      >
+                        <Download className="w-4 h-4" />
+                      </button>
+                      <button
+                        onClick={(e) => handleShare(photo, e)}
+                        className="p-2.5 bg-white/90 backdrop-blur-sm text-[#8B7355] rounded-xl hover:bg-white hover:text-[#C4A882] transition-all shadow-sm hover:shadow-md transform hover:scale-105"
+                        title="שתף"
+                      >
+                        <Share2 className="w-4 h-4" />
+                      </button>
                     </div>
                   </div>
-
-                  {/* Action Buttons - Top Right */}
-                  <div className="absolute top-3 right-3 flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity duration-200 z-10">
-                    <button
-                      onClick={(e) => handleDownload(photo, e)}
-                      className="p-2.5 bg-white/90 backdrop-blur-sm text-slate-700 rounded-xl hover:bg-white hover:text-cyan-600 transition-all shadow-sm hover:shadow-md transform hover:scale-105"
-                      title="הורד תמונה"
-                    >
-                      <Download className="w-4 h-4" />
-                    </button>
-                    <button
-                      onClick={(e) => handleShare(photo, e)}
-                      className="p-2.5 bg-white/90 backdrop-blur-sm text-slate-700 rounded-xl hover:bg-white hover:text-cyan-600 transition-all shadow-sm hover:shadow-md transform hover:scale-105"
-                      title="שתף"
-                    >
-                      <Share2 className="w-4 h-4" />
-                    </button>
-                  </div>
-                </div>
-              ))}
+                );
+              })}
             </div>
 
-            {hasMore && mode === 'full' && (
-              <div className="mt-12 flex justify-center">
-                <button
-                  onClick={loadMorePhotos}
-                  className="bg-white border border-slate-200 text-slate-600 px-8 py-4 rounded-2xl font-bold hover:bg-slate-50 transition-all shadow-sm hover:shadow-md flex items-center gap-3 group"
-                >
-                  <div className="w-8 h-8 rounded-full bg-slate-100 flex items-center justify-center group-hover:bg-slate-200 transition-colors">
-                    <Download className="w-4 h-4 rotate-180" />
-                  </div>
-                  <span className="text-lg">טען עוד תמונות</span>
-                </button>
-              </div>
-            )}
+            {/* Load More handled in footer or auto-scroll (cleaning up old button) */}
 
             {photos.length === 0 && (
-              <div className="text-center py-24 bg-white rounded-3xl border border-slate-100 shadow-sm">
-                <div className="w-20 h-20 bg-slate-50 rounded-full flex items-center justify-center mx-auto mb-6">
-                  <Search className="w-10 h-10 text-slate-300" />
+              <div className="text-center py-24 bg-[#FAF8F5] rounded-3xl border border-[#E8DFD3] shadow-sm">
+                <div className="w-20 h-20 bg-[#F5F1EB] rounded-full flex items-center justify-center mx-auto mb-6">
+                  <Search className="w-10 h-10 text-[#D4C4B0]" />
                 </div>
-                <h3 className="text-xl font-bold text-slate-900 mb-2">לא נמצאו תמונות</h3>
+                <h3 className="text-xl font-bold text-[#5C4A3A] mb-2">לא נמצאו תמונות</h3>
                 {mode === 'guest' ? (
                   <>
-                    <p className="text-slate-500 max-w-xs mx-auto mb-6">
+                    <p className="text-[#8B7355] max-w-xs mx-auto mb-6">
                       לא הצלחנו למצוא תמונות תואמות. נסה להעלות תמונה אחרת.
                     </p>
                     <button
                       onClick={() => setViewState('landing')}
-                      className="text-cyan-600 font-bold hover:text-cyan-700 hover:underline"
+                      className="text-[#C4A882] font-bold hover:text-[#B39872] hover:underline"
                     >
                       נסה שוב
                     </button>
                   </>
                 ) : (
-                  <p className="text-slate-500 max-w-xs mx-auto">
+                  <p className="text-[#8B7355] max-w-xs mx-auto">
                     הגלריה ריקה כרגע.
                   </p>
                 )}
@@ -519,22 +598,54 @@ const GalleryPage: React.FC<GalleryPageProps> = ({ mode: propMode }) => {
       </div>
 
       {/* Footer */}
-      <footer className="bg-white border-t border-slate-100 py-16 mt-20">
-        <div className="max-w-5xl mx-auto px-4 text-center">
-          <p className="text-slate-400 text-sm mb-3 font-medium tracking-wide uppercase">צולם באהבה על ידי</p>
-          <h3 className="text-2xl font-bold text-slate-900 mb-8">{photographer?.name}</h3>
-          <div className="flex justify-center gap-4 mb-10">
-            {photographer?.portfolio?.slice(0, 3).map((file, i) => (
-              <div key={i} className="w-24 h-24 rounded-xl overflow-hidden bg-slate-100 shadow-sm hover:shadow-md transition-shadow">
-                <div className="w-full h-full bg-slate-200 flex items-center justify-center text-slate-400 text-xs font-medium">
-                  תיק עבודות
-                </div>
+      {/* Footer / Call to Action */}
+      <footer className="bg-[#EAE2D6]/30 border-t border-[#E8DFD3] py-16 mt-20">
+        <div className="max-w-2xl mx-auto px-6 text-center">
+
+          <h3 className="text-2xl font-bold text-[#5C4A3A] mb-2">אהבתם את התמונות?</h3>
+          <p className="text-[#8B7355] mb-8 font-medium">חכו שתראו איך נצלם את האירוע שלכם :)</p>
+          <p className="text-xs text-[#A89680] mb-8">שמרו את הפרטים שלנו או עברו לאתר שלנו לפרטים נוספים</p>
+
+          <div className="flex flex-col gap-4 max-w-lg mx-auto">
+            {/* Save Phone Button */}
+            <button
+              onClick={handleSavePhone}
+              className="w-full bg-[#C4A882] text-white py-4 rounded-full text-lg font-bold shadow-sm hover:bg-[#B39872] transition-colors flex items-center justify-center gap-3"
+            >
+              <span>שמור מספר טלפון</span>
+              <Phone className="w-5 h-5" />
+            </button>
+
+            {/* Website Button */}
+            {photographer?.websiteUrl && (
+              <button
+                onClick={() => window.open(photographer.websiteUrl, '_blank')}
+                className="w-full bg-white text-[#5C4A3A] border border-[#E8DFD3] py-4 rounded-full text-lg font-bold shadow-sm hover:shadow-md transition-all flex items-center justify-center gap-3"
+              >
+                <span>מעבר לאתר הצלם</span>
+                <Globe className="w-5 h-5" />
+              </button>
+            )}
+
+            {/* Pages / Load More (If in full mode and exists) */}
+            {hasMore && mode === 'full' && (
+              <div className="mt-4">
+                <button
+                  onClick={loadMorePhotos}
+                  className="text-[#C4A882] font-bold hover:underline"
+                >
+                  טען עוד תמונות
+                </button>
               </div>
-            ))}
+            )}
+
           </div>
-          <p className="text-slate-400 text-xs">
-            © כל הזכויות שמורות ל{photographer?.name}. נבנה באמצעות <span className="font-bold text-slate-600">Click2Pic</span>.
-          </p>
+
+          <div className="mt-16 pt-8 border-t border-[#E8DFD3]/50">
+            <p className="text-[#A89680] text-xs">
+              Powered by <span className="font-bold text-[#C4A882]">Click2Pic</span>
+            </p>
+          </div>
         </div>
       </footer>
 
@@ -579,8 +690,8 @@ const GalleryPage: React.FC<GalleryPageProps> = ({ mode: propMode }) => {
       {/* Toast Notification */}
       {showToast && (
         <div className="fixed bottom-8 left-1/2 transform -translate-x-1/2 z-50 animate-fade-in">
-          <div className="bg-slate-900 text-white px-6 py-3 rounded-full shadow-lg flex items-center gap-3">
-            <CheckCircle2 className="w-5 h-5 text-green-400" />
+          <div className="bg-[#8B7355] text-white px-6 py-3 rounded-full shadow-lg flex items-center gap-3">
+            <CheckCircle2 className="w-5 h-5 text-[#C4E8C4]" />
             <span className="font-medium">{toastMessage}</span>
           </div>
         </div>
