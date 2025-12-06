@@ -13,7 +13,9 @@ import {
     Users,
     Heart,
     Image as ImageIcon,
-    FileText
+    FileText,
+    CheckCircle2,
+    XCircle
 } from 'lucide-react';
 
 const EventManagePage: React.FC = () => {
@@ -38,7 +40,19 @@ const EventManagePage: React.FC = () => {
             }, 100);
         }
     }, [location.hash, activeTab, loading]);
+    const [toast, setToast] = useState<{ show: boolean; message: string; type: 'success' | 'error' }>({
+        show: false,
+        message: '',
+        type: 'success'
+    });
+
+    const showNotification = (message: string, type: 'success' | 'error' = 'success') => {
+        setToast({ show: true, message, type });
+        setTimeout(() => setToast(prev => ({ ...prev, show: false })), 3000);
+    };
+
     const [uploading, setUploading] = useState(false);
+
 
     // Edit form state
     const [editForm, setEditForm] = useState({
@@ -159,10 +173,10 @@ const EventManagePage: React.FC = () => {
                 setPhotos(updatedPhotos);
                 setEvent(prev => prev ? ({ ...prev, photoCount: prev.photoCount + totalFiles }) : null);
 
-                alert(`הועלו בהצלחה ${totalFiles} תמונות`);
+                showNotification(`הועלו בהצלחה ${totalFiles} תמונות`);
             } catch (error) {
                 console.error(error);
-                alert('שגיאה בהעלאת תמונות');
+                showNotification('שגיאה בהעלאת תמונות', 'error');
             } finally {
                 setUploading(false);
             }
@@ -176,7 +190,7 @@ const EventManagePage: React.FC = () => {
                 setPhotos(prev => prev.filter(p => p.id !== photoId));
                 setEvent(prev => prev ? ({ ...prev, photoCount: Math.max(0, prev.photoCount - 1) }) : null);
             } catch (error) {
-                alert('שגיאה במחיקת תמונה');
+                showNotification('שגיאה במחיקת תמונה', 'error');
             }
         }
     };
@@ -186,9 +200,9 @@ const EventManagePage: React.FC = () => {
             try {
                 const updated = await BackendService.updateEvent(id, { coverImage: photoUrl });
                 setEvent(updated);
-                alert('תמונת קאבר עודכנה בהצלחה');
+                showNotification('תמונת קאבר עודכנה בהצלחה');
             } catch (error) {
-                alert('שגיאה בעדכון תמונת קאבר');
+                showNotification('שגיאה בעדכון תמונת קאבר', 'error');
             }
         }
     };
@@ -199,9 +213,9 @@ const EventManagePage: React.FC = () => {
             try {
                 const updated = await BackendService.updateEvent(id, editForm);
                 setEvent(updated);
-                alert('פרטי האירוע עודכנו בהצלחה');
+                showNotification('פרטי האירוע עודכנו בהצלחה');
             } catch (error) {
-                alert('שגיאה בעדכון פרטים');
+                showNotification('שגיאה בעדכון פרטים', 'error');
             }
         }
     };
@@ -213,7 +227,7 @@ const EventManagePage: React.FC = () => {
                     await BackendService.deleteEvent(id);
                     navigate('/admin');
                 } catch (error) {
-                    alert('שגיאה במחיקת האירוע');
+                    showNotification('שגיאה במחיקת האירוע', 'error');
                 }
             }
         }
@@ -466,10 +480,10 @@ const EventManagePage: React.FC = () => {
                                                                 setEvent(updatedEvent);
                                                             }
 
-                                                            alert('תמונת קאבר עודכנה בהצלחה');
+                                                            showNotification('תמונת קאבר עודכנה בהצלחה');
                                                         } catch (error) {
                                                             console.error(error);
-                                                            alert('שגיאה בהעלאת תמונת קאבר');
+                                                            showNotification('שגיאה בהעלאת תמונת קאבר', 'error');
                                                         } finally {
                                                             setUploading(false);
                                                         }
@@ -538,6 +552,23 @@ const EventManagePage: React.FC = () => {
                     </div>
                 )}
             </div>
+            {/* Toast Notification */}
+            {toast.show && (
+                <div className="fixed bottom-6 left-1/2 transform -translate-x-1/2 z-50 animate-fade-in-up">
+                    <div className={`px-6 py-3 rounded-full shadow-xl border flex items-center gap-3 ${
+                        toast.type === 'success' 
+                            ? 'bg-slate-900 text-white border-slate-800' 
+                            : 'bg-red-50 text-red-600 border-red-200'
+                    }`}>
+                        {toast.type === 'success' ? (
+                            <CheckCircle2 className="w-5 h-5 text-cyan-400" />
+                        ) : (
+                            <XCircle className="w-5 h-5" />
+                        )}
+                        <span className="font-medium text-sm">{toast.message}</span>
+                    </div>
+                </div>
+            )}
         </Layout>
     );
 };

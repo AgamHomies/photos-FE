@@ -48,7 +48,6 @@ const GalleryPage: React.FC<GalleryPageProps> = ({ mode: propMode }) => {
   const [itemsPerPage, setItemsPerPage] = useState(12); // Default for desktop
   
   // Calculate total pages based on mode
-  // Calculate total pages based on mode
   const totalItems = mode === 'full' ? (event?.photoCount || 0) : (viewState === 'results' ? searchResults.length : 0);
   const totalPages = Math.ceil(totalItems / itemsPerPage);
 
@@ -381,7 +380,7 @@ END:VCARD`;
               <img
                 src={photographer.profileImageUrl}
                 alt="Logo"
-                className="w-20 h-20 mx-auto rounded-lg object-contain shadow-sm bg-black"
+                className="w-20 h-20 mx-auto rounded-lg object-contain shadow-sm bg-transparent"
                 onError={(e) => {
                    // Fallback if image fails
                    e.currentTarget.style.display = 'none';
