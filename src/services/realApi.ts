@@ -102,6 +102,7 @@ export const RealProfileAPI = {
             instagramUrl: data.profile.instagramUrl,
             tiktokUrl: data.profile.tiktokUrl,
             facebookUrl: data.profile.facebookUrl,
+            websiteUrl: data.profile.websiteUrl,
             portfolio: data.profile.portfolio || [],
         };
     },
@@ -122,6 +123,7 @@ export const RealProfileAPI = {
         if (updates.instagramUrl) formData.append('instagramUrl', updates.instagramUrl);
         if (updates.tiktokUrl) formData.append('tiktokUrl', updates.tiktokUrl);
         if (updates.facebookUrl) formData.append('facebookUrl', updates.facebookUrl);
+        if (updates.websiteUrl) formData.append('websiteUrl', updates.websiteUrl);
 
         // Add address
         if (updates.address) formData.append('address', updates.address);
@@ -157,6 +159,7 @@ export const RealProfileAPI = {
         if (profileData.instagramUrl) formData.append('instagramUrl', profileData.instagramUrl);
         if (profileData.tiktokUrl) formData.append('tiktokUrl', profileData.tiktokUrl);
         if (profileData.facebookUrl) formData.append('facebookUrl', profileData.facebookUrl);
+        if (profileData.websiteUrl) formData.append('websiteUrl', profileData.websiteUrl);
 
         // Optional file uploads
         if (profileData.logo) formData.append('logo', profileData.logo);
