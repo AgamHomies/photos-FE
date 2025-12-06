@@ -444,4 +444,33 @@ export const RealGalleryAPI = {
             return undefined;
         }
     },
+
+    searchFaces: async (slug: string, selfieFile: File): Promise<Photo[]> => {
+        try {
+            const formData = new FormData();
+            formData.append('selfie', selfieFile);
+
+            const response = await fetch(`${CONFIG.API_BASE_URL}/public/events/${slug}/search`, {
+                method: 'POST',
+                body: formData,
+            });
+
+            if (!response.ok) {
+                throw new Error('Face search failed');
+            }
+
+            const data = await response.json();
+
+            // Map the response to Photo objects
+            return data.map((img: any) => ({
+                id: img.id.toString(),
+                url: img.url,
+                thumbnailUrl: img.thumbnail_url,
+                title: `Photo ${img.id}`,
+            }));
+        } catch (error) {
+            console.error('Failed to search faces:', error);
+            throw error;
+        }
+    },
 };

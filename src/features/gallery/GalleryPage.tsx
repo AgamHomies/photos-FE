@@ -105,22 +105,31 @@ const GalleryPage: React.FC<GalleryPageProps> = ({ mode: propMode }) => {
     if (e.target.files && e.target.files[0]) {
       setSelectedImage(e.target.files[0]);
       setViewState('scanning');
-      simulateScanning();
+      performFaceSearch(e.target.files[0]);
     }
   };
 
-  const simulateScanning = async () => {
-    setTimeout(async () => {
-      if (event?.id) {
-        const allPhotos = await BackendService.getEventPhotos(event.id);
-        const matches = allPhotos.filter(() => Math.random() > 0.6);
-        setPhotos(matches);
-        setViewState('results');
-        setTimeout(() => {
-          resultsRef.current?.scrollIntoView({ behavior: 'smooth' });
-        }, 100);
+  const performFaceSearch = async (selfieFile: File) => {
+    try {
+      if (!id) {
+        console.error('No event ID available');
+        return;
       }
-    }, 3000);
+
+      // Call the real face search API
+      const matches = await BackendService.searchFaces(id, selfieFile);
+
+      setPhotos(matches);
+      setViewState('results');
+
+      setTimeout(() => {
+        resultsRef.current?.scrollIntoView({ behavior: 'smooth' });
+      }, 100);
+    } catch (error) {
+      console.error('Face search failed:', error);
+      alert('חיפוש הפנים נכשל. אנא נסה שוב.');
+      setViewState('landing');
+    }
   };
 
   const handleShare = async (photo: Photo, e: React.MouseEvent) => {
@@ -350,7 +359,7 @@ const GalleryPage: React.FC<GalleryPageProps> = ({ mode: propMode }) => {
                 <h2 className="text-2xl font-bold text-slate-900 flex items-center gap-3">
                   {mode === 'full' ? 'כל התמונות' : 'התמונות שלך'}
                   <span className="bg-slate-100 text-slate-600 text-sm px-3 py-1 rounded-full font-medium">
-                    {event?.photoCount || photos.length}
+                    {mode === 'full' ? (event?.photoCount || photos.length) : photos.length}
                   </span>
                 </h2>
               </div>

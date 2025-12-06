@@ -181,6 +181,17 @@ export const BackendService = {
         }
         return await MockS3Service.uploadPhoto(file);
     },
+
+    // ============================================
+    // Face Search
+    // ============================================
+    searchFaces: async (slug: string, selfieFile: File): Promise<Photo[]> => {
+        if (USE_MOCK) {
+            console.warn('Face search not implemented for mock, returning empty array');
+            return [];
+        }
+        return await RealGalleryAPI.searchFaces(slug, selfieFile);
+    },
 };
 
 // Export for backward compatibility
