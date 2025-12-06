@@ -473,4 +473,28 @@ export const RealGalleryAPI = {
             throw error;
         }
     },
+
+    trackContactSaved: async (slug: string): Promise<void> => {
+        try {
+            await fetch(`${CONFIG.API_BASE_URL}/public/events/${slug}/track-contact-saved`, {
+                method: 'POST',
+            });
+        } catch (error) {
+            console.error('Failed to track contact saved:', error);
+        }
+    },
+
+    trackTrafficSource: async (slug: string, source: string): Promise<void> => {
+        try {
+            await fetch(`${CONFIG.API_BASE_URL}/public/events/${slug}/track-source`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ source }),
+            });
+        } catch (error) {
+            console.error('Failed to track traffic source:', error);
+        }
+    },
 };

@@ -192,6 +192,25 @@ export const BackendService = {
         }
         return await RealGalleryAPI.searchFaces(slug, selfieFile);
     },
+
+    // ============================================
+    // Tracking
+    // ============================================
+    trackContactSaved: async (slug: string): Promise<void> => {
+        if (USE_MOCK) {
+            console.log('Mock: tracking contact saved');
+            return;
+        }
+        return await RealGalleryAPI.trackContactSaved(slug);
+    },
+
+    trackTrafficSource: async (slug: string, source: string): Promise<void> => {
+        if (USE_MOCK) {
+            console.log('Mock: tracking traffic source:', source);
+            return;
+        }
+        return await RealGalleryAPI.trackTrafficSource(slug, source);
+    },
 };
 
 // Export for backward compatibility

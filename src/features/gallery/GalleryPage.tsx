@@ -14,7 +14,8 @@ import {
   Search,
   Loader2,
   X,
-  CheckCircle2
+  CheckCircle2,
+  Facebook
 } from 'lucide-react';
 
 interface GalleryPageProps {
@@ -39,6 +40,10 @@ const GalleryPage: React.FC<GalleryPageProps> = ({ mode: propMode }) => {
   const ITEMS_PER_PAGE = 50;
 
   const resultsRef = useRef<HTMLDivElement>(null);
+
+  // Toast notification state
+  const [showToast, setShowToast] = useState(false);
+  const [toastMessage, setToastMessage] = useState('');
 
   useEffect(() => {
     if (id) {
@@ -220,13 +225,46 @@ const GalleryPage: React.FC<GalleryPageProps> = ({ mode: propMode }) => {
     }
   };
 
-  const handleSavePhone = () => {
+  const handleSavePhone = async () => {
     if (photographer?.phone) {
-      navigator.clipboard.writeText(photographer.phone);
-      alert(`המספר ${photographer.phone} הועתק ללוח`);
+      try {
+        await navigator.clipboard.writeText(photographer.phone);
+        setToastMessage(`המספר ${photographer.phone} הועתק ללוח`);
+        setShowToast(true);
+        setTimeout(() => setShowToast(false), 3000);
+
+        // Track the contact save
+        if (id) {
+          await BackendService.trackContactSaved(id);
+        }
+      } catch (error) {
+        console.error('Failed to copy phone:', error);
+        setToastMessage('שגיאה בהעתקת המספר');
+        setShowToast(true);
+        setTimeout(() => setShowToast(false), 3000);
+      }
     } else {
-      alert('מספר טלפון לא זמין');
+      setToastMessage('מספר טלפון לא זמין');
+      setShowToast(true);
+      setTimeout(() => setShowToast(false), 3000);
     }
+  };
+
+  const handleSocialClick = async (url: string, source: string) => {
+    if (!url) return;
+
+    // Track the social media click
+    if (id) {
+      await BackendService.trackTrafficSource(id, source);
+    }
+
+    // Show toast notification
+    setToastMessage(`פתיחת ${source}...`);
+    setShowToast(true);
+    setTimeout(() => setShowToast(false), 2000);
+
+    // Open the link
+    window.open(url, '_blank', 'noopener,noreferrer');
   };
 
   if (loading) {
@@ -265,9 +303,33 @@ const GalleryPage: React.FC<GalleryPageProps> = ({ mode: propMode }) => {
           </div>
           <div className="flex items-center gap-3">
             {photographer?.instagramUrl && (
-              <a href={photographer.instagramUrl} target="_blank" rel="noreferrer" className="p-2 text-slate-400 hover:text-pink-600 transition-colors bg-slate-50 rounded-full">
+              <button
+                onClick={() => handleSocialClick(photographer.instagramUrl!, 'instagram')}
+                className="p-2 text-slate-400 hover:text-pink-600 transition-colors bg-slate-50 rounded-full"
+                title="Instagram"
+              >
                 <Instagram className="w-5 h-5" />
-              </a>
+              </button>
+            )}
+            {photographer?.tiktokUrl && (
+              <button
+                onClick={() => handleSocialClick(photographer.tiktokUrl!, 'tiktok')}
+                className="p-2 text-slate-400 hover:text-slate-900 transition-colors bg-slate-50 rounded-full"
+                title="TikTok"
+              >
+                <svg className="w-5 h-5" viewBox="0 0 24 24" fill="currentColor">
+                  <path d="M19.59 6.69a4.83 4.83 0 0 1-3.77-4.25V2h-3.45v13.67a2.89 2.89 0 0 1-5.2 1.74 2.89 2.89 0 0 1 2.31-4.64 2.93 2.93 0 0 1 .88.13V9.4a6.84 6.84 0 0 0-1-.05A6.33 6.33 0 0 0 5 20.1a6.34 6.34 0 0 0 10.86-4.43v-7a8.16 8.16 0 0 0 4.77 1.52v-3.4a4.85 4.85 0 0 1-1-.1z" />
+                </svg>
+              </button>
+            )}
+            {photographer?.facebookUrl && (
+              <button
+                onClick={() => handleSocialClick(photographer.facebookUrl!, 'facebook')}
+                className="p-2 text-slate-400 hover:text-blue-600 transition-colors bg-slate-50 rounded-full"
+                title="Facebook"
+              >
+                <Facebook className="w-5 h-5" />
+              </button>
             )}
             <button
               onClick={handleSavePhone}
@@ -510,6 +572,16 @@ const GalleryPage: React.FC<GalleryPageProps> = ({ mode: propMode }) => {
                 <span>שתף</span>
               </button>
             </div>
+          </div>
+        </div>
+      )}
+
+      {/* Toast Notification */}
+      {showToast && (
+        <div className="fixed bottom-8 left-1/2 transform -translate-x-1/2 z-50 animate-fade-in">
+          <div className="bg-slate-900 text-white px-6 py-3 rounded-full shadow-lg flex items-center gap-3">
+            <CheckCircle2 className="w-5 h-5 text-green-400" />
+            <span className="font-medium">{toastMessage}</span>
           </div>
         </div>
       )}
