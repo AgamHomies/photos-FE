@@ -429,7 +429,7 @@ export const RealGalleryAPI = {
                 date: eventData.event_date.split('T')[0],
                 location: eventData.location || '',
                 coverImage: eventData.cover_image_url || 'https://via.placeholder.com/800x600',
-                photoCount: eventData.image_count || 0,
+                photoCount: eventData.images_count || 0,
                 guestVisits: eventData.guest_visits || 0,
                 downloads: eventData.downloads || 0,
                 uniqueLink: `${window.location.origin}/gallery/${eventData.guest_slug || eventData.id}`,
