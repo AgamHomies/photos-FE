@@ -20,7 +20,7 @@ import {
     Heart,
     Share2
 } from 'lucide-react';
-import Toast from '../../components/Toast';
+import { Toast } from '../../components';
 
 const DashboardPage: React.FC = () => {
     const navigate = useNavigate();

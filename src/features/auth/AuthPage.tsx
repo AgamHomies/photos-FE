@@ -5,7 +5,7 @@ import { PhotographerRegistration } from '../../types';
 import { useAuth } from '../../hooks/useAuth';
 import { BackendService } from '../../services/backendService';
 import { supabaseAuthService } from '../../services/supabaseAuthService';
-import Toast from '../../components/Toast';
+import { Toast } from '../../components';
 
 const AuthPage: React.FC = () => {
     const navigate = useNavigate();

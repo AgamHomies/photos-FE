@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { Upload, Image as ImageIcon, Check, Calendar, MapPin, Camera, ScanFace, Send, Star } from 'lucide-react';
 import { BackendService } from '../../services/backendService';
 import Layout from '../../components/Layout';
-import Toast from '../../components/Toast';
+import { Toast } from '../../components';
 
 const CreateEventPage: React.FC = () => {
     const navigate = useNavigate();

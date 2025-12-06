@@ -22,7 +22,7 @@ const Toast: React.FC<ToastProps> = ({ show, message, type = 'success', onClose,
   if (!show) return null;
 
   return (
-    <div className="fixed bottom-6 left-1/2 transform -translate-x-1/2 z-50 animate-fade-in-up">
+    <div className="fixed bottom-6 left-1/2 transform -translate-x-1/2 z-[60] animate-fade-in-up">
       <div className={`px-6 py-3 rounded-full shadow-xl border flex items-center gap-3 ${
         type === 'success' 
             ? 'bg-slate-900 text-white border-slate-800' 

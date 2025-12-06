@@ -23,7 +23,7 @@ import {
   ChevronLeft,
   ChevronRight
 } from 'lucide-react';
-import Toast from '../../components/Toast';
+import { Toast } from '../../components';
 
 interface GalleryPageProps {
   mode?: 'guest' | 'full';

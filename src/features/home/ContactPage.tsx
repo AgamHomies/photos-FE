@@ -11,7 +11,7 @@ import {
     Send
 } from 'lucide-react';
 import Layout from '../../components/Layout';
-import Toast from '../../components/Toast';
+import { Toast } from '../../components';
 
 const ContactPage: React.FC = () => {
     const [formData, setFormData] = useState({

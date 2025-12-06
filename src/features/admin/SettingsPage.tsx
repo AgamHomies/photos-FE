@@ -7,7 +7,7 @@ import { BackendService } from '../../services/backendService';
 import { supabaseAuthService } from '../../services/supabaseAuthService';
 import { useAuth } from '../../hooks/useAuth';
 import Layout from '../../components/Layout';
-import Toast from '../../components/Toast';
+import { Toast } from '../../components';
 
 const SettingsPage: React.FC = () => {
     const navigate = useNavigate();
