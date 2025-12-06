@@ -48,7 +48,8 @@ const GalleryPage: React.FC<GalleryPageProps> = ({ mode: propMode }) => {
   const [itemsPerPage, setItemsPerPage] = useState(12); // Default for desktop
   
   // Calculate total pages based on mode
-  const totalItems = viewState === 'results' ? searchResults.length : (event?.photoCount || 0);
+  // Calculate total pages based on mode
+  const totalItems = mode === 'full' ? (event?.photoCount || 0) : (viewState === 'results' ? searchResults.length : 0);
   const totalPages = Math.ceil(totalItems / itemsPerPage);
 
   const resultsRef = useRef<HTMLDivElement>(null);
@@ -74,18 +75,13 @@ const GalleryPage: React.FC<GalleryPageProps> = ({ mode: propMode }) => {
 
   // Update displayed photos when page, itemsPerPage, or searchResults change
   useEffect(() => {
+    if (mode === 'full') return; // In full mode, photos are controlled by manual fetches
+
     if (viewState === 'results') {
       // Client-side pagination for results
       const start = (page - 1) * itemsPerPage;
       const end = start + itemsPerPage;
       setPhotos(searchResults.slice(start, end));
-    } else if (mode === 'full' && event) {
-      // Server-side pagination for full mode is handled by loadData/handlePageChange
-      // Only trigger re-fetch if itemsPerPage changed significantly to affect view?
-      // For simplicity, we might just reload data if itemsPerPage changes, 
-      // but to avoid loops, let's rely on handlePageChange for explicit actions.
-      // However, if we resize, we might want to re-fetch to fill the grid? 
-      // Let's stick to explicit page changes for now to minimize API calls during resize.
     }
   }, [page, itemsPerPage, searchResults, viewState, mode, event]);
 
@@ -149,10 +145,7 @@ const GalleryPage: React.FC<GalleryPageProps> = ({ mode: propMode }) => {
   const handlePageChange = async (newPage: number) => {
     if (newPage < 1 || newPage > totalPages) return;
     
-    if (viewState === 'results') {
-       // Client-side pagination (update triggered by useEffect)
-       setPage(newPage);
-    } else if (mode === 'full' && event) {
+    if (mode === 'full' && event) {
        // Server-side pagination
        setLoading(true);
        try {
@@ -164,11 +157,9 @@ const GalleryPage: React.FC<GalleryPageProps> = ({ mode: propMode }) => {
        } finally {
           setLoading(false);
        }
-    }
-    
-    // Scroll to top of results
-    if (resultsRef.current) {
-       resultsRef.current.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    } else if (viewState === 'results') {
+       // Client-side pagination (update triggered by useEffect)
+       setPage(newPage);
     }
   };
 
@@ -544,6 +535,8 @@ END:VCARD`;
             <div className="flex flex-col items-center mb-10">
                <h2 className="text-3xl font-bold text-[#4A3B2C] mb-2">הגלריה שלך מהאירוע</h2>
                <div className="flex items-center gap-2 text-[#8B7355] text-sm">
+                  <span>{event.name}</span>
+                  <span>|</span>
                   <span>{new Date(event.date).toLocaleDateString('he-IL')}</span>
                   <span>|</span>
                   <span>{event.location}</span>
