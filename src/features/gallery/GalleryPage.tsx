@@ -337,30 +337,37 @@ const GalleryPage: React.FC<GalleryPageProps> = ({ mode: propMode }) => {
         </div>
       </header>
 
-      {/* Hero / Event Info */}
-      <div className="relative bg-[#8B7355] text-white overflow-hidden">
+      {/* Hero / Welcome Message */}
+      <div className="relative bg-[#A89680] text-white overflow-hidden">
         <div className="absolute inset-0">
           <img src={event.coverImage} alt="Cover" className="w-full h-full object-cover opacity-50 blur-sm scale-105" />
-          <div className="absolute inset-0 bg-gradient-to-t from-[#8B7355] via-[#8B7355]/50 to-transparent"></div>
+          <div className="absolute inset-0 bg-gradient-to-t from-[#A89680] via-[#A89680]/50 to-transparent"></div>
         </div>
 
-        <div className="relative max-w-3xl mx-auto px-6 py-24 text-center">
-          <div className="inline-flex items-center gap-3 bg-white/10 backdrop-blur-md px-4 py-1.5 rounded-full text-xs font-medium mb-8 border border-white/20 shadow-lg">
-            <Calendar className="w-3 h-3 text-[#F5D5A8]" />
-            <span>{new Date(event.date).toLocaleDateString('he-IL')}</span>
-            <span className="w-1 h-1 bg-white/40 rounded-full"></span>
-            <MapPin className="w-3 h-3 text-[#F5D5A8]" />
-            <span>{event.location}</span>
+        <div className="relative max-w-3xl mx-auto px-6 py-32 text-center">
+          {/* Photographer Branding */}
+          <div className="mb-12">
+            {photographer?.profileImageUrl ? (
+              <img
+                src={photographer.profileImageUrl}
+                alt="Photographer Logo"
+                className="w-32 h-32 md:w-40 md:h-40 mx-auto mb-8 rounded-2xl object-cover shadow-xl border-4 border-white/20"
+              />
+            ) : (
+              <div className="w-32 h-32 md:w-40 md:h-40 bg-white/10 rounded-2xl flex items-center justify-center mx-auto mb-8 border-4 border-white/20">
+                <Camera className="w-16 h-16 md:w-20 md:h-20 text-white/50" />
+              </div>
+            )}
+            <h1 className="text-3xl md:text-5xl font-bold mb-3 text-white leading-tight">
+              {photographer?.name || 'הצלם שלך'}
+            </h1>
+            <p className="text-white/70 text-sm md:text-base tracking-widest uppercase font-light">
+              PHOTOGRAPHY STUDIO
+            </p>
           </div>
-          <h1 className="text-4xl md:text-6xl font-bold mb-6 leading-tight tracking-tight">{event.name}</h1>
-          <p className="text-[#F5F1EB] text-lg md:text-xl max-w-xl mx-auto leading-relaxed font-light">
-            {mode === 'full'
-              ? 'ברוכים הבאים לגלריה המלאה. כל הרגעים היפים מהאירוע במקום אחד.'
-              : 'ברוכים הבאים לגלריה הרשמית. כאן תוכלו למצוא את כל הרגעים היפים מהאירוע.'}
-          </p>
 
           {/* Social Media Buttons */}
-          <div className="flex items-center justify-center gap-4 mt-8">
+          <div className="flex items-center justify-center gap-4 mt-12">
             {photographer?.instagramUrl && (
               <button
                 onClick={() => handleSocialClick(photographer.instagramUrl!, 'instagram')}
@@ -441,10 +448,28 @@ const GalleryPage: React.FC<GalleryPageProps> = ({ mode: propMode }) => {
           </div>
         )}
 
+        {/* Event Details - Just Above Gallery */}
+        {viewState === 'results' && (
+          <div className="bg-[#FAF8F5] rounded-3xl shadow-sm border border-[#E8DFD3] py-12 px-8 text-center mb-12 mt-24">
+            <h1 className="text-4xl md:text-5xl font-bold mb-6 leading-tight tracking-tight text-[#5C4A3A]">{event.name}</h1>
+            <div className="flex items-center justify-center gap-6 text-[#8B7355] text-base md:text-lg">
+              <div className="flex items-center gap-2">
+                <Calendar className="w-5 h-5 text-[#C4A882]" />
+                <span className="font-medium">{new Date(event.date).toLocaleDateString('he-IL')}</span>
+              </div>
+              <span className="w-1.5 h-1.5 bg-[#D4C4B0] rounded-full"></span>
+              <div className="flex items-center gap-2">
+                <MapPin className="w-5 h-5 text-[#C4A882]" />
+                <span className="font-medium">{event.location}</span>
+              </div>
+            </div>
+          </div>
+        )}
+
         {/* Results State */}
         {viewState === 'results' && (
           <div ref={resultsRef} className="animate-fade-in-up">
-            <div className="flex flex-col md:flex-row items-center justify-between mb-8 mt-12 px-2 gap-4 md:gap-0">
+            <div className="flex flex-col md:flex-row items-center justify-between mb-8 px-2 gap-4 md:gap-0">
               <div className="flex items-center gap-4 w-full md:w-auto justify-between md:justify-start">
                 <h2 className="text-2xl font-bold text-[#5C4A3A] flex items-center gap-3">
                   {mode === 'full' ? 'כל התמונות' : 'התמונות שלך'}
