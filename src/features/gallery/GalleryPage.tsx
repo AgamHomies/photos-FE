@@ -444,8 +444,8 @@ const GalleryPage: React.FC<GalleryPageProps> = ({ mode: propMode }) => {
         {/* Results State */}
         {viewState === 'results' && (
           <div ref={resultsRef} className="animate-fade-in-up">
-            <div className="flex items-center justify-between mb-8 mt-12 px-2">
-              <div className="flex items-center gap-4">
+            <div className="flex flex-col md:flex-row items-center justify-between mb-8 mt-12 px-2 gap-4 md:gap-0">
+              <div className="flex items-center gap-4 w-full md:w-auto justify-between md:justify-start">
                 <h2 className="text-2xl font-bold text-[#5C4A3A] flex items-center gap-3">
                   {mode === 'full' ? 'כל התמונות' : 'התמונות שלך'}
                   <span className="bg-[#EAE2D6] text-[#8B7355] text-sm px-3 py-1 rounded-full font-medium">
@@ -453,7 +453,7 @@ const GalleryPage: React.FC<GalleryPageProps> = ({ mode: propMode }) => {
                   </span>
                 </h2>
 
-                {/* Selection Counter */}
+                {/* Selection Counter - Show next to title on mobile too */}
                 {selectedPhotos.size > 0 && (
                   <div className="bg-[#C4A882] text-white px-4 py-2 rounded-full text-sm font-bold flex items-center gap-2 shadow-lg animate-fade-in">
                     <CheckCircle2 className="w-4 h-4" />
@@ -462,7 +462,7 @@ const GalleryPage: React.FC<GalleryPageProps> = ({ mode: propMode }) => {
                 )}
               </div>
 
-              <div className="flex items-center gap-3">
+              <div className="flex items-center gap-3 w-full md:w-auto justify-end">
                 {/* Clear Selection Button - Rightmost in RTL */}
                 <div className="w-[140px] flex justify-end">
                   {selectedPhotos.size > 0 && (
@@ -510,7 +510,7 @@ const GalleryPage: React.FC<GalleryPageProps> = ({ mode: propMode }) => {
                 return (
                   <div
                     key={photo.id}
-                    className={`group relative aspect-[2/3] rounded-2xl overflow-hidden shadow-sm hover:shadow-xl transition-all ${isSelected ? 'shadow-md' : ''}`}
+                    className={`group relative aspect-[2/3] rounded-2xl overflow-hidden shadow-sm hover:shadow-xl transition-all duration-300 hover:scale-[1.02] hover:z-10 transform-gpu ${isSelected ? 'shadow-md' : ''}`}
                   >
                     <img
                       src={photo.url}
@@ -544,7 +544,7 @@ const GalleryPage: React.FC<GalleryPageProps> = ({ mode: propMode }) => {
                       </div>
                     </div>
 
-                    {/* Action Buttons - Top Left (Moved from Right) */}
+                    {/* Action Buttons - Top Left */}
                     <div className="absolute top-3 left-3 flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity duration-200 z-10">
                       <button
                         onClick={(e) => handleDownload(photo, e)}
@@ -568,34 +568,36 @@ const GalleryPage: React.FC<GalleryPageProps> = ({ mode: propMode }) => {
 
             {/* Load More handled in footer or auto-scroll (cleaning up old button) */}
 
-            {photos.length === 0 && (
-              <div className="text-center py-24 bg-[#FAF8F5] rounded-3xl border border-[#E8DFD3] shadow-sm">
-                <div className="w-20 h-20 bg-[#F5F1EB] rounded-full flex items-center justify-center mx-auto mb-6">
-                  <Search className="w-10 h-10 text-[#D4C4B0]" />
-                </div>
-                <h3 className="text-xl font-bold text-[#5C4A3A] mb-2">לא נמצאו תמונות</h3>
-                {mode === 'guest' ? (
-                  <>
-                    <p className="text-[#8B7355] max-w-xs mx-auto mb-6">
-                      לא הצלחנו למצוא תמונות תואמות. נסה להעלות תמונה אחרת.
+            {
+              photos.length === 0 && (
+                <div className="text-center py-24 bg-[#FAF8F5] rounded-3xl border border-[#E8DFD3] shadow-sm">
+                  <div className="w-20 h-20 bg-[#F5F1EB] rounded-full flex items-center justify-center mx-auto mb-6">
+                    <Search className="w-10 h-10 text-[#D4C4B0]" />
+                  </div>
+                  <h3 className="text-xl font-bold text-[#5C4A3A] mb-2">לא נמצאו תמונות</h3>
+                  {mode === 'guest' ? (
+                    <>
+                      <p className="text-[#8B7355] max-w-xs mx-auto mb-6">
+                        לא הצלחנו למצוא תמונות תואמות. נסה להעלות תמונה אחרת.
+                      </p>
+                      <button
+                        onClick={() => setViewState('landing')}
+                        className="text-[#C4A882] font-bold hover:text-[#B39872] hover:underline"
+                      >
+                        נסה שוב
+                      </button>
+                    </>
+                  ) : (
+                    <p className="text-[#8B7355] max-w-xs mx-auto">
+                      הגלריה ריקה כרגע.
                     </p>
-                    <button
-                      onClick={() => setViewState('landing')}
-                      className="text-[#C4A882] font-bold hover:text-[#B39872] hover:underline"
-                    >
-                      נסה שוב
-                    </button>
-                  </>
-                ) : (
-                  <p className="text-[#8B7355] max-w-xs mx-auto">
-                    הגלריה ריקה כרגע.
-                  </p>
-                )}
-              </div>
-            )}
-          </div>
+                  )}
+                </div>
+              )
+            }
+          </div >
         )}
-      </div>
+      </div >
 
       {/* Footer */}
       {/* Footer / Call to Action */}
@@ -650,53 +652,57 @@ const GalleryPage: React.FC<GalleryPageProps> = ({ mode: propMode }) => {
       </footer>
 
       {/* Lightbox Modal */}
-      {lightboxPhoto && (
-        <div className="fixed inset-0 z-50 bg-black/95 flex items-center justify-center p-4 animate-fade-in backdrop-blur-sm">
-          <button
-            onClick={() => setLightboxPhoto(null)}
-            className="absolute top-6 right-6 p-2 text-white/70 hover:text-white transition-colors z-50 bg-white/10 rounded-full"
-          >
-            <X className="w-6 h-6" />
-          </button>
+      {
+        lightboxPhoto && (
+          <div className="fixed inset-0 z-50 bg-black/95 flex items-center justify-center p-4 animate-fade-in backdrop-blur-sm">
+            <button
+              onClick={() => setLightboxPhoto(null)}
+              className="absolute top-6 right-6 p-2 text-white/70 hover:text-white transition-colors z-50 bg-white/10 rounded-full"
+            >
+              <X className="w-6 h-6" />
+            </button>
 
-          <div className="relative max-w-full max-h-full">
-            <img
-              src={lightboxPhoto.url}
-              alt="Full view"
-              className="max-w-full max-h-[90vh] object-contain rounded-lg shadow-2xl"
-            />
+            <div className="relative max-w-full max-h-full">
+              <img
+                src={lightboxPhoto.url}
+                alt="Full view"
+                className="max-w-full max-h-[90vh] object-contain rounded-lg shadow-2xl"
+              />
 
-            {/* Lightbox Actions */}
-            <div className="absolute bottom-8 left-1/2 transform -translate-x-1/2 flex gap-4">
-              <button
-                onClick={(e) => handleDownload(lightboxPhoto, e)}
-                className="bg-white/10 backdrop-blur-md text-white px-6 py-3 rounded-full flex items-center gap-2 hover:bg-white/20 transition-all font-medium border border-white/10"
-              >
-                <Download className="w-5 h-5" />
-                <span>הורד</span>
-              </button>
-              <button
-                onClick={(e) => handleShare(lightboxPhoto, e)}
-                className="bg-white/10 backdrop-blur-md text-white px-6 py-3 rounded-full flex items-center gap-2 hover:bg-white/20 transition-all font-medium border border-white/10"
-              >
-                <Share2 className="w-5 h-5" />
-                <span>שתף</span>
-              </button>
+              {/* Lightbox Actions */}
+              <div className="absolute bottom-8 left-1/2 transform -translate-x-1/2 flex gap-4">
+                <button
+                  onClick={(e) => handleDownload(lightboxPhoto, e)}
+                  className="bg-white/10 backdrop-blur-md text-white px-6 py-3 rounded-full flex items-center gap-2 hover:bg-white/20 transition-all font-medium border border-white/10"
+                >
+                  <Download className="w-5 h-5" />
+                  <span>הורד</span>
+                </button>
+                <button
+                  onClick={(e) => handleShare(lightboxPhoto, e)}
+                  className="bg-white/10 backdrop-blur-md text-white px-6 py-3 rounded-full flex items-center gap-2 hover:bg-white/20 transition-all font-medium border border-white/10"
+                >
+                  <Share2 className="w-5 h-5" />
+                  <span>שתף</span>
+                </button>
+              </div>
             </div>
           </div>
-        </div>
-      )}
+        )
+      }
 
       {/* Toast Notification */}
-      {showToast && (
-        <div className="fixed bottom-8 left-1/2 transform -translate-x-1/2 z-50 animate-fade-in">
-          <div className="bg-[#8B7355] text-white px-6 py-3 rounded-full shadow-lg flex items-center gap-3">
-            <CheckCircle2 className="w-5 h-5 text-[#C4E8C4]" />
-            <span className="font-medium">{toastMessage}</span>
+      {
+        showToast && (
+          <div className="fixed bottom-8 left-1/2 transform -translate-x-1/2 z-50 animate-fade-in">
+            <div className="bg-[#8B7355] text-white px-6 py-3 rounded-full shadow-lg flex items-center gap-3">
+              <CheckCircle2 className="w-5 h-5 text-[#C4E8C4]" />
+              <span className="font-medium">{toastMessage}</span>
+            </div>
           </div>
-        </div>
-      )}
-    </div>
+        )
+      }
+    </div >
   );
 };
 
