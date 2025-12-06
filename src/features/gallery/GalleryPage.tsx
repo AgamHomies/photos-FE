@@ -635,26 +635,35 @@ END:VCARD`;
 
             {/* Pagination Controls */}
             {totalPages > 1 && (
-               <div className="flex justify-center items-center gap-4 mt-8" dir="rtl">
+               <div className="flex justify-center items-center gap-6 mt-12 mb-8" dir="rtl">
                   {/* Previous Button (Right in RTL) */}
                   <button
                      onClick={() => handlePageChange(page - 1)}
                      disabled={page === 1}
-                     className="p-2 rounded-full hover:bg-[#E8DFD3] disabled:opacity-30 disabled:cursor-not-allowed text-[#8B7355] transition-all bg-white shadow-sm border border-[#E8DFD3]"
+                     className="w-12 h-12 rounded-full bg-white shadow-md border border-[#F0EBE3] flex items-center justify-center text-[#8B7355] hover:bg-[#FAF9F6] disabled:opacity-40 disabled:cursor-not-allowed transition-all transform hover:-translate-y-0.5 active:translate-y-0"
                      title="הקודם"
                   >
                      <ChevronRight className="w-6 h-6" />
                   </button>
                   
-                  <span className="text-sm font-medium text-[#8B7355]">
-                     עמוד {page} מתוך {totalPages}
-                  </span>
+                  <div className="flex items-center gap-3 text-[#8B7355] font-medium text-xl">
+                     <span>עמוד</span>
+                     
+                     <div className="w-12 h-12 rounded-full bg-[#C4A882] text-white font-bold flex items-center justify-center shadow-md">
+                        {page}
+                     </div>
+                     
+                     <div className="flex items-center gap-1">
+                        <span>מתוך</span>
+                        <span>{totalPages}</span>
+                     </div>
+                  </div>
                   
                   {/* Next Button (Left in RTL) */}
                   <button
                      onClick={() => handlePageChange(page + 1)}
                      disabled={page === totalPages}
-                     className="p-2 rounded-full hover:bg-[#E8DFD3] disabled:opacity-30 disabled:cursor-not-allowed text-[#8B7355] transition-all bg-white shadow-sm border border-[#E8DFD3]"
+                     className="w-12 h-12 rounded-full bg-white shadow-md border border-[#F0EBE3] flex items-center justify-center text-[#8B7355] hover:bg-[#FAF9F6] disabled:opacity-40 disabled:cursor-not-allowed transition-all transform hover:-translate-y-0.5 active:translate-y-0"
                      title="הבא"
                   >
                      <ChevronLeft className="w-6 h-6" />
@@ -794,5 +803,6 @@ END:VCARD`;
     </div>
   );
 };
+
 
 export default GalleryPage;
