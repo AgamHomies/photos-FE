@@ -11,6 +11,7 @@ import {
     Send
 } from 'lucide-react';
 import Layout from '../../components/Layout';
+import Toast from '../../components/Toast';
 
 const ContactPage: React.FC = () => {
     const [formData, setFormData] = useState({
@@ -21,9 +22,19 @@ const ContactPage: React.FC = () => {
         message: ''
     });
 
+    const [showToast, setShowToast] = useState(false);
+    const [toastMessage, setToastMessage] = useState('');
+    const [toastType, setToastType] = useState<'success' | 'error'>('success');
+
+    const triggerToast = (message: string, type: 'success' | 'error' = 'success') => {
+        setToastMessage(message);
+        setToastType(type);
+        setShowToast(true);
+    };
+
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault();
-        alert('ההודעה נשלחה בהצלחה! נחזור אליך בהקדם.');
+        triggerToast('ההודעה נשלחה בהצלחה! נחזור אליך בהקדם.');
         setFormData({
             fullName: '',
             email: '',
@@ -204,6 +215,12 @@ const ContactPage: React.FC = () => {
                     </div>
                 </div>
             </div>
+            <Toast 
+                show={showToast}
+                message={toastMessage}
+                type={toastType}
+                onClose={() => setShowToast(false)}
+            />
         </Layout>
     );
 };

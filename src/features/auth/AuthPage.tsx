@@ -5,6 +5,7 @@ import { PhotographerRegistration } from '../../types';
 import { useAuth } from '../../hooks/useAuth';
 import { BackendService } from '../../services/backendService';
 import { supabaseAuthService } from '../../services/supabaseAuthService';
+import Toast from '../../components/Toast';
 
 const AuthPage: React.FC = () => {
     const navigate = useNavigate();
@@ -16,6 +17,16 @@ const AuthPage: React.FC = () => {
     const [isLogin, setIsLogin] = useState(initialMode);
     const [loading, setLoading] = useState(false);
     const [showPassword, setShowPassword] = useState(false);
+
+    const [showToast, setShowToast] = useState(false);
+    const [toastMessage, setToastMessage] = useState('');
+    const [toastType, setToastType] = useState<'success' | 'error'>('success');
+
+    const triggerToast = (message: string, type: 'success' | 'error' = 'success') => {
+        setToastMessage(message);
+        setToastType(type);
+        setShowToast(true);
+    };
 
     const [formData, setFormData] = useState<PhotographerRegistration>({
         email: '',
@@ -79,10 +90,10 @@ const AuthPage: React.FC = () => {
         setLoading(true);
         try {
             const { error } = await supabaseAuthService.signInWithGoogle();
-            if (error) alert('שגיאה בהתחברות עם Google: ' + error.message);
+            if (error) triggerToast('שגיאה בהתחברות עם Google: ' + error.message, 'error');
         } catch (error: any) {
             console.error('Google sign in error:', error);
-            alert('שגיאה בהתחברות עם Google');
+            triggerToast('שגיאה בהתחברות עם Google', 'error');
         } finally {
             setLoading(false);
         }
@@ -130,7 +141,7 @@ const AuthPage: React.FC = () => {
 
                     if (error) {
                         console.error('Login error:', error);
-                        alert('שגיאה בהתחברות: ' + (error.message || 'פרטים חסרים'));
+                        triggerToast('שגיאה בהתחברות: ' + (error.message || 'פרטים חסרים'), 'error');
                         return;
                     }
                     sessionData = session;
@@ -142,7 +153,7 @@ const AuthPage: React.FC = () => {
 
                     if (error) {
                         console.error('Signup error:', error);
-                        alert('שגיאה בהרשמה: ' + (error.message || 'פרטים חסרים'));
+                        triggerToast('שגיאה בהרשמה: ' + (error.message || 'פרטים חסרים'), 'error');
                         return;
                     }
                     sessionData = session;
@@ -162,19 +173,29 @@ const AuthPage: React.FC = () => {
                         } else {
                             // If it's registration, show alert first
                             if (!isLogin) {
-                                alert('הרשמה בוצעה בהצלחה! אנא השלם את הפרופיל שלך.');
+                                // For redirect, we might prefer passing state or using a longer toast.
+                                // triggerToast('הרשמה בוצעה בהצלחה! אנא השלם את הפרופיל שלך.'); 
+                                // Actually since we navigate immediately, the toast might be lost unless we put it in context.
+                                // But let's trigger it and hope for the best or pass state.
+                                // Given the architecture, I'll stick to triggerToast but it might not show if we navigate away.
+                                // However, existing code was alert() then navigate. 
+                                // To emulate blocking alert, we can't easily. 
+                                // But navigation usually clears the component. 
+                                // Let's rely on ProfileCompletionPage to show a welcome message? 
+                                // Or better, just remove the alert here as the next page is self-explanatory.
+                                // User requested "styled messages" so... let's trigger it.
                             }
-                            navigate('/complete-profile');
+                            navigate('/complete-profile', { state: { message: 'הרשמה בוצעה בהצלחה! אנא השלם את הפרופיל שלך.' } });
                         }
                     } catch (backendError: any) {
                         console.error('Backend sync failed:', backendError);
-                        alert(`שגיאה בסנכרון נתונים מול השרת: ${backendError.message}`);
+                        triggerToast(`שגיאה בסנכרון נתונים מול השרת: ${backendError.message}`, 'error');
                     }
                 }
 
             } catch (error: any) {
                 console.error(error);
-                alert(error.message || 'אירעה שגיאה. אנא נסה שנית.');
+                triggerToast(error.message || 'אירעה שגיאה. אנא נסה שנית.', 'error');
             } finally {
                 setIsSubmitting(false);
             }
@@ -398,6 +419,13 @@ const AuthPage: React.FC = () => {
                     </div>
                 </div>
             </footer>
+
+            <Toast 
+                show={showToast}
+                message={toastMessage}
+                type={toastType}
+                onClose={() => setShowToast(false)}
+            />
         </div>
     );
 };

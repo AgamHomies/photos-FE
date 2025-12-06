@@ -20,6 +20,7 @@ import {
     Heart,
     Share2
 } from 'lucide-react';
+import Toast from '../../components/Toast';
 
 const DashboardPage: React.FC = () => {
     const navigate = useNavigate();
@@ -32,6 +33,16 @@ const DashboardPage: React.FC = () => {
     const [deleteModalOpen, setDeleteModalOpen] = useState(false);
     const [eventToDelete, setEventToDelete] = useState<Event | null>(null);
     const itemsPerPage = 5;
+
+    const [showToast, setShowToast] = useState(false);
+    const [toastMessage, setToastMessage] = useState('');
+    const [toastType, setToastType] = useState<'success' | 'error'>('success');
+
+    const triggerToast = (message: string, type: 'success' | 'error' = 'success') => {
+        setToastMessage(message);
+        setToastType(type);
+        setShowToast(true);
+    };
 
     useEffect(() => {
         loadData();
@@ -73,7 +84,7 @@ const DashboardPage: React.FC = () => {
             await loadData();
         } catch (error) {
             console.error('Failed to delete event:', error);
-            alert('שגיאה במחיקת האירוע. אנא נסה שנית.');
+            triggerToast('שגיאה במחיקת האירוע. אנא נסה שנית.', 'error');
         }
     };
 
@@ -391,6 +402,13 @@ const DashboardPage: React.FC = () => {
                     </div>
                 )}
             </div>
+
+            <Toast 
+                show={showToast}
+                message={toastMessage}
+                type={toastType}
+                onClose={() => setShowToast(false)}
+            />
         </Layout>
     );
 };

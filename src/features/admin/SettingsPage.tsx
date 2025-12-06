@@ -7,6 +7,7 @@ import { BackendService } from '../../services/backendService';
 import { supabaseAuthService } from '../../services/supabaseAuthService';
 import { useAuth } from '../../hooks/useAuth';
 import Layout from '../../components/Layout';
+import Toast from '../../components/Toast';
 
 const SettingsPage: React.FC = () => {
     const navigate = useNavigate();
@@ -27,6 +28,16 @@ const SettingsPage: React.FC = () => {
     });
     const [errors, setErrors] = useState<Partial<Record<string, string>>>({});
     const [logoPreview, setLogoPreview] = useState<string | null>(null);
+
+    const [showToast, setShowToast] = useState(false);
+    const [toastMessage, setToastMessage] = useState('');
+    const [toastType, setToastType] = useState<'success' | 'error'>('success');
+
+    const triggerToast = (message: string, type: 'success' | 'error' = 'success') => {
+        setToastMessage(message);
+        setToastType(type);
+        setShowToast(true);
+    };
 
     useEffect(() => {
         const fetchProfile = async () => {
@@ -129,11 +140,11 @@ const SettingsPage: React.FC = () => {
                     data: { full_name: formData.fullName }
                 });
 
-                alert('הפרופיל עודכן בהצלחה!');
-                navigate('/admin');
+                triggerToast('הפרופיל עודכן בהצלחה!');
+                setTimeout(() => navigate('/admin'), 1500); // Give user time to see toast
             } catch (error: any) {
                 console.error('Failed to update profile:', error);
-                alert('שגיאה בעדכון הפרופיל. אנא נסה שנית.');
+                triggerToast('שגיאה בעדכון הפרופיל. אנא נסה שנית.', 'error');
             } finally {
                 setIsSubmitting(false);
             }
@@ -412,6 +423,12 @@ const SettingsPage: React.FC = () => {
                     </form>
                 </div>
             </div>
+            <Toast 
+                show={showToast}
+                message={toastMessage}
+                type={toastType}
+                onClose={() => setShowToast(false)}
+            />
         </Layout>
     );
 };

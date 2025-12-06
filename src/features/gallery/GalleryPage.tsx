@@ -23,6 +23,7 @@ import {
   ChevronLeft,
   ChevronRight
 } from 'lucide-react';
+import Toast from '../../components/Toast';
 
 interface GalleryPageProps {
   mode?: 'guest' | 'full';
@@ -88,6 +89,13 @@ const GalleryPage: React.FC<GalleryPageProps> = ({ mode: propMode }) => {
   // Toast notification state
   const [showToast, setShowToast] = useState(false);
   const [toastMessage, setToastMessage] = useState('');
+  const [toastType, setToastType] = useState<'success' | 'error'>('success');
+
+  const triggerToast = (message: string, type: 'success' | 'error' = 'success') => {
+      setToastMessage(message);
+      setToastType(type);
+      setShowToast(true);
+  };
 
   useEffect(() => {
     if (id) {
@@ -190,7 +198,7 @@ const GalleryPage: React.FC<GalleryPageProps> = ({ mode: propMode }) => {
       }, 100);
     } catch (error) {
       console.error('Face search failed:', error);
-      alert('חיפוש הפנים נכשל. אנא נסה שוב.');
+      triggerToast('חיפוש הפנים נכשל. אנא נסה שוב.', 'error');
       setViewState('landing');
     }
   };
@@ -209,9 +217,7 @@ const GalleryPage: React.FC<GalleryPageProps> = ({ mode: propMode }) => {
       }
     } else {
       navigator.clipboard.writeText(photo.url);
-      setToastMessage('הקישור לתמונה הועתק ללוח');
-      setShowToast(true);
-      setTimeout(() => setShowToast(false), 3000);
+      triggerToast('הקישור לתמונה הועתק ללוח');
     }
   };
 
@@ -276,11 +282,11 @@ const GalleryPage: React.FC<GalleryPageProps> = ({ mode: propMode }) => {
           document.body.removeChild(link);
           window.URL.revokeObjectURL(url);
         } else {
-          alert('שגיאה ביצירת קובץ ההורדה');
+          triggerToast('שגיאה ביצירת קובץ ההורדה', 'error');
         }
       } catch (e) {
         console.error(e);
-        alert('שגיאה בהורדה');
+        triggerToast('שגיאה בהורדה', 'error');
       }
     }
   };
@@ -311,9 +317,7 @@ END:VCARD`;
       // Copy to clipboard for desktop
       try {
         await navigator.clipboard.writeText(photographer.phone);
-        setToastMessage(`המספר ${photographer.phone} הועתק ללוח`);
-        setShowToast(true);
-        setTimeout(() => setShowToast(false), 3000);
+        triggerToast(`המספר ${photographer.phone} הועתק ללוח`);
       } catch (error) {
         console.error('Failed to copy phone:', error);
       }
@@ -380,7 +384,7 @@ END:VCARD`;
               <img
                 src={photographer.profileImageUrl}
                 alt="Logo"
-                className="w-20 h-20 mx-auto rounded-lg object-contain shadow-sm bg-transparent"
+                className="w-20 h-20 mx-auto rounded-lg object-contain bg-transparent"
                 onError={(e) => {
                    // Fallback if image fails
                    e.currentTarget.style.display = 'none';
@@ -436,11 +440,11 @@ END:VCARD`;
       </div>
 
       {/* Spacer / Background for Main Content - Lighter Cream */}
-      <div className="bg-[#FDFBF7] min-h-[calc(100vh-250px)] pt-8">
+      <div className="bg-[#FDFBF7] min-h-[calc(100vh-250px)] pt-8 flex flex-col items-center">
 
       {/* 2. Main Content Card */}
       {viewState !== 'results' && (
-        <div className="max-w-5xl mx-auto px-4">
+        <div className="w-full max-w-5xl mx-auto px-4">
           <div className="bg-white rounded-3xl shadow-xl overflow-hidden border border-[#E8DFD3]">
             {/* Card Header (Event Details) */}
             <div className="text-center py-8 border-b border-[#E8DFD3]">
@@ -528,12 +532,12 @@ END:VCARD`;
 
       {/* 3. Results View */}
       {viewState === 'results' && (
-         <div ref={resultsRef} className="max-w-6xl mx-auto px-4 mt-8 animate-fade-in-up">
+         <div ref={resultsRef} className="w-full max-w-6xl mx-auto px-4 mt-8 animate-fade-in-up">
             
             {/* Minimal Header for Results */}
-            <div className="flex flex-col items-center mb-10">
+            <div className="text-center mb-10">
                <h2 className="text-3xl font-bold text-[#4A3B2C] mb-2">הגלריה שלך מהאירוע</h2>
-               <div className="flex items-center gap-2 text-[#8B7355] text-sm">
+               <div className="flex items-center justify-center gap-2 text-[#8B7355] text-sm">
                   <span>{event.name}</span>
                   <span>|</span>
                   <span>{new Date(event.date).toLocaleDateString('he-IL')}</span>
@@ -571,13 +575,13 @@ END:VCARD`;
              </div>
 
             {/* Grid */}
-            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+            <div className="flex flex-wrap justify-center pb-8" dir="rtl">
                {photos.map((photo) => {
                   const isSelected = selectedPhotos.has(photo.id);
                   return (
                      <div 
                         key={photo.id}
-                        className={`group relative aspect-[2/3] rounded-xl overflow-hidden bg-[#F0EBE3] cursor-pointer ${isSelected ? 'ring-4 ring-[#C4A882] ring-offset-2' : ''}`}
+                        className={`group relative aspect-[2/3] rounded-xl overflow-hidden bg-[#F0EBE3] cursor-pointer w-[calc(50%-1rem)] md:w-[calc(33.33%-1rem)] lg:w-[calc(25%-1rem)] m-2 ${isSelected ? 'ring-4 ring-[#C4A882] ring-offset-2' : ''}`}
                         onClick={() => setLightboxPhoto(photo)}
                      >
                         <img 
@@ -782,15 +786,13 @@ END:VCARD`;
         </div>
       )}
 
-      {/* Toast */}
-      {showToast && (
-        <div className="fixed top-6 left-1/2 transform -translate-x-1/2 z-[60] animate-fade-in-down">
-          <div className="bg-[#4A3B2C] text-white px-6 py-3 rounded-full shadow-xl flex items-center gap-3">
-             <CheckCircle2 className="w-5 h-5 text-[#C4A882]" />
-             <span className="font-medium text-sm">{toastMessage}</span>
-          </div>
-        </div>
-      )}
+      {/* Toast Notification */}
+      <Toast 
+          show={showToast}
+          message={toastMessage}
+          type={toastType}
+          onClose={() => setShowToast(false)}
+      />
 
     </div>
   );

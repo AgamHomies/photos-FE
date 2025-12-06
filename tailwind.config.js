@@ -29,20 +29,9 @@ module.exports = {
             transform: "translate(0px, 0px) scale(1)",
           },
         },
-        "fade-in-up": {
-            "0%": {
-                opacity: "0",
-                transform: "translate(-50%, 20px)"
-            },
-            "100%": {
-                opacity: "1",
-                transform: "translate(-50%, 0)"
-            }
-        }
       },
       animation: {
         blob: "blob 7s infinite",
-        "fade-in-up": "fade-in-up 0.5s ease-out forwards",
       },
     },
   },

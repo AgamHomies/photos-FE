@@ -1,14 +1,16 @@
-import React, { useState, ChangeEvent, FormEvent } from 'react';
-import { useNavigate } from 'react-router-dom';
+import React, { useState, ChangeEvent, FormEvent, useEffect } from 'react';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { Upload, Instagram, MapPin, Phone, User, FileText, Mail, Globe, LogOut } from 'lucide-react';
 import { FaFacebook, FaTiktok } from 'react-icons/fa';
 import { PhotographerRegistration } from '../../types';
 import { BackendService } from '../../services/backendService';
 import { supabaseAuthService } from '../../services/supabaseAuthService';
 import { useAuth } from '../../hooks/useAuth';
+import Toast from '../../components/Toast';
 
 const ProfileCompletionPage: React.FC = () => {
     const navigate = useNavigate();
+    const location = useLocation();
     const { logout, user } = useAuth();
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [formData, setFormData] = useState({
@@ -26,6 +28,25 @@ const ProfileCompletionPage: React.FC = () => {
     });
     const [errors, setErrors] = useState<Partial<Record<string, string>>>({});
     const [logoPreview, setLogoPreview] = useState<string | null>(null);
+
+    const [showToast, setShowToast] = useState(false);
+    const [toastMessage, setToastMessage] = useState('');
+    const [toastType, setToastType] = useState<'success' | 'error'>('success');
+
+    const triggerToast = (message: string, type: 'success' | 'error' = 'success') => {
+        setToastMessage(message);
+        setToastType(type);
+        setShowToast(true);
+    };
+
+    useEffect(() => {
+        const state = location.state as { message?: string };
+        if (state?.message) {
+            triggerToast(state.message);
+            // Clear state so it doesn't show again on refresh (optional but good practice)
+            window.history.replaceState({}, document.title);
+        }
+    }, [location]);
 
     const handleLogout = () => {
         logout();
@@ -96,7 +117,7 @@ const ProfileCompletionPage: React.FC = () => {
                 navigate('/profile-success');
             } catch (error: any) {
                 console.error('Failed to complete profile:', error);
-                alert('שגיאה בשמירת הפרופיל. אנא נסה שנית.');
+                triggerToast('שגיאה בשמירת הפרופיל. אנא נסה שנית.', 'error');
             } finally {
                 setIsSubmitting(false);
             }
@@ -416,6 +437,12 @@ const ProfileCompletionPage: React.FC = () => {
                     </form>
                 </div>
             </main>
+        <Toast 
+                show={showToast}
+                message={toastMessage}
+                type={toastType}
+                onClose={() => setShowToast(false)}
+            />
         </div>
     );
 };

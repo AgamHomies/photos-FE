@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { Upload, Image as ImageIcon, Check, Calendar, MapPin, Camera, ScanFace, Send, Star } from 'lucide-react';
 import { BackendService } from '../../services/backendService';
 import Layout from '../../components/Layout';
+import Toast from '../../components/Toast';
 
 const CreateEventPage: React.FC = () => {
     const navigate = useNavigate();
@@ -19,6 +20,16 @@ const CreateEventPage: React.FC = () => {
     const [uploadProgress, setUploadProgress] = useState(0);
     const [processingStage, setProcessingStage] = useState('');
     const [createdEventLink, setCreatedEventLink] = useState('');
+
+    const [showToast, setShowToast] = useState(false);
+    const [toastMessage, setToastMessage] = useState('');
+    const [toastType, setToastType] = useState<'success' | 'error'>('success');
+
+    const triggerToast = (message: string, type: 'success' | 'error' = 'success') => {
+        setToastMessage(message);
+        setToastType(type);
+        setShowToast(true);
+    };
 
     const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
         const { name, value } = e.target;
@@ -145,7 +156,7 @@ const CreateEventPage: React.FC = () => {
 
         } catch (error) {
             console.error(error);
-            alert('אירעה שגיאה ביצירת האירוע');
+            triggerToast('אירעה שגיאה ביצירת האירוע', 'error');
             setStep('details');
         }
     };
@@ -404,6 +415,12 @@ const CreateEventPage: React.FC = () => {
 
                 </div>
             </div>
+            <Toast 
+                show={showToast}
+                message={toastMessage}
+                type={toastType}
+                onClose={() => setShowToast(false)}
+            />
         </Layout>
     );
 };
