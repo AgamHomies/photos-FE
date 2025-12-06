@@ -383,8 +383,8 @@ END:VCARD`;
   return (
     <div className="min-h-screen bg-[#FDFBF7] font-sans text-[#5C4A3A] pb-20" dir="rtl">
       
-      {/* 1. Header & Branding */}
-      <div className="pt-8 pb-8 text-center bg-[#FDFBF7]">
+      {/* 1. Header & Branding - Full Width Darker Beige Background */}
+      <div className="w-full bg-[#EEE9E1] pt-8 pb-8 text-center shadow-sm relative z-10">
          <div className="mb-4">
             {photographer?.profileImageUrl ? (
               <img
@@ -444,6 +444,9 @@ END:VCARD`;
             )}
          </div>
       </div>
+
+      {/* Spacer / Background for Main Content - Lighter Cream */}
+      <div className="bg-[#FDFBF7] min-h-[calc(100vh-250px)] pt-8">
 
       {/* 2. Main Content Card */}
       {viewState !== 'results' && (
@@ -644,11 +647,13 @@ END:VCARD`;
          </div>
       )}
 
+      {/* End of Main Content Wrapper */}
+      </div>
+
       {/* 4. Footer & Contact */}
-      {/* 4. Footer & Contact */}
-      <footer className="mt-12">
+      <footer className="mt-0"> {/* Removed margin-top since wrapper handles spacing */}
          {/* Top Section - Darker */}
-         <div className="bg-[#F0E8DD] py-10 px-6 relative overflow-hidden">
+         <div className="bg-[#EEE9E1] py-10 px-6 relative overflow-hidden">
             {/* Decorative top border */}
             <div className="absolute top-0 left-0 right-0 h-px bg-[#D4C4B0]/50"></div>
 
@@ -706,7 +711,7 @@ END:VCARD`;
          </div>
 
          {/* Bottom Section - Lighter */}
-         <div className="bg-[#FDFBF7] py-4 text-center border-t border-[#D4C4B0]/20">
+         <div className="bg-[#EEE9E1] py-4 text-center border-t border-[#D4C4B0]/20">
             <div className="flex flex-col items-center gap-1">
                <p className="text-[10px] uppercase tracking-[0.2em] text-[#A89680]">Powered by</p>
                <span className="font-bold text-[#C4A882] text-sm">Click2Pic</span>
