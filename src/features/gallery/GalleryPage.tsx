@@ -317,23 +317,8 @@ const GalleryPage: React.FC<GalleryPageProps> = ({ mode: propMode }) => {
 
       {/* Photographer Branding Header */}
       <header className="bg-[#FAF8F5] border-b border-[#E8DFD3] sticky top-0 z-20 shadow-sm">
-        <div className="max-w-6xl mx-auto px-4 h-16 flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            {photographer?.profileImageUrl ? (
-              <img src={photographer.profileImageUrl} alt="Photographer" className="w-10 h-10 rounded-full object-cover border border-[#D4C4B0]" />
-            ) : (
-              <div className="w-10 h-10 bg-[#EAE2D6] rounded-full flex items-center justify-center text-[#A89680]">
-                <Camera className="w-5 h-5" />
-              </div>
-            )}
-            <div>
-              <h2 className="font-bold text-sm leading-tight text-[#5C4A3A]">{photographer?.name || 'הצלם שלך'}</h2>
-              <p className="text-[11px] text-[#8B7355] font-medium">צילום אירועים מקצועי</p>
-            </div>
-          </div>
-          <div className="flex items-center gap-3">
-            {/* Phone button moved to footer */}
-          </div>
+        <div className="max-w-6xl mx-auto px-4 h-14 flex items-center justify-center">
+          <h2 className="font-bold text-base text-[#5C4A3A]">{photographer?.name || 'הצלם שלך'}</h2>
         </div>
       </header>
 
@@ -344,46 +329,46 @@ const GalleryPage: React.FC<GalleryPageProps> = ({ mode: propMode }) => {
           <div className="absolute inset-0 bg-gradient-to-t from-[#A89680] via-[#A89680]/50 to-transparent"></div>
         </div>
 
-        <div className="relative max-w-3xl mx-auto px-6 py-32 text-center">
+        <div className="relative max-w-3xl mx-auto px-6 py-6 text-center">
           {/* Photographer Branding */}
-          <div className="mb-12">
+          <div className="mb-5">
             {photographer?.profileImageUrl ? (
               <img
                 src={photographer.profileImageUrl}
                 alt="Photographer Logo"
-                className="w-32 h-32 md:w-40 md:h-40 mx-auto mb-8 rounded-2xl object-cover shadow-xl border-4 border-white/20"
+                className="w-14 h-14 md:w-18 md:h-18 mx-auto mb-3 rounded-2xl object-cover shadow-xl border-3 border-white/20"
               />
             ) : (
-              <div className="w-32 h-32 md:w-40 md:h-40 bg-white/10 rounded-2xl flex items-center justify-center mx-auto mb-8 border-4 border-white/20">
-                <Camera className="w-16 h-16 md:w-20 md:h-20 text-white/50" />
+              <div className="w-14 h-14 md:w-18 md:h-18 bg-white/10 rounded-2xl flex items-center justify-center mx-auto mb-3 border-3 border-white/20">
+                <Camera className="w-7 h-7 md:w-9 md:h-9 text-white/50" />
               </div>
             )}
-            <h1 className="text-3xl md:text-5xl font-bold mb-3 text-white leading-tight">
+            <h1 className="text-lg md:text-2xl font-bold mb-1.5 text-white leading-tight">
               {photographer?.name || 'הצלם שלך'}
             </h1>
-            <p className="text-white/70 text-sm md:text-base tracking-widest uppercase font-light">
+            <p className="text-white/70 text-[11px] md:text-xs tracking-widest uppercase font-light">
               PHOTOGRAPHY STUDIO
             </p>
           </div>
 
           {/* Social Media Buttons */}
-          <div className="flex items-center justify-center gap-4 mt-12">
+          <div className="flex items-center justify-center gap-3 mt-3">
             {photographer?.instagramUrl && (
               <button
                 onClick={() => handleSocialClick(photographer.instagramUrl!, 'instagram')}
-                className="p-3 text-white/70 hover:text-pink-400 transition-colors bg-white/10 backdrop-blur-md rounded-full border border-white/20 hover:border-pink-400/50"
+                className="p-2 text-white/70 hover:text-pink-400 transition-colors bg-white/10 backdrop-blur-md rounded-full border border-white/20 hover:border-pink-400/50"
                 title="Instagram"
               >
-                <Instagram className="w-6 h-6" />
+                <Instagram className="w-4 h-4" />
               </button>
             )}
             {photographer?.tiktokUrl && (
               <button
                 onClick={() => handleSocialClick(photographer.tiktokUrl!, 'tiktok')}
-                className="p-3 text-white/70 hover:text-white transition-colors bg-white/10 backdrop-blur-md rounded-full border border-white/20 hover:border-white/50"
+                className="p-2 text-white/70 hover:text-white transition-colors bg-white/10 backdrop-blur-md rounded-full border border-white/20 hover:border-white/50"
                 title="TikTok"
               >
-                <svg className="w-6 h-6" viewBox="0 0 24 24" fill="currentColor">
+                <svg className="w-4 h-4" viewBox="0 0 24 24" fill="currentColor">
                   <path d="M19.59 6.69a4.83 4.83 0 0 1-3.77-4.25V2h-3.45v13.67a2.89 2.89 0 0 1-5.2 1.74 2.89 2.89 0 0 1 2.31-4.64 2.93 2.93 0 0 1 .88.13V9.4a6.84 6.84 0 0 0-1-.05A6.33 6.33 0 0 0 5 20.1a6.34 6.34 0 0 0 10.86-4.43v-7a8.16 8.16 0 0 0 4.77 1.52v-3.4a4.85 4.85 0 0 1-1-.1z" />
                 </svg>
               </button>
@@ -391,10 +376,10 @@ const GalleryPage: React.FC<GalleryPageProps> = ({ mode: propMode }) => {
             {photographer?.facebookUrl && (
               <button
                 onClick={() => handleSocialClick(photographer.facebookUrl!, 'facebook')}
-                className="p-3 text-white/70 hover:text-blue-400 transition-colors bg-white/10 backdrop-blur-md rounded-full border border-white/20 hover:border-blue-400/50"
+                className="p-2 text-white/70 hover:text-blue-400 transition-colors bg-white/10 backdrop-blur-md rounded-full border border-white/20 hover:border-blue-400/50"
                 title="Facebook"
               >
-                <Facebook className="w-6 h-6" />
+                <Facebook className="w-4 h-4" />
               </button>
             )}
           </div>
@@ -406,7 +391,7 @@ const GalleryPage: React.FC<GalleryPageProps> = ({ mode: propMode }) => {
 
         {/* Guest Mode: Landing State */}
         {mode === 'guest' && viewState === 'landing' && (
-          <div className="bg-[#FAF8F5] rounded-3xl shadow-xl p-8 md:p-16 text-center max-w-2xl mx-auto border border-[#E8DFD3]">
+          <div className="bg-[#FAF8F5] rounded-3xl shadow-xl p-8 md:p-16 text-center max-w-2xl mx-auto border border-[#E8DFD3] mt-20">
             <div className="w-20 h-20 bg-[#F5E6D3] rounded-full flex items-center justify-center mx-auto mb-8 ring-8 ring-[#F5E6D3]/50">
               <Search className="w-10 h-10 text-[#C4A882]" />
             </div>
@@ -431,7 +416,7 @@ const GalleryPage: React.FC<GalleryPageProps> = ({ mode: propMode }) => {
 
         {/* Guest Mode: Scanning State */}
         {mode === 'guest' && viewState === 'scanning' && (
-          <div className="bg-[#FAF8F5] rounded-3xl shadow-xl p-16 text-center max-w-2xl mx-auto border border-[#E8DFD3]">
+          <div className="bg-[#FAF8F5] rounded-3xl shadow-xl p-16 text-center max-w-2xl mx-auto border border-[#E8DFD3] mt-20">
             <div className="relative w-32 h-32 mx-auto mb-8">
               {selectedImage && (
                 <img
@@ -450,16 +435,16 @@ const GalleryPage: React.FC<GalleryPageProps> = ({ mode: propMode }) => {
 
         {/* Event Details - Just Above Gallery */}
         {viewState === 'results' && (
-          <div className="bg-[#FAF8F5] rounded-3xl shadow-sm border border-[#E8DFD3] py-12 px-8 text-center mb-12 mt-24">
-            <h1 className="text-4xl md:text-5xl font-bold mb-6 leading-tight tracking-tight text-[#5C4A3A]">{event.name}</h1>
-            <div className="flex items-center justify-center gap-6 text-[#8B7355] text-base md:text-lg">
-              <div className="flex items-center gap-2">
-                <Calendar className="w-5 h-5 text-[#C4A882]" />
+          <div className="bg-[#FAF8F5] rounded-2xl shadow-sm border border-[#E8DFD3] py-5 px-5 text-center mb-8 mt-20">
+            <h1 className="text-xl md:text-2xl font-bold mb-3 leading-tight tracking-tight text-[#5C4A3A]">{event.name}</h1>
+            <div className="flex items-center justify-center gap-3 text-[#8B7355] text-xs md:text-sm">
+              <div className="flex items-center gap-1.5">
+                <Calendar className="w-3.5 h-3.5 text-[#C4A882]" />
                 <span className="font-medium">{new Date(event.date).toLocaleDateString('he-IL')}</span>
               </div>
-              <span className="w-1.5 h-1.5 bg-[#D4C4B0] rounded-full"></span>
-              <div className="flex items-center gap-2">
-                <MapPin className="w-5 h-5 text-[#C4A882]" />
+              <span className="w-1 h-1 bg-[#D4C4B0] rounded-full"></span>
+              <div className="flex items-center gap-1.5">
+                <MapPin className="w-3.5 h-3.5 text-[#C4A882]" />
                 <span className="font-medium">{event.location}</span>
               </div>
             </div>
