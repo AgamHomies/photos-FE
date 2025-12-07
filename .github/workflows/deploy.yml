@@ -3,7 +3,7 @@ name: Deploy the react app to beanstalk
 on:
   push:
     branches:
-      - base-ui  
+      - dev  
 
 jobs:
   build-and-deploy:
