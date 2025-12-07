@@ -9,7 +9,7 @@ import AuthPage from './features/auth/AuthPage';
 import { CONFIG } from './config';
 
 function App() {
-  // Log the current mode on app start!!!!
+  // Log the current mode on app start!!!
   console.log(`%c━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━`, 'color: #f59e0b; font-weight: bold');
   console.log(`%c🚀 Click2Pic Frontend Started`, 'color: #10b981; font-size: 16px; font-weight: bold');
   console.log(`%c━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━`, 'color: #f59e0b; font-weight: bold');
