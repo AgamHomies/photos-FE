@@ -32,7 +32,7 @@ jobs:
 
       - name: Create deployment package
         run: |
-          zip -r deploy.zip build/ .platform/ package.json package-lock.json Procfile -x '*.git*'
+          zip -r deploy.zip build/ .platform/ package.json package-lock.json Procfile server.js -x '*.git*'
 
       - name: Deploy to Elastic Beanstalk
         uses: einaregilsson/beanstalk-deploy@v22
