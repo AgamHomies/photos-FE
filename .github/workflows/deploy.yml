@@ -27,9 +27,12 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
+      - name: Build React app
+        run: npm run build
+
       - name: Create deployment package
         run: |
-          zip -r deploy.zip . -x '*.git*' '*node_modules/*' '*.github/*'
+          zip -r deploy.zip build/ .platform/ package.json package-lock.json Procfile -x '*.git*'
 
       - name: Deploy to Elastic Beanstalk
         uses: einaregilsson/beanstalk-deploy@v22
