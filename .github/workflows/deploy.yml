@@ -1,4 +1,4 @@
-name: Deploy the fucking react app to beanstalk
+name: Deploy the react app to beanstalk
 
 on:
   push:
