@@ -1,0 +1,46 @@
+name: Deploy the react app to beanstalk
+
+on:
+  push:
+    branches:
+      - base-ui  
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+
+    env:
+      AWS_REGION: ${{ secrets.AWS_REGION }}
+      APPLICATION_NAME: "click2pic"
+      ENVIRONMENT_NAME: "Click2pic-prod"
+      CI: false
+      
+    steps:
+      - name: Checkout source
+        uses: actions/checkout@v4
+
+      - name: Use Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Install dependencies
+        run: npm install
+
+      - name: Build React app
+        run: npm run build
+
+      - name: Create deployment package
+        run: |
+          zip -r deploy.zip build/ .platform/ package.json package-lock.json Procfile server.js -x '*.git*'
+
+      - name: Deploy to Elastic Beanstalk
+        uses: einaregilsson/beanstalk-deploy@v22
+        with:
+          aws_access_key: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws_secret_key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          application_name: ${{ env.APPLICATION_NAME }}
+          environment_name: ${{ env.ENVIRONMENT_NAME }}
+          region: ${{ env.AWS_REGION }}
+          version_label: deploy-${{ github.sha }}-${{ github.run_number }}
+          deployment_package: deploy.zip
