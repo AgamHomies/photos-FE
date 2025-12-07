@@ -11,8 +11,8 @@ jobs:
 
     env:
       AWS_REGION: ${{ secrets.AWS_REGION }}
-      APPLICATION_NAME: "Click to pic"
-      ENVIRONMENT_NAME: "Clicktopic-env"
+      APPLICATION_NAME: "click2pic"
+      ENVIRONMENT_NAME: "Click2pic-prod"
       CI: false
       
     steps:
@@ -35,8 +35,18 @@ jobs:
           rm -rf node_modules
           rm -rf coverage
 
+      - name: Verify build output
+        run: |
+          if [ ! -d "build" ]; then
+            echo "Error: build directory not found!"
+            exit 1
+          fi
+          echo "Build directory contents:"
+          ls -la build/
+
       - name: Create deployment package
-        run: zip -r deploy.zip . -x '*.git*' '*/node_modules/*'
+        run: |
+          zip -r deploy.zip build/ .platform/ package.json -x '*.git*'
 
       - name: Deploy to Elastic Beanstalk
         uses: einaregilsson/beanstalk-deploy@v22
