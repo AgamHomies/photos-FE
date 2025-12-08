@@ -221,6 +221,48 @@ const GalleryPage: React.FC<GalleryPageProps> = ({ mode: propMode }) => {
     }
   };
 
+  // Keyboard navigation for lightbox
+  useEffect(() => {
+    if (!lightboxPhoto) return;
+
+    const handleKeyDown = (e: KeyboardEvent) => {
+      const currentIndex = photos.findIndex(p => p.id === lightboxPhoto.id);
+      
+      if (e.key === 'ArrowLeft') { // Next in RTL
+         if (currentIndex < photos.length - 1) {
+            setLightboxPhoto(photos[currentIndex + 1]);
+         }
+      } else if (e.key === 'ArrowRight') { // Prev in RTL
+         if (currentIndex > 0) {
+            setLightboxPhoto(photos[currentIndex - 1]);
+         }
+      } else if (e.key === 'Escape') {
+         setLightboxPhoto(null);
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [lightboxPhoto, photos]);
+
+  const handleNextPhoto = (e?: React.MouseEvent) => {
+    e?.stopPropagation();
+    if (!lightboxPhoto) return;
+    const currentIndex = photos.findIndex(p => p.id === lightboxPhoto.id);
+    if (currentIndex < photos.length - 1) {
+      setLightboxPhoto(photos[currentIndex + 1]);
+    }
+  };
+
+  const handlePrevPhoto = (e?: React.MouseEvent) => {
+    e?.stopPropagation();
+    if (!lightboxPhoto) return;
+    const currentIndex = photos.findIndex(p => p.id === lightboxPhoto.id);
+    if (currentIndex > 0) {
+      setLightboxPhoto(photos[currentIndex - 1]);
+    }
+  };
+
   const handleDownload = async (photo: Photo, e?: React.MouseEvent) => {
     if (e) e.stopPropagation();
 
@@ -768,6 +810,25 @@ END:VCARD`;
             alt="Full view"
             className="max-w-full max-h-[85vh] object-contain rounded-md shadow-2xl"
           />
+
+          {/* Navigation Buttons */}
+          <button
+             onClick={handleNextPhoto}
+             className={`absolute left-4 top-1/2 transform -translate-y-1/2 p-3 rounded-full bg-white/10 hover:bg-white/20 text-white transition-all backdrop-blur-sm border border-white/10 ${photos.findIndex(p => p.id === lightboxPhoto.id) >= photos.length - 1 ? 'opacity-30 cursor-not-allowed' : ''}`}
+             disabled={photos.findIndex(p => p.id === lightboxPhoto.id) >= photos.length - 1}
+             title="הבא"
+           >
+             <ChevronLeft className="w-8 h-8" />
+           </button>
+
+           <button
+             onClick={handlePrevPhoto}
+             className={`absolute right-4 top-1/2 transform -translate-y-1/2 p-3 rounded-full bg-white/10 hover:bg-white/20 text-white transition-all backdrop-blur-sm border border-white/10 ${photos.findIndex(p => p.id === lightboxPhoto.id) <= 0 ? 'opacity-30 cursor-not-allowed' : ''}`}
+             disabled={photos.findIndex(p => p.id === lightboxPhoto.id) <= 0}
+             title="הקודם"
+           >
+             <ChevronRight className="w-8 h-8" />
+           </button>
 
           <div className="absolute bottom-8 flex gap-6">
              <button onClick={(e) => handleDownload(lightboxPhoto, e)} className="text-white flex flex-col items-center gap-1 hover:text-[#C4A882] transition-colors">
