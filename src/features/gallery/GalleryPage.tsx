@@ -448,21 +448,21 @@ END:VCARD`;
           <div className="bg-white rounded-3xl shadow-xl overflow-hidden border border-[#E8DFD3]">
             {/* Card Header (Event Details) */}
             <div className="text-center py-8 border-b border-[#E8DFD3]">
-                <h2 className="text-3xl font-bold text-[#4A3B2C] mb-4">הגלריה שלך מהאירוע</h2>
+                <h2 className="text-4xl font-bold text-[#4A3B2C] mb-4">הגלריה שלך מהאירוע</h2>
                 
-                <div className="flex flex-wrap items-center justify-center gap-4 text-[#8B7355] text-sm font-medium">
+                <div className="flex flex-wrap items-center justify-center gap-4 text-[#8B7355] text-lg font-medium">
                    <div className="flex items-center gap-1.5">
-                     <Heart className="w-4 h-4 text-[#C4A882]" />
+                     <Heart className="w-5 h-5 text-[#C4A882]" />
                      <span>{event.name}</span>
                    </div>
                   <span className="hidden md:inline w-px h-4 bg-[#E8DFD3]"></span>
                   <div className="flex items-center gap-2">
-                    <Calendar className="w-4 h-4 text-[#C4A882]" />
+                    <Calendar className="w-5 h-5 text-[#C4A882]" />
                     <span>{new Date(event.date).toLocaleDateString('he-IL', { day: 'numeric', month: 'long', year: 'numeric'})}</span>
                   </div>
                    <span className="hidden md:inline w-px h-4 bg-[#E8DFD3]"></span>
                   <div className="flex items-center gap-2">
-                    <MapPin className="w-4 h-4 text-[#C4A882]" />
+                    <MapPin className="w-5 h-5 text-[#C4A882]" />
                     <span>{event.location}</span>
                   </div>
                 </div>
@@ -537,7 +537,7 @@ END:VCARD`;
             {/* Minimal Header for Results */}
             <div className="text-center mb-10">
                <h2 className="text-3xl font-bold text-[#4A3B2C] mb-2">הגלריה שלך מהאירוע</h2>
-               <div className="flex items-center justify-center gap-2 text-[#8B7355] text-sm">
+               <div className="flex items-center justify-center gap-2 text-[#8B7355] text-lg">
                   <span>{event.name}</span>
                   <span>|</span>
                   <span>{new Date(event.date).toLocaleDateString('he-IL')}</span>
@@ -695,7 +695,7 @@ END:VCARD`;
                
                {viewState === 'results' ? (
                   <div className="animate-fade-in">
-                     <h2 className="text-3xl font-bold text-[#4A3B2C] mb-3 leading-tight">
+                     <h2 className="text-2xl font-bold text-[#4A3B2C] mb-3 leading-tight">
                         אהבתם את התמונות?
                         <br/>
                         חכו שתראו איך נצלם את האירוע שלכם (:
@@ -706,7 +706,7 @@ END:VCARD`;
                   </div>
                ) : (
                   <div className="animate-fade-in">
-                     <h2 className="text-3xl font-bold text-[#4A3B2C] mb-3 leading-tight">
+                     <h2 className="text-2xl font-bold text-[#4A3B2C] mb-3 leading-tight">
                         היום אתם אורחים -<br/>מחר אתם בעלי האירוע!
                      </h2>
                      <p className="text-[#8B7355] mb-6 text-base">
