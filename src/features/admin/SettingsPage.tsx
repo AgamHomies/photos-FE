@@ -39,9 +39,25 @@ const SettingsPage: React.FC = () => {
         setShowToast(true);
     };
 
+    // Track the last user ID we fetched for to prevent re-fetching on token refreshes/tab switches
+    const fetchedUserId = React.useRef<string | null>(null);
+
     useEffect(() => {
         const fetchProfile = async () => {
+            // If we don't have a user, or if we've already fetched for this specific user ID, skip
+            if (!user || user.id === fetchedUserId.current) {
+                // If we have no user but are still loading, that's fine.
+                // If we have a user but already fetched, turn off loading just in case.
+                if (user && user.id === fetchedUserId.current) {
+                    setIsLoading(false);
+                }
+                return;
+            }
+
             try {
+                // Mark this user as fetched
+                fetchedUserId.current = user.id;
+                
                 const profile = await BackendService.getProfile();
 
                 if (profile) {
@@ -75,13 +91,16 @@ const SettingsPage: React.FC = () => {
                         email: user.email || '',
                     }));
                 }
+                // Determine if we should retry or just keep the current ID marking
             } finally {
                 setIsLoading(false);
             }
         };
 
-        fetchProfile();
-    }, [user]);
+        if (!isLoading || user) {
+             fetchProfile();
+        }
+    }, [user, isLoading]);
 
     const handleInputChange = (e: ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
         const { name, value } = e.target;
@@ -293,31 +312,28 @@ const SettingsPage: React.FC = () => {
                                 <label className="block text-sm font-medium text-slate-700 mb-2">
                                     העלאת לוגו (אופציונלי)
                                 </label>
-                                <div className="border-2 border-dashed border-slate-200 rounded-xl p-8 text-center hover:border-cyan-500 transition-colors cursor-pointer">
+                                <label className="block border-2 border-dashed border-slate-200 rounded-xl p-8 text-center hover:border-cyan-500 transition-colors cursor-pointer w-full">
                                     <input
                                         type="file"
                                         accept="image/*"
                                         className="hidden"
-                                        id="logo-upload"
                                         onChange={handleLogoUpload}
                                     />
-                                    <label htmlFor="logo-upload" className="cursor-pointer w-full h-full block">
-                                        {logoPreview ? (
-                                            <div className="flex flex-col items-center">
-                                                <img src={logoPreview} alt="Logo Preview" className="h-24 w-24 object-contain mb-2" />
-                                                <p className="text-sm text-cyan-600">לחץ להחלפת הלוגו</p>
+                                    {logoPreview ? (
+                                        <div className="flex flex-col items-center pointer-events-none">
+                                            <img src={logoPreview} alt="Logo Preview" className="h-24 w-24 object-contain mb-2" />
+                                            <p className="text-sm text-cyan-600">לחץ להחלפת הלוגו</p>
+                                        </div>
+                                    ) : (
+                                        <div className="flex flex-col items-center pointer-events-none">
+                                            <div className="w-16 h-16 bg-slate-100 rounded-full flex items-center justify-center mb-3">
+                                                <Upload className="w-8 h-8 text-slate-400" />
                                             </div>
-                                        ) : (
-                                            <div className="flex flex-col items-center">
-                                                <div className="w-16 h-16 bg-slate-100 rounded-full flex items-center justify-center mb-3">
-                                                    <Upload className="w-8 h-8 text-slate-400" />
-                                                </div>
-                                                <p className="text-slate-600 font-medium mb-1">לחץ להעלאת לוגו</p>
-                                                <p className="text-xs text-slate-400">PNG, JPG עד 5MB</p>
-                                            </div>
-                                        )}
-                                    </label>
-                                </div>
+                                            <p className="text-slate-600 font-medium mb-1">לחץ להעלאת לוגו</p>
+                                            <p className="text-xs text-slate-400">PNG, JPG עד 5MB</p>
+                                        </div>
+                                    )}
+                                </label>
                                 {errors.logo && <p className="text-red-500 text-xs mt-1">{errors.logo}</p>}
                                 <p className="text-xs text-slate-500 mt-2">הלוגו יופיע על התמונות והגלריות שתיצור</p>
                             </div>
