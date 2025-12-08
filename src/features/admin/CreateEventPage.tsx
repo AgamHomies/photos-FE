@@ -99,7 +99,7 @@ const CreateEventPage: React.FC = () => {
                     const totalBatches = Math.ceil(totalFiles / BATCH_SIZE);
 
                     setProcessingStage(`מעלה נגלה ${currentBatchNum} מתוך ${totalBatches} (${chunk.length} תמונות)...`);
-                    
+
                     // A. Get presigned URLs for this batch
                     const fileInfos = chunk.map(f => ({ filename: f.name, contentType: f.type }));
                     const { urls } = await BackendService.getPresignedUrls(newEvent.id, fileInfos);
@@ -130,8 +130,8 @@ const CreateEventPage: React.FC = () => {
 
                 // Get presigned URL for cover
                 const coverInfo = await BackendService.getPresignedCoverUrl(
-                    newEvent.id, 
-                    coverImageFile.name, 
+                    newEvent.id,
+                    coverImageFile.name,
                     coverImageFile.type
                 );
 
@@ -180,7 +180,7 @@ const CreateEventPage: React.FC = () => {
                         <form onSubmit={handleSubmit} className="space-y-6">
 
                             {/* Card 1: Event Details */}
-                            <div className="bg-white rounded-2xl shadow-sm border border-slate-100 p-8">
+                            <div className="bg-white rounded-2xl shadow-sm border border-slate-100 p-4 md:p-8">
                                 <div className="flex items-center gap-2 mb-6 text-slate-800 font-bold text-lg">
                                     <Calendar className="w-5 h-5 text-cyan-500" />
                                     <h2>פרטי האירוע</h2>
@@ -234,7 +234,7 @@ const CreateEventPage: React.FC = () => {
                             </div>
 
                             {/* Card 2: Cover Image */}
-                            <div className="bg-white rounded-2xl shadow-sm border border-slate-100 p-8">
+                            <div className="bg-white rounded-2xl shadow-sm border border-slate-100 p-4 md:p-8">
                                 <div className="flex items-center gap-2 mb-6 text-slate-800 font-bold text-lg">
                                     <ImageIcon className="w-5 h-5 text-cyan-500" />
                                     <h2>תמונת קאבר</h2>
@@ -268,7 +268,7 @@ const CreateEventPage: React.FC = () => {
                             </div>
 
                             {/* Card 3: Gallery Images */}
-                            <div className="bg-white rounded-2xl shadow-sm border border-slate-100 p-8">
+                            <div className="bg-white rounded-2xl shadow-sm border border-slate-100 p-4 md:p-8">
                                 <div className="flex items-center gap-2 mb-6 text-slate-800 font-bold text-lg">
                                     <ImageIcon className="w-5 h-5 text-cyan-500" />
                                     <h2>העלאת תמונות האירוע</h2>
@@ -415,7 +415,7 @@ const CreateEventPage: React.FC = () => {
 
                 </div>
             </div>
-            <Toast 
+            <Toast
                 show={showToast}
                 message={toastMessage}
                 type={toastType}
