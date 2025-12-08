@@ -176,7 +176,7 @@ const HomePage: React.FC = () => {
                 </div>
 
                 {/* Floating Badge */}
-                <div className="absolute -top-6 -right-6 bg-white p-4 rounded-2xl shadow-xl animate-bounce border border-slate-50">
+                <div className="hidden lg:block absolute -top-6 -right-6 bg-white p-4 rounded-2xl shadow-xl animate-bounce border border-slate-50">
                   <div className="flex items-center gap-3">
                     <div className="bg-green-100 p-2 rounded-full">
                       <CheckCircle2 className="w-6 h-6 text-green-600" />
@@ -304,8 +304,8 @@ const HomePage: React.FC = () => {
       <section className="py-24 bg-gradient-to-br from-cyan-600 to-blue-700 text-white text-center relative overflow-hidden">
         {/* Background Patterns */}
         <div className="absolute top-0 left-0 w-full h-full overflow-hidden opacity-10">
-          <div className="absolute top-[-10%] left-[-10%] w-[40%] h-[40%] bg-white rounded-full blur-3xl"></div>
-          <div className="absolute bottom-[-10%] right-[-10%] w-[40%] h-[40%] bg-white rounded-full blur-3xl"></div>
+          <div className="hidden lg:block absolute top-[-10%] left-[-10%] w-[40%] h-[40%] bg-white rounded-full blur-3xl"></div>
+          <div className="hidden lg:block absolute bottom-[-10%] right-[-10%] w-[40%] h-[40%] bg-white rounded-full blur-3xl"></div>
         </div>
 
         <div className="container mx-auto px-4 relative z-10">
