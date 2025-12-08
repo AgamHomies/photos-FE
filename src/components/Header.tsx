@@ -30,8 +30,8 @@ const Header: React.FC<HeaderProps> = ({ isAuthenticated }) => {
                 <img src="/logo.png" alt="Click2Pic" className="h-8" />
             </div>
 
-            {/* Navigation Links (Center - Hidden on mobile) */}
-            <nav className="hidden md:flex items-center gap-8 text-sm font-medium text-slate-600 absolute left-1/2 transform -translate-x-1/2">
+            {/* Navigation Links (Center - Hidden on mobile/tablet) */}
+            <nav className="hidden lg:flex items-center gap-8 text-sm font-medium text-slate-600">
                 {isAuthenticated ? (
                     <>
                         <button
@@ -135,7 +135,7 @@ const Header: React.FC<HeaderProps> = ({ isAuthenticated }) => {
                         </div>
                     </div>
                 ) : (
-                    <div className="flex items-center gap-4">
+                    <div className="hidden lg:flex items-center gap-3">
                         <button
                             onClick={() => navigate('/auth')}
                             className="text-sm font-medium text-slate-600 hover:text-cyan-600 transition-colors"
@@ -144,7 +144,7 @@ const Header: React.FC<HeaderProps> = ({ isAuthenticated }) => {
                         </button>
                         <button
                             onClick={() => navigate('/auth', { state: { mode: 'register' } })}
-                            className="bg-cyan-500 text-white text-sm font-bold py-2 px-6 rounded-full hover:bg-cyan-600 transition-all shadow-sm hover:shadow-md"
+                            className="bg-cyan-500 text-white text-sm font-bold py-2 px-6 rounded-full hover:bg-cyan-600 transition-all shadow-sm hover:shadow-md whitespace-nowrap"
                         >
                             התחלה בחינם
                         </button>
@@ -154,7 +154,7 @@ const Header: React.FC<HeaderProps> = ({ isAuthenticated }) => {
 
             {/* Mobile Menu Button */}
             <button
-                className="md:hidden p-2 text-slate-600 hover:text-cyan-600 transition-colors"
+                className="lg:hidden p-2 text-slate-600 hover:text-cyan-600 transition-colors"
                 onClick={() => setIsMenuOpen(!isMenuOpen)}
             >
                 {isMenuOpen ? <X /> : <Menu />}
@@ -162,7 +162,7 @@ const Header: React.FC<HeaderProps> = ({ isAuthenticated }) => {
 
             {/* Mobile Menu Dropdown */}
             {isMenuOpen && (
-                <div className="absolute top-full left-0 w-full bg-white border-b border-slate-100 shadow-lg py-4 px-6 flex flex-col gap-4 md:hidden">
+                <div className="absolute top-full left-0 w-full bg-white border-b border-slate-100 shadow-lg py-4 px-6 flex flex-col gap-4 lg:hidden">
                     {isAuthenticated ? (
                         <>
                             <button
@@ -216,7 +216,7 @@ const Header: React.FC<HeaderProps> = ({ isAuthenticated }) => {
                             >
                                 למה לבחור בנו?
                             </button>
-                            <button
+                                <button
                                 onClick={() => {
                                     navigate('/');
                                     setIsMenuOpen(false);
@@ -226,6 +226,26 @@ const Header: React.FC<HeaderProps> = ({ isAuthenticated }) => {
                             >
                                 שאלות נפוצות
                             </button>
+                            <div className="border-t border-slate-100 my-2 pt-4 flex flex-col gap-3">
+                                <button
+                                    onClick={() => {
+                                        navigate('/auth');
+                                        setIsMenuOpen(false);
+                                    }}
+                                    className="text-right py-2 font-medium text-slate-600 hover:text-cyan-600"
+                                >
+                                    התחבר לחשבון
+                                </button>
+                                <button
+                                    onClick={() => {
+                                        navigate('/auth', { state: { mode: 'register' } });
+                                        setIsMenuOpen(false);
+                                    }}
+                                    className="bg-cyan-500 text-white text-center font-bold py-3 rounded-xl hover:bg-cyan-600 transition-all shadow-sm"
+                                >
+                                    התחלה בחינם
+                                </button>
+                            </div>
                         </>
                     )}
                 </div>

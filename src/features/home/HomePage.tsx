@@ -106,13 +106,13 @@ const HomePage: React.FC = () => {
   return (
     <Layout>
       {/* Hero Section */}
-      <section className="relative pt-12 pb-20 lg:pt-24 lg:pb-32 overflow-hidden bg-gradient-to-b from-white to-slate-50">
+      <section className="relative pt-8 pb-12 lg:pt-24 lg:pb-32 overflow-hidden bg-gradient-to-b from-white to-slate-50">
         <div className="container mx-auto px-4 relative z-10">
           <div className="flex flex-col lg:flex-row items-center gap-12 lg:gap-20">
 
             {/* Text Content */}
             <div className="lg:w-1/2 text-center lg:text-right">
-              <h1 className="text-4xl lg:text-6xl font-bold text-slate-900 mb-6 leading-tight">
+              <h1 className="text-3xl md:text-4xl lg:text-6xl font-bold text-slate-900 mb-6 leading-tight">
                 באירוע הבא, כולם ידעו <br />
                 <span className="text-cyan-500">מי צילם אותם!</span>
               </h1>
@@ -158,7 +158,7 @@ const HomePage: React.FC = () => {
 
             {/* Hero Image / Mockup */}
             <div className="lg:w-1/2 relative">
-              <div className="relative z-10 bg-white p-6 rounded-[2.5rem] shadow-2xl transform rotate-[-2deg] hover:rotate-0 transition-transform duration-500 border border-slate-100">
+              <div className="relative z-10 bg-white p-3 lg:p-6 rounded-[2.5rem] shadow-2xl transform rotate-[-1deg] lg:rotate-[-2deg] hover:rotate-0 transition-transform duration-500 border border-slate-100">
                 <div className="relative rounded-2xl overflow-hidden bg-slate-100 aspect-[4/3]">
                   {/* Placeholder for the phone mockup image from the user's screenshot */}
                   <div className="absolute inset-0 flex items-center justify-center bg-slate-50">
@@ -176,8 +176,8 @@ const HomePage: React.FC = () => {
                 </div>
 
                 {/* Floating Badge */}
-                <div className="hidden lg:block absolute -top-6 -right-6 bg-white p-4 rounded-2xl shadow-xl animate-bounce border border-slate-50">
-                  <div className="flex items-center gap-3">
+                <div className="hidden absolute -top-6 -right-6 p-4 rounded-2xl shadow-xl animate-bounce border border-slate-50">
+                  <div className="flex items-center gap-2">
                     <div className="bg-green-100 p-2 rounded-full">
                       <CheckCircle2 className="w-6 h-6 text-green-600" />
                     </div>
@@ -190,14 +190,14 @@ const HomePage: React.FC = () => {
               </div>
 
               {/* Decorative blobs */}
-              <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[120%] h-[120%] bg-gradient-to-tr from-cyan-200/40 to-blue-200/40 rounded-full filter blur-3xl -z-10 opacity-70"></div>
+              <div className="hidden absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[120%] h-[120%] bg-gradient-to-tr from-cyan-200/40 to-blue-200/40 rounded-full filter blur-3xl -z-10 opacity-70"></div>
             </div>
           </div>
         </div>
       </section>
 
       {/* How It Works Section */}
-      <section id="how-it-works-section" className="py-24 bg-white relative">
+      <section id="how-it-works-section" className="py-12 lg:py-24 bg-white relative">
         <div className="container mx-auto px-4">
           <div className="text-center mb-20">
             <h2 className="text-3xl lg:text-5xl font-bold text-slate-900 mb-6">איך זה עובד? <span className="text-cyan-500">3 שלבים פשוטים</span></h2>
@@ -226,7 +226,7 @@ const HomePage: React.FC = () => {
       </section>
 
       {/* Benefits Section */}
-      <section id="benefits-section" className="py-24 bg-slate-50">
+      <section id="benefits-section" className="py-12 lg:py-24 bg-slate-50">
         <div className="container mx-auto px-4">
           <div className="flex flex-col lg:flex-row gap-16 items-start max-w-7xl mx-auto">
             <div className="lg:w-1/3 lg:sticky lg:top-24">
@@ -270,7 +270,7 @@ const HomePage: React.FC = () => {
       </section>
 
       {/* FAQ Section */}
-      <section id="faq-section" className="py-24 bg-white">
+      <section id="faq-section" className="py-12 lg:py-24 bg-white">
         <div className="container mx-auto px-4 max-w-3xl">
           <div className="text-center mb-16">
             <h2 className="text-3xl font-bold text-slate-900 mb-4">שאלות נפוצות</h2>
@@ -301,7 +301,7 @@ const HomePage: React.FC = () => {
       </section>
 
       {/* CTA Section */}
-      <section className="py-24 bg-gradient-to-br from-cyan-600 to-blue-700 text-white text-center relative overflow-hidden">
+      <section className="py-12 lg:py-24 bg-gradient-to-br from-cyan-600 to-blue-700 text-white text-center relative overflow-hidden">
         {/* Background Patterns */}
         <div className="absolute top-0 left-0 w-full h-full overflow-hidden opacity-10">
           <div className="hidden lg:block absolute top-[-10%] left-[-10%] w-[40%] h-[40%] bg-white rounded-full blur-3xl"></div>
