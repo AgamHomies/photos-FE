@@ -229,7 +229,7 @@ const HomePage: React.FC = () => {
       <section id="benefits-section" className="py-24 bg-slate-50">
         <div className="container mx-auto px-4">
           <div className="flex flex-col lg:flex-row gap-16 items-start max-w-7xl mx-auto">
-            <div className="lg:w-1/3 sticky top-24">
+            <div className="lg:w-1/3 lg:sticky lg:top-24">
               <h2 className="text-4xl font-bold text-slate-900 mb-6">למה לבחור בנו?</h2>
               <p className="text-xl text-slate-600 mb-8 leading-relaxed">
                 בואו להפוך כל אירוע להזדמנות לצמיחה. המערכת שלנו נותנת לכם את הכלים להצליח.
@@ -326,7 +326,7 @@ const HomePage: React.FC = () => {
               <ArrowRight className="w-5 h-5" />
             </button>
 
-            <button 
+            <button
               onClick={() => navigate('/contact')}
               className="text-white font-bold flex items-center gap-2 hover:text-cyan-100 transition-colors"
             >
