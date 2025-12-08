@@ -447,10 +447,10 @@ END:VCARD`;
         <div className="w-full max-w-5xl mx-auto px-4">
           <div className="bg-white rounded-3xl shadow-xl overflow-hidden border border-[#E8DFD3]">
             {/* Card Header (Event Details) */}
-            <div className="text-center py-8 border-b border-[#E8DFD3]">
+            <div className="text-center py-8 px-6 border-b border-[#E8DFD3]">
                 <h2 className="text-3xl font-bold text-[#4A3B2C] mb-4">הגלריה שלך מהאירוע</h2>
                 
-                <div className="flex flex-wrap items-center justify-center gap-4 text-[#8B7355] text-lg font-medium">
+                <div className="flex flex-wrap items-center justify-center gap-4 text-[#8B7355] text-lg font-medium max-w-2xl mx-auto">
                    <div className="flex items-center gap-1.5">
                      <Heart className="w-4 h-4 text-[#C4A882]" />
                      <span>{event.name}</span>
