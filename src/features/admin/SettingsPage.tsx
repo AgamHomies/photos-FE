@@ -164,7 +164,7 @@ const SettingsPage: React.FC = () => {
     return (
         <Layout>
             <div className="min-h-[calc(100vh-80px)] flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8 bg-slate-50">
-                <div className="max-w-5xl w-full bg-white rounded-3xl shadow-sm border border-slate-100 p-8 md:p-12">
+                <div className="max-w-5xl w-full bg-white rounded-3xl shadow-sm border border-slate-100 p-4 md:p-12">
                     {/* Title */}
                     <div className="text-center mb-8">
                         <div className="mx-auto h-16 w-16 bg-cyan-50 rounded-full flex items-center justify-center mb-4 text-cyan-500">
@@ -423,7 +423,7 @@ const SettingsPage: React.FC = () => {
                     </form>
                 </div>
             </div>
-            <Toast 
+            <Toast
                 show={showToast}
                 message={toastMessage}
                 type={toastType}

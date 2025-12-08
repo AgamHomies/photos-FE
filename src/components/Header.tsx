@@ -1,7 +1,7 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../hooks/useAuth';
-import { Camera, LogOut, User } from 'lucide-react';
+import { Camera, LogOut, User, Menu, X } from 'lucide-react';
 
 interface HeaderProps {
     isAuthenticated?: boolean;
@@ -11,6 +11,7 @@ const Header: React.FC<HeaderProps> = ({ isAuthenticated }) => {
     const navigate = useNavigate();
     const location = useLocation();
     const { logout, user } = useAuth();
+    const [isMenuOpen, setIsMenuOpen] = useState(false);
 
     const handleLogout = () => {
         logout();
@@ -49,49 +50,49 @@ const Header: React.FC<HeaderProps> = ({ isAuthenticated }) => {
                     </>
                 ) : (
                     <>
-                        <button 
+                        <button
                             onClick={() => {
                                 navigate('/');
                                 setTimeout(() => {
                                     window.scrollTo({ top: 0, behavior: 'smooth' });
                                 }, 100);
-                            }} 
+                            }}
                             className="hover:text-cyan-500 transition-colors"
                         >
                             דף הבית
                         </button>
-                        <button 
+                        <button
                             onClick={() => {
                                 navigate('/');
                                 setTimeout(() => {
                                     const section = document.getElementById('how-it-works-section');
                                     section?.scrollIntoView({ behavior: 'smooth' });
                                 }, 100);
-                            }} 
+                            }}
                             className="hover:text-cyan-500 transition-colors"
                         >
                             איך זה עובד
                         </button>
-                        <button 
+                        <button
                             onClick={() => {
                                 navigate('/');
                                 setTimeout(() => {
                                     const section = document.getElementById('benefits-section');
                                     section?.scrollIntoView({ behavior: 'smooth' });
                                 }, 100);
-                            }} 
+                            }}
                             className="hover:text-cyan-500 transition-colors"
                         >
                             למה לבחור בנו?
                         </button>
-                        <button 
+                        <button
                             onClick={() => {
                                 navigate('/');
                                 setTimeout(() => {
                                     const section = document.getElementById('faq-section');
                                     section?.scrollIntoView({ behavior: 'smooth' });
                                 }, 100);
-                            }} 
+                            }}
                             className="hover:text-cyan-500 transition-colors"
                         >
                             שאלות נפוצות
@@ -150,6 +151,85 @@ const Header: React.FC<HeaderProps> = ({ isAuthenticated }) => {
                     </div>
                 )}
             </div>
+
+            {/* Mobile Menu Button */}
+            <button
+                className="md:hidden p-2 text-slate-600 hover:text-cyan-600 transition-colors"
+                onClick={() => setIsMenuOpen(!isMenuOpen)}
+            >
+                {isMenuOpen ? <X /> : <Menu />}
+            </button>
+
+            {/* Mobile Menu Dropdown */}
+            {isMenuOpen && (
+                <div className="absolute top-full left-0 w-full bg-white border-b border-slate-100 shadow-lg py-4 px-6 flex flex-col gap-4 md:hidden">
+                    {isAuthenticated ? (
+                        <>
+                            <button
+                                onClick={() => {
+                                    navigate('/admin');
+                                    setIsMenuOpen(false);
+                                }}
+                                className={`text-right py-2 hover:text-cyan-500 transition-colors ${isActive('/admin') ? 'text-cyan-600 font-bold' : ''}`}
+                            >
+                                דשבורד
+                            </button>
+                            <button
+                                onClick={() => {
+                                    navigate('/admin/create-event');
+                                    setIsMenuOpen(false);
+                                }}
+                                className={`text-right py-2 hover:text-cyan-500 transition-colors ${isActive('/admin/create-event') ? 'text-cyan-600 font-bold' : ''}`}
+                            >
+                                צור אירוע חדש
+                            </button>
+                        </>
+                    ) : (
+                        <>
+                            <button
+                                onClick={() => {
+                                    navigate('/');
+                                    setIsMenuOpen(false);
+                                    setTimeout(() => window.scrollTo({ top: 0, behavior: 'smooth' }), 100);
+                                }}
+                                className="text-right py-2 hover:text-cyan-500 transition-colors"
+                            >
+                                דף הבית
+                            </button>
+                            <button
+                                onClick={() => {
+                                    navigate('/');
+                                    setIsMenuOpen(false);
+                                    setTimeout(() => document.getElementById('how-it-works-section')?.scrollIntoView({ behavior: 'smooth' }), 100);
+                                }}
+                                className="text-right py-2 hover:text-cyan-500 transition-colors"
+                            >
+                                איך זה עובד
+                            </button>
+                            <button
+                                onClick={() => {
+                                    navigate('/');
+                                    setIsMenuOpen(false);
+                                    setTimeout(() => document.getElementById('benefits-section')?.scrollIntoView({ behavior: 'smooth' }), 100);
+                                }}
+                                className="text-right py-2 hover:text-cyan-500 transition-colors"
+                            >
+                                למה לבחור בנו?
+                            </button>
+                            <button
+                                onClick={() => {
+                                    navigate('/');
+                                    setIsMenuOpen(false);
+                                    setTimeout(() => document.getElementById('faq-section')?.scrollIntoView({ behavior: 'smooth' }), 100);
+                                }}
+                                className="text-right py-2 hover:text-cyan-500 transition-colors"
+                            >
+                                שאלות נפוצות
+                            </button>
+                        </>
+                    )}
+                </div>
+            )}
         </header>
     );
 };

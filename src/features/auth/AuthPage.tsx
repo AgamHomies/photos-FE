@@ -217,7 +217,7 @@ const AuthPage: React.FC = () => {
                 <div className="absolute top-1/4 right-1/4 w-96 h-96 bg-cyan-50 rounded-full mix-blend-multiply filter blur-3xl opacity-50 animate-blob"></div>
                 <div className="absolute top-1/3 left-1/4 w-96 h-96 bg-blue-50 rounded-full mix-blend-multiply filter blur-3xl opacity-50 animate-blob" style={{ animationDelay: '2s' }}></div>
 
-                <div className="max-w-md w-full space-y-8 bg-white p-10 rounded-2xl shadow-[0_8px_30px_rgb(0,0,0,0.04)] relative z-10">
+                <div className="max-w-md w-full space-y-8 bg-white p-6 md:p-10 rounded-2xl shadow-[0_8px_30px_rgb(0,0,0,0.04)] relative z-10">
                     <div className="text-center">
                         <h2 className="text-3xl font-bold text-slate-800 mb-2">
                             {isLogin ? 'ברוך הבא!' : 'צור חשבון חדש'}
@@ -420,7 +420,7 @@ const AuthPage: React.FC = () => {
                 </div>
             </footer>
 
-            <Toast 
+            <Toast
                 show={showToast}
                 message={toastMessage}
                 type={toastType}
