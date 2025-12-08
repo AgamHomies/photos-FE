@@ -132,52 +132,58 @@ const DashboardPage: React.FC = () => {
                 </div>
 
                 {/* Stats Grid */}
+                {/* Stats Grid */}
                 {stats && (
-                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-6 mb-10">
+                    <div className="grid grid-cols-2 lg:grid-cols-5 gap-3 md:gap-6 mb-8 md:mb-10">
                         {/* 1. סה"כ הורדות */}
-                        <div className="bg-white p-6 rounded-2xl shadow-sm border border-slate-100 hover:shadow-md transition-shadow">
-                            <div className="p-3 bg-blue-50 text-blue-500 rounded-xl w-fit mb-4">
-                                <Download className="w-6 h-6" />
+                        <div className="bg-white p-4 md:p-6 rounded-xl md:rounded-2xl shadow-sm border border-slate-100 hover:shadow-md transition-shadow">
+                            <div className="p-2 md:p-3 bg-blue-50 text-blue-500 rounded-lg md:rounded-xl w-fit mb-3 md:mb-4">
+                                <Download className="w-5 h-5 md:w-6 md:h-6" />
                             </div>
-                            <h3 className="text-3xl font-bold text-slate-900 mb-1">{stats.totalDownloads.toLocaleString()}</h3>
-                            <p className="text-slate-500 text-sm font-medium">סה"כ הורדות</p>
+                            <h3 className="text-2xl md:text-3xl font-bold text-slate-900 mb-1">{stats.totalDownloads.toLocaleString()}</h3>
+                            <p className="text-slate-500 text-xs md:text-sm font-medium">סה"כ הורדות</p>
                         </div>
 
                         {/* 2. כניסות לדפי אירועים */}
-                        <div className="bg-white p-6 rounded-2xl shadow-sm border border-slate-100 hover:shadow-md transition-shadow">
-                            <div className="p-3 bg-purple-50 text-purple-500 rounded-xl w-fit mb-4">
-                                <Users className="w-6 h-6" />
+                        <div className="bg-white p-4 md:p-6 rounded-xl md:rounded-2xl shadow-sm border border-slate-100 hover:shadow-md transition-shadow">
+                            <div className="p-2 md:p-3 bg-purple-50 text-purple-500 rounded-lg md:rounded-xl w-fit mb-3 md:mb-4">
+                                <Users className="w-5 h-5 md:w-6 md:h-6" />
                             </div>
-                            <h3 className="text-3xl font-bold text-slate-900 mb-1">{stats.totalPageVisits.toLocaleString()}</h3>
-                            <p className="text-slate-500 text-sm font-medium">כניסות לדפי אירועים</p>
+                            <h3 className="text-2xl md:text-3xl font-bold text-slate-900 mb-1">{stats.totalPageVisits.toLocaleString()}</h3>
+                            <p className="text-slate-500 text-xs md:text-sm font-medium">כניסות לאירועים</p>
                         </div>
 
                         {/* 3. כניסה לפרופיל שלך */}
-                        <div className="bg-white p-6 rounded-2xl shadow-sm border border-slate-100 hover:shadow-md transition-shadow">
-                            <div className="bg-pink-50 p-3 rounded-xl w-fit mb-4 text-pink-500">
-                                <Share2 className="w-6 h-6" />
+                        <div className="bg-white p-4 md:p-6 rounded-xl md:rounded-2xl shadow-sm border border-slate-100 hover:shadow-md transition-shadow">
+                            <div className="bg-pink-50 p-2 md:p-3 rounded-lg md:rounded-xl w-fit mb-3 md:mb-4 text-pink-500">
+                                <Share2 className="w-5 h-5 md:w-6 md:h-6" />
                             </div>
-                            <h3 className="text-3xl font-bold text-slate-900 mb-1">{stats.totalSocialTraffic.toLocaleString()}</h3>
-                            <p className="text-slate-500 text-sm font-medium leading-tight">כניסות לפרופיל שלך</p>
-                            <p className="text-slate-400 text-xs mt-1">פייסבוק • אינסטגרם • טיקטוק • אתר</p>
+                            <h3 className="text-2xl md:text-3xl font-bold text-slate-900 mb-1">{stats.totalSocialTraffic.toLocaleString()}</h3>
+                            <p className="text-slate-500 text-xs md:text-sm font-medium leading-tight">כניסות לפרופיל</p>
+                            {/* Hidden detail on mobile to save space */}
+                            <p className="hidden md:block text-slate-400 text-xs mt-1">פייסבוק • אינסטגרם • טיקטוק</p>
                         </div>
 
                         {/* 4. שמרו את המספר שלך */}
-                        <div className="bg-white p-6 rounded-2xl shadow-sm border border-slate-100 hover:shadow-md transition-shadow">
-                            <div className="bg-green-50 p-3 rounded-xl w-fit mb-4 text-green-500">
-                                <Smartphone className="w-6 h-6" />
+                        <div className="bg-white p-4 md:p-6 rounded-xl md:rounded-2xl shadow-sm border border-slate-100 hover:shadow-md transition-shadow">
+                            <div className="bg-green-50 p-2 md:p-3 rounded-lg md:rounded-xl w-fit mb-3 md:mb-4 text-green-500">
+                                <Smartphone className="w-5 h-5 md:w-6 md:h-6" />
                             </div>
-                            <h3 className="text-3xl font-bold text-slate-900 mb-1">{stats.phoneSaves.toLocaleString()}</h3>
-                            <p className="text-slate-500 text-sm font-medium">שמרו את המספר שלך</p>
+                            <h3 className="text-2xl md:text-3xl font-bold text-slate-900 mb-1">{stats.phoneSaves.toLocaleString()}</h3>
+                            <p className="text-slate-500 text-xs md:text-sm font-medium">שמרו מספר</p>
                         </div>
 
                         {/* 5. אירועים פעילים */}
-                        <div className="bg-white p-6 rounded-2xl shadow-sm border border-slate-100 hover:shadow-md transition-shadow">
-                            <div className="bg-orange-50 p-3 rounded-xl w-fit mb-4 text-orange-500">
-                                <Calendar className="w-6 h-6" />
+                        <div className="bg-white p-4 md:p-6 rounded-xl md:rounded-2xl shadow-sm border border-slate-100 hover:shadow-md transition-shadow col-span-2 md:col-span-1 lg:col-span-1">
+                            <div className="flex flex-row md:flex-col items-center md:items-start justify-between md:justify-start gap-4 md:gap-0">
+                                <div className="bg-orange-50 p-2 md:p-3 rounded-lg md:rounded-xl w-fit mb-0 md:mb-4 text-orange-500">
+                                    <Calendar className="w-5 h-5 md:w-6 md:h-6" />
+                                </div>
+                                <div>
+                                     <h3 className="text-2xl md:text-3xl font-bold text-slate-900 mb-1">{stats.activeEvents}/{stats.activeEvents + stats.expiredEvents}</h3>
+                                     <p className="text-slate-500 text-xs md:text-sm font-medium">אירועים פעילים</p>
+                                </div>
                             </div>
-                            <h3 className="text-3xl font-bold text-slate-900 mb-1">{stats.activeEvents}/{stats.activeEvents + stats.expiredEvents}</h3>
-                            <p className="text-slate-500 text-sm font-medium">אירועים פעילים</p>
                         </div>
                     </div>
                 )}

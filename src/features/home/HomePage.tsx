@@ -176,17 +176,7 @@ const HomePage: React.FC = () => {
                 </div>
 
                 {/* Floating Badge */}
-                <div className="hidden absolute -top-6 -right-6 p-4 rounded-2xl shadow-xl animate-bounce border border-slate-50">
-                  <div className="flex items-center gap-2">
-                    <div className="bg-green-100 p-2 rounded-full">
-                      <CheckCircle2 className="w-6 h-6 text-green-600" />
-                    </div>
-                    <div>
-                      <p className="text-xs text-slate-500 font-medium">זיהוי מוצלח</p>
-                      <p className="font-bold text-slate-800">100% דיוק</p>
-                    </div>
-                  </div>
-                </div>
+
               </div>
 
               {/* Decorative blobs */}

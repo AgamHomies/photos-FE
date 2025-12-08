@@ -32,23 +32,7 @@ const Header: React.FC<HeaderProps> = ({ isAuthenticated }) => {
 
             {/* Navigation Links (Center - Hidden on mobile/tablet) */}
             <nav className="hidden lg:flex items-center gap-8 text-sm font-medium text-slate-600">
-                {isAuthenticated ? (
-                    <>
-                        <button
-                            onClick={() => navigate('/admin')}
-                            className={`hover:text-cyan-500 transition-colors ${isActive('/admin') ? 'text-cyan-600 font-bold' : ''}`}
-                        >
-                            דשבורד
-                        </button>
-
-                        <button
-                            onClick={() => navigate('/admin/create-event')}
-                            className={`hover:text-cyan-500 transition-colors ${isActive('/admin/create-event') ? 'text-cyan-600 font-bold' : ''}`}
-                        >
-                            צור אירוע חדש
-                        </button>
-                    </>
-                ) : (
+                {!isAuthenticated && (
                     <>
                         <button
                             onClick={() => {
@@ -118,7 +102,7 @@ const Header: React.FC<HeaderProps> = ({ isAuthenticated }) => {
                             </button>
 
                             {/* Dropdown */}
-                            <div className="absolute right-0 mt-2 w-48 bg-white rounded-xl shadow-lg border border-slate-100 py-2 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 transform origin-top-right">
+                            <div className="absolute left-0 mt-2 w-48 bg-white rounded-xl shadow-lg border border-slate-100 py-2 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 transform origin-top-left">
                                 <button
                                     onClick={() => navigate('/admin/settings')}
                                     className="w-full text-right px-4 py-2 text-sm text-slate-600 hover:bg-slate-50 hover:text-cyan-600 transition-colors"
@@ -152,13 +136,15 @@ const Header: React.FC<HeaderProps> = ({ isAuthenticated }) => {
                 )}
             </div>
 
-            {/* Mobile Menu Button */}
-            <button
-                className="lg:hidden p-2 text-slate-600 hover:text-cyan-600 transition-colors"
-                onClick={() => setIsMenuOpen(!isMenuOpen)}
-            >
-                {isMenuOpen ? <X /> : <Menu />}
-            </button>
+            {/* Mobile Menu Button - Hide if authenticated */}
+            {!isAuthenticated && (
+                <button
+                    className="lg:hidden p-2 text-slate-600 hover:text-cyan-600 transition-colors"
+                    onClick={() => setIsMenuOpen(!isMenuOpen)}
+                >
+                    {isMenuOpen ? <X /> : <Menu />}
+                </button>
+            )}
 
             {/* Mobile Menu Dropdown */}
             {isMenuOpen && (
