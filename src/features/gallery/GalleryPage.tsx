@@ -375,7 +375,7 @@ END:VCARD`;
   const isScanning = viewState === 'scanning';
 
   return (
-    <div className="min-h-screen bg-[#FDFBF7] font-sans text-[#5C4A3A] pb-20" dir="rtl">
+    <div className="min-h-screen bg-[#FDFBF7] font-sans text-[#5C4A3A] flex flex-col" dir="rtl">
       
       {/* 1. Header & Branding - Full Width Darker Beige Background */}
       <div className="w-full bg-[#EEE9E1] pt-8 pb-8 text-center shadow-sm relative z-10">
@@ -440,7 +440,7 @@ END:VCARD`;
       </div>
 
       {/* Spacer / Background for Main Content - Lighter Cream */}
-      <div className="bg-[#FDFBF7] min-h-[calc(100vh-250px)] pt-8 flex flex-col items-center">
+      <div className="bg-[#FDFBF7] flex-grow w-full flex flex-col items-center py-12">
 
       {/* 2. Main Content Card */}
       {viewState !== 'results' && (
@@ -448,21 +448,21 @@ END:VCARD`;
           <div className="bg-white rounded-3xl shadow-xl overflow-hidden border border-[#E8DFD3]">
             {/* Card Header (Event Details) */}
             <div className="text-center py-8 border-b border-[#E8DFD3]">
-                <h2 className="text-4xl font-bold text-[#4A3B2C] mb-4">הגלריה שלך מהאירוע</h2>
+                <h2 className="text-3xl font-bold text-[#4A3B2C] mb-4">הגלריה שלך מהאירוע</h2>
                 
                 <div className="flex flex-wrap items-center justify-center gap-4 text-[#8B7355] text-lg font-medium">
                    <div className="flex items-center gap-1.5">
-                     <Heart className="w-5 h-5 text-[#C4A882]" />
+                     <Heart className="w-4 h-4 text-[#C4A882]" />
                      <span>{event.name}</span>
                    </div>
                   <span className="hidden md:inline w-px h-4 bg-[#E8DFD3]"></span>
                   <div className="flex items-center gap-2">
-                    <Calendar className="w-5 h-5 text-[#C4A882]" />
+                    <Calendar className="w-4 h-4 text-[#C4A882]" />
                     <span>{new Date(event.date).toLocaleDateString('he-IL', { day: 'numeric', month: 'long', year: 'numeric'})}</span>
                   </div>
                    <span className="hidden md:inline w-px h-4 bg-[#E8DFD3]"></span>
                   <div className="flex items-center gap-2">
-                    <MapPin className="w-5 h-5 text-[#C4A882]" />
+                    <MapPin className="w-4 h-4 text-[#C4A882]" />
                     <span>{event.location}</span>
                   </div>
                 </div>
@@ -537,7 +537,7 @@ END:VCARD`;
             {/* Minimal Header for Results */}
             <div className="text-center mb-10">
                <h2 className="text-3xl font-bold text-[#4A3B2C] mb-2">הגלריה שלך מהאירוע</h2>
-               <div className="flex items-center justify-center gap-2 text-[#8B7355] text-lg">
+               <div className="flex items-center justify-center gap-2 text-[#8B7355] text-sm">
                   <span>{event.name}</span>
                   <span>|</span>
                   <span>{new Date(event.date).toLocaleDateString('he-IL')}</span>
