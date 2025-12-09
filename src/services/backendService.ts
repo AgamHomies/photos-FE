@@ -51,7 +51,7 @@ export const BackendService = {
             : await RealProfileAPI.getPhotographerProfile(id);
     },
 
-    updateProfile: async (updates: Partial<PhotographerProfile>): Promise<void> => {
+    updateProfile: async (updates: Partial<PhotographerProfile> & { deleteLogo?: boolean }): Promise<void> => {
         return USE_MOCK
             ? await MockS3Service.updateProfile(updates)
             : await RealProfileAPI.updateProfile(updates);

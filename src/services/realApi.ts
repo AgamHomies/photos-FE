@@ -134,25 +134,29 @@ export const RealProfileAPI = {
         }
     },
 
-    updateProfile: async (updates: Partial<PhotographerProfile>): Promise<void> => {
+    updateProfile: async (updates: Partial<PhotographerProfile> & { deleteLogo?: boolean }): Promise<void> => {
         const formData = new FormData();
 
         // Map fields to form data
-        if (updates.name) formData.append('fullName', updates.name);
-        if (updates.bio) formData.append('description', updates.bio);
-        if (updates.phone) formData.append('phone', updates.phone);
-        if (updates.contactEmail) formData.append('contactEmail', updates.contactEmail);
+        // Check for undefined to allow sending empty strings (to clear fields)
+        if (updates.name !== undefined) formData.append('fullName', updates.name);
+        if (updates.bio !== undefined) formData.append('description', updates.bio);
+        if (updates.phone !== undefined) formData.append('phone', updates.phone);
+        if (updates.contactEmail !== undefined) formData.append('contactEmail', updates.contactEmail);
 
-        if (updates.instagramUrl) formData.append('instagramUrl', updates.instagramUrl);
-        if (updates.tiktokUrl) formData.append('tiktokUrl', updates.tiktokUrl);
-        if (updates.facebookUrl) formData.append('facebookUrl', updates.facebookUrl);
-        if (updates.websiteUrl) formData.append('websiteUrl', updates.websiteUrl);
+        if (updates.instagramUrl !== undefined) formData.append('instagramUrl', updates.instagramUrl);
+        if (updates.tiktokUrl !== undefined) formData.append('tiktokUrl', updates.tiktokUrl);
+        if (updates.facebookUrl !== undefined) formData.append('facebookUrl', updates.facebookUrl);
+        if (updates.websiteUrl !== undefined) formData.append('websiteUrl', updates.websiteUrl);
 
         // Add address
-        if (updates.address) formData.append('address', updates.address);
+        if (updates.address !== undefined) formData.append('address', updates.address);
 
         // Add logo if present
         if (updates.logo) formData.append('logo', updates.logo);
+        
+        // Handle delete logo
+        if (updates.deleteLogo) formData.append('deleteLogo', 'true');
 
         const token = await getAuthToken();
         const response = await fetch(`${API_BASE_URL}/auth/profile`, {

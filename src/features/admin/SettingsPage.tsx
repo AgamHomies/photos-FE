@@ -32,6 +32,9 @@ const SettingsPage: React.FC = () => {
     const [showToast, setShowToast] = useState(false);
     const [toastMessage, setToastMessage] = useState('');
     const [toastType, setToastType] = useState<'success' | 'error'>('success');
+    
+    // New state for handling logo deletion
+    const [isLogoDeleted, setIsLogoDeleted] = useState(false);
 
     const triggerToast = (message: string, type: 'success' | 'error' = 'success') => {
         setToastMessage(message);
@@ -115,6 +118,7 @@ const SettingsPage: React.FC = () => {
             const file = e.target.files[0];
             setFormData(prev => ({ ...prev, logo: file }));
             setLogoPreview(URL.createObjectURL(file));
+            setIsLogoDeleted(false);
         }
     };
 
@@ -136,7 +140,8 @@ const SettingsPage: React.FC = () => {
         if (validateForm()) {
             setIsSubmitting(true);
             try {
-                const updates: Partial<PhotographerProfile> = {
+                // We cast to any to allow deleteLogo property
+                const updates: any = {
                     name: formData.fullName,
                     contactEmail: formData.email,
                     bio: formData.description,
@@ -147,10 +152,8 @@ const SettingsPage: React.FC = () => {
                     tiktokUrl: formData.tiktokUrl,
                     facebookUrl: formData.facebookUrl,
                     logo: formData.logo || undefined,
+                    deleteLogo: isLogoDeleted
                 };
-
-                // Note: File upload for logo needs to be handled if supported by backend update
-                // Currently assuming text updates only for this iteration or separate endpoint
 
                 await BackendService.updateProfile(updates);
 
@@ -160,6 +163,7 @@ const SettingsPage: React.FC = () => {
                 });
 
                 triggerToast('הפרופיל עודכן בהצלחה!');
+                setIsLogoDeleted(false);
                 setTimeout(() => navigate('/admin'), 1500); // Give user time to see toast
             } catch (error: any) {
                 console.error('Failed to update profile:', error);
@@ -310,7 +314,7 @@ const SettingsPage: React.FC = () => {
 
                             <div>
                                 <label className="block text-sm font-medium text-slate-700 mb-2">
-                                    העלאת לוגו (אופציונלי)
+                                    העלאת לוגו
                                 </label>
                                 <label className="block border-2 border-dashed border-slate-200 rounded-xl p-8 text-center hover:border-cyan-500 transition-colors cursor-pointer w-full">
                                     <input
@@ -334,6 +338,20 @@ const SettingsPage: React.FC = () => {
                                         </div>
                                     )}
                                 </label>
+                                {logoPreview && (
+                                    <button
+                                        type="button"
+                                        onClick={(e) => {
+                                            e.preventDefault();
+                                            setFormData(prev => ({ ...prev, logo: null }));
+                                            setLogoPreview(null);
+                                            setIsLogoDeleted(true);
+                                        }}
+                                        className="mt-2 text-sm text-red-500 hover:text-red-600 font-medium w-full text-center"
+                                    >
+                                        הסר לוגו
+                                    </button>
+                                )}
                                 {errors.logo && <p className="text-red-500 text-xs mt-1">{errors.logo}</p>}
                                 <p className="text-xs text-slate-500 mt-2">הלוגו יופיע על התמונות והגלריות שתיצור</p>
                             </div>
