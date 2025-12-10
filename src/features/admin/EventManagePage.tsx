@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useRef } from 'react';
 import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import { BackendService } from '../../services/backendService';
 import { Event, Photo } from '../../types';
@@ -21,38 +21,22 @@ import {
 const EventManagePage: React.FC = () => {
     const { id } = useParams<{ id: string }>();
     const navigate = useNavigate();
+    const location = useLocation();
+    
     const [event, setEvent] = useState<Event | null>(null);
     const [photos, setPhotos] = useState<Photo[]>([]);
+    const [batches, setBatches] = useState<any[]>([]);
     const [loading, setLoading] = useState(true);
-    const location = useLocation();
+    
+    // Upload & Progress State
+    const [uploading, setUploading] = useState(false);
+    const [progress, setProgress] = useState(0);
+    const [progressStage, setProgressStage] = useState('');
+    const hasStartedUpload = useRef(false);
+
     const queryParams = new URLSearchParams(location.search);
     const initialTab = (queryParams.get('tab') as 'photos' | 'details') || 'photos';
     const [activeTab, setActiveTab] = useState<'photos' | 'details'>(initialTab);
-
-    useEffect(() => {
-        if (location.hash === '#delete-section' && activeTab === 'details' && !loading) {
-            // Small timeout to ensure rendering
-            setTimeout(() => {
-                const element = document.getElementById('delete-section');
-                if (element) {
-                    element.scrollIntoView({ behavior: 'smooth' });
-                }
-            }, 100);
-        }
-    }, [location.hash, activeTab, loading]);
-    const [toast, setToast] = useState<{ show: boolean; message: string; type: 'success' | 'error' }>({
-        show: false,
-        message: '',
-        type: 'success'
-    });
-
-    const showNotification = (message: string, type: 'success' | 'error' = 'success') => {
-        setToast({ show: true, message, type });
-        setTimeout(() => setToast(prev => ({ ...prev, show: false })), 3000);
-    };
-
-    const [uploading, setUploading] = useState(false);
-
 
     // Edit form state
     const [editForm, setEditForm] = useState({
@@ -65,18 +49,91 @@ const EventManagePage: React.FC = () => {
     const [hasMore, setHasMore] = useState(true);
     const ITEMS_PER_PAGE = 50;
 
+    const [toast, setToast] = useState<{ show: boolean; message: string; type: 'success' | 'error' }>({
+        show: false,
+        message: '',
+        type: 'success'
+    });
+
+    const showNotification = (message: string, type: 'success' | 'error' = 'success') => {
+        setToast({ show: true, message, type });
+        setTimeout(() => setToast(prev => ({ ...prev, show: false })), 3000);
+    };
+
+    // 1. Check for redirected upload state
     useEffect(() => {
-        if (id) {
+        const state = location.state as { filesToUpload?: File[], coverFile?: File, isNewEvent?: boolean } | null;
+        
+        if (id && state?.filesToUpload && !hasStartedUpload.current) {
+            hasStartedUpload.current = true;
+            // Clear state immediately to prevent double upload on refresh (works in some routers, otherwise history replace)
+            window.history.replaceState({}, document.title);
+            
+            handleBulkUpload(state.filesToUpload, state.coverFile);
+        } else if (id) {
             loadEventData(id);
         }
-    }, [id]);
+    }, [id, location.state]);
+
+    // 2. Polling for Server-Side Processing
+    useEffect(() => {
+        let interval: NodeJS.Timeout;
+        const isServerProcessing = batches.some(b => b.status === 'processing');
+        
+        // Poll if we are NOT currently uploading from client (to avoid conflict) 
+        // OR if we just finished upload and want to track server progress
+        if (id && isServerProcessing && !uploading) {
+            interval = setInterval(async () => {
+                try {
+                    const updatedBatches = await BackendService.getBatches(id);
+                    setBatches(updatedBatches);
+                    
+                    // Calculate server-side progress
+                    const total = updatedBatches.reduce((acc: number, b: any) => acc + b.totalImages, 0);
+                    const processed = updatedBatches.reduce((acc: number, b: any) => acc + b.processedImages, 0);
+                    
+                    if (total > 0) {
+                        const rawPct = processed / total;
+                        const serverProgress = 80 + Math.floor(rawPct * 20);
+                        // Only update main progress if we are not in client-upload mode
+                        setProgress(serverProgress);
+                        setProgressStage(`מעבד תמונות בשרת (${processed}/${total})...`);
+                    }
+
+                // If all became done, refresh photos/event and AUTO-PUBLISH
+                if (!updatedBatches.some((b: any) => b.status === 'processing')) {
+                    // Check if we need to publish
+                    const processingStatus = await BackendService.getProcessingStatus(id);
+                    if (processingStatus.initial_processing_done && !processingStatus.is_published) {
+                         try {
+                             await BackendService.publishEvent(id);
+                             showNotification('האירוע פורסם אוטומטית!', 'success');
+                         } catch (err) {
+                             console.error("Auto-publish failed", err);
+                         }
+                    }
+                    
+                    loadEventData(id);
+                    setProgress(100);
+                    setProgressStage('העיבוד הסתיים בהצלחה!');
+                }
+            } catch (e) {
+                console.error("Polling error", e);
+            }
+        }, 3000);
+        }
+        return () => clearInterval(interval);
+    }, [batches, id, uploading]);
 
     const loadEventData = async (eventId: string) => {
-        setLoading(true);
+        // Don't show full page loader if we are just refreshing data
+        if (!event) setLoading(true); 
+        
         try {
-            const [eventData, photosData] = await Promise.all([
+            const [eventData, photosData, batchesData] = await Promise.all([
                 BackendService.getEvent(eventId),
-                BackendService.getEventPhotos(eventId, 1, ITEMS_PER_PAGE)
+                BackendService.getEventPhotos(eventId, 1, ITEMS_PER_PAGE),
+                BackendService.getBatches(eventId)
             ]);
 
             if (eventData) {
@@ -87,8 +144,21 @@ const EventManagePage: React.FC = () => {
                     location: eventData.location
                 });
                 setPhotos(photosData);
+                setBatches(batchesData);
                 setPage(1);
                 setHasMore(photosData.length === ITEMS_PER_PAGE);
+
+                // Initial progress check
+                const isProcessing = batchesData.some((b: any) => b.status === 'processing');
+                if (isProcessing) {
+                    const total = batchesData.reduce((acc: number, b: any) => acc + b.totalImages, 0);
+                    const processed = batchesData.reduce((acc: number, b: any) => acc + b.processedImages, 0);
+                    if (total > 0) {
+                        const rawPct = processed / total;
+                        setProgress(80 + Math.floor(rawPct * 20));
+                        setProgressStage('ממשיך עיבוד מהשרת...');
+                    }
+                }
             } else {
                 navigate('/admin');
             }
@@ -99,36 +169,21 @@ const EventManagePage: React.FC = () => {
         }
     };
 
-    const loadMorePhotos = async () => {
-        if (!id || !hasMore) return;
-
+    const handleBulkUpload = async (files: File[], coverFile?: File) => {
+        if (!id) return;
+        
+        setUploading(true);
+        setProgress(0);
+        
         try {
-            const nextPage = page + 1;
-            const newPhotos = await BackendService.getEventPhotos(id, nextPage, ITEMS_PER_PAGE);
-
-            if (newPhotos.length > 0) {
-                setPhotos(prev => [...prev, ...newPhotos]);
-                setPage(nextPage);
-                setHasMore(newPhotos.length === ITEMS_PER_PAGE);
-            } else {
-                setHasMore(false);
-            }
-        } catch (error) {
-            console.error("Failed to load more photos", error);
-        }
-    };
-
-    const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
-        if (e.target.files && e.target.files.length > 0 && id) {
-            setUploading(true);
-            try {
-                const files = Array.from(e.target.files);
-                const BATCH_SIZE = 50;
-                const CONCURRENCY_LIMIT = 5;
-                const totalFiles = files.length;
+            // A. Upload Gallery Files
+            if (files.length > 0) {
+                const BATCH_SIZE = 100;
+                const CONCURRENCY_LIMIT = 15;
                 let processedCount = 0;
+                const totalFiles = files.length;
 
-                // Helper for concurrency control
+                // Helper for concurrency
                 const uploadWithConcurrency = async (tasks: (() => Promise<any>)[], limit: number) => {
                     const results = [];
                     const executing: Promise<any>[] = [];
@@ -144,42 +199,78 @@ const EventManagePage: React.FC = () => {
                     return Promise.all(results);
                 };
 
-                // Process in batches
                 for (let i = 0; i < totalFiles; i += BATCH_SIZE) {
                     const chunk = files.slice(i, i + BATCH_SIZE);
+                    const currentBatchNum = Math.floor(i / BATCH_SIZE) + 1;
+                    const totalBatches = Math.ceil(totalFiles / BATCH_SIZE);
 
-                    // 1. Get presigned URLs for this batch
+                    setProgressStage(`מעלה נגלה ${currentBatchNum} מתוך ${totalBatches}...`);
+
+                    // 1. Presign
                     const fileInfos = chunk.map(f => ({ filename: f.name, contentType: f.type }));
                     const { urls } = await BackendService.getPresignedUrls(id, fileInfos);
 
-                    // 2. Upload to S3 with concurrency limit
+                    // 2. Upload to S3
                     const uploadTasks = urls.map((urlInfo, index) => async () => {
                         const file = chunk[index];
                         await BackendService.uploadToS3(urlInfo.uploadUrl, file);
                         return urlInfo.photoId;
                     });
-
+                    
                     const uploadedPhotoIds = await uploadWithConcurrency(uploadTasks, CONCURRENCY_LIMIT);
 
-                    // 3. Confirm uploads for this batch
+                    // 3. Confirm
                     await BackendService.confirmUploads(id, uploadedPhotoIds);
 
                     processedCount += chunk.length;
+                    // Client upload is 0-80% of total "perceived" progress, Server processing is the rest
+                    const clientProgress = Math.floor((processedCount / totalFiles) * 80);
+                    setProgress(clientProgress);
                 }
-
-                // 4. Refresh photos
-                // We reload the first page to show the new photos, and update the total count
-                const updatedPhotos = await BackendService.getEventPhotos(id);
-                setPhotos(updatedPhotos);
-                setEvent(prev => prev ? ({ ...prev, photoCount: prev.photoCount + totalFiles }) : null);
-
-                showNotification(`הועלו בהצלחה ${totalFiles} תמונות`);
-            } catch (error) {
-                console.error(error);
-                showNotification('שגיאה בהעלאת תמונות', 'error');
-            } finally {
-                setUploading(false);
             }
+
+            // B. Upload Cover if exists
+            if (coverFile) {
+                setProgressStage('מעלה תמונת קאבר...');
+                const coverInfo = await BackendService.getPresignedCoverUrl(id, coverFile.name, coverFile.type);
+                await BackendService.uploadToS3(coverInfo.uploadUrl, coverFile);
+                await BackendService.setCoverImage(id, coverInfo.photoId.toString());
+            }
+
+            // Refresh data to start server polling
+            await loadEventData(id);
+            showNotification(`העלאה הסתיימה בהצלחה! המערכת מעבדת את התמונות...`);
+
+        } catch (error) {
+            console.error(error);
+            showNotification('שגיאה בהעלאת תמונות', 'error');
+            setProgressStage('אירעה שגיאה בהעלאה');
+        } finally {
+            setUploading(false); // This will allow polling to take over for the 80-100% part
+        }
+    };
+
+    // Simple manual upload handler (for the "Upload More" button)
+    const handleManualUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+        if (e.target.files && e.target.files.length > 0) {
+            handleBulkUpload(Array.from(e.target.files));
+        }
+    };
+
+    const loadMorePhotos = async () => {
+        if (!id || !hasMore) return;
+        try {
+            const nextPage = page + 1;
+            const newPhotos = await BackendService.getEventPhotos(id, nextPage, ITEMS_PER_PAGE);
+            if (newPhotos.length > 0) {
+                setPhotos(prev => [...prev, ...newPhotos]);
+                setPage(nextPage);
+                setHasMore(newPhotos.length === ITEMS_PER_PAGE);
+            } else {
+                setHasMore(false);
+            }
+        } catch (error) {
+            console.error("Failed to load more photos", error);
         }
     };
 
@@ -221,7 +312,7 @@ const EventManagePage: React.FC = () => {
     };
 
     const handleDeleteEvent = async () => {
-        if (window.confirm('האם אתה בטוח שברצונך למחוק את האירוע? פעולה זו תמחק את כל הנתונים והתמונות לצמיתות ולא ניתן יהיה לשחזר אותם.')) {
+        if (window.confirm('האם אתה בטוח שברצונך למחוק את האירוע? פעולה זו תמחק את כל הנתונים והתמונות לצמיתות.')) {
             if (id) {
                 try {
                     await BackendService.deleteEvent(id);
@@ -245,10 +336,43 @@ const EventManagePage: React.FC = () => {
 
     if (!event) return null;
 
+    // determine if we should show links
+    // Show links if NOT uploading AND NOT processing (or checking batch status)
+    // determine if we should show links
+    // Show links if NOT uploading AND NOT processing (or checking batch status) AND (published OR initial done)
+    // Actually, if we auto-publish, we just need to wait for the state to update.
+    const isProcessing = batches.some(b => b.status === 'processing');
+    const showLinks = !uploading && !isProcessing && (event.isPublished || event.initialProcessingDone);
+
     return (
         <Layout>
             <div className="bg-white border-b border-slate-200 sticky top-0 z-30 shadow-sm">
                 <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
+                    
+                    {/* Progress Bar (Visible if uploading or processing) */}
+                    {(uploading || isProcessing) && (
+                        <div className="mb-6 bg-slate-50 border border-slate-200 rounded-xl p-4">
+                            <div className="flex justify-between items-center mb-2">
+                                <span className="font-bold text-slate-700 flex items-center gap-2">
+                                    <Loader2 className="w-4 h-4 animate-spin text-cyan-500" />
+                                    {progressStage || 'מעבד נתונים...'}
+                                </span>
+                                <span className="font-mono font-bold text-cyan-600">{progress}%</span>
+                            </div>
+                            <div className="w-full bg-slate-200 rounded-full h-2.5 overflow-hidden">
+                                <div 
+                                    className="bg-cyan-500 h-2.5 rounded-full transition-all duration-500" 
+                                    style={{ width: `${progress}%` }}
+                                ></div>
+                            </div>
+                            <p className="text-xs text-slate-400 mt-2">
+                                {uploading 
+                                    ? 'אנא אל תסגור את החלון עד סיום ההעלאה.' 
+                                    : 'התמונות עוברות עיבוד בשרת. ניתן לערוך פרטים במקביל.'}
+                            </p>
+                        </div>
+                    )}
+
                     <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
                         <div className="flex items-center gap-4">
                             <button
@@ -267,25 +391,26 @@ const EventManagePage: React.FC = () => {
                                 </div>
                             </div>
                         </div>
-                        <div className="flex gap-3">
-                            <button
-                                onClick={() => window.open(`/gallery/${event.slug || event.id}`, '_blank')}
-                                className="px-4 py-2 text-sm font-bold text-slate-600 border border-slate-200 hover:bg-slate-50 rounded-xl transition-colors flex items-center gap-2"
-                                title="קישור לאורחים (זיהוי פנים)"
-                            >
-                                <Users className="w-4 h-4" />
-                                <span>לאורחים</span>
-                            </button>
-                            <button
-                                onClick={() => window.open(`/gallery/${event.coupleSlug || event.id}`, '_blank')}
-                                className="px-4 py-2 text-sm font-bold text-cyan-600 bg-cyan-50 hover:bg-cyan-100 rounded-xl transition-colors flex items-center gap-2 border border-cyan-100"
-                                title="קישור לזוג (גלריה מלאה)"
-                            >
-                                <Heart className="w-4 h-4" />
-                                <span>לזוג</span>
-                            </button>
 
-                        </div>
+                        {/* Links - Only visible when done */}
+                        {showLinks && (
+                            <div className="flex gap-3 animate-fade-in">
+                                <button
+                                    onClick={() => window.open(`/gallery/${event.slug || event.id}`, '_blank')}
+                                    className="w-32 justify-center px-4 py-2 text-sm font-bold text-slate-600 border border-slate-200 hover:bg-slate-50 rounded-xl transition-colors flex items-center gap-2"
+                                >
+                                    <Users className="w-4 h-4" />
+                                    <span>לאורחים</span>
+                                </button>
+                                <button
+                                    onClick={() => window.open(`/gallery/${event.coupleSlug || event.id}`, '_blank')}
+                                    className="w-32 justify-center px-4 py-2 text-sm font-bold text-cyan-600 bg-cyan-50 hover:bg-cyan-100 rounded-xl transition-colors flex items-center gap-2 border border-cyan-100"
+                                >
+                                    <Heart className="w-4 h-4" />
+                                    <span>לזוג</span>
+                                </button>
+                            </div>
+                        )}
                     </div>
 
                     {/* Tabs */}
@@ -318,18 +443,18 @@ const EventManagePage: React.FC = () => {
                 {activeTab === 'photos' && (
                     <div className="space-y-8">
                         {/* Upload Section */}
-                        <div className="bg-white p-10 rounded-3xl border-2 border-dashed border-slate-200 text-center hover:bg-slate-50 hover:border-cyan-500 transition-all relative group cursor-pointer">
+                        <div className={`bg-white p-10 rounded-3xl border-2 border-dashed border-slate-200 text-center transition-all relative group cursor-pointer ${uploading ? 'opacity-50 pointer-events-none' : 'hover:bg-slate-50 hover:border-cyan-500'}`}>
                             <input
                                 type="file"
                                 multiple
                                 accept="image/*"
-                                onChange={handleFileUpload}
+                                onChange={handleManualUpload}
                                 className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10"
                                 disabled={uploading}
                             />
                             {uploading ? (
                                 <div className="flex flex-col items-center">
-                                    <Loader2 className="w-12 h-12 text-cyan-500 animate-spin mb-4" />
+                                    <Loader2 className="w-12 h-12 text-slate-400 animate-spin mb-4" />
                                     <p className="text-slate-600 font-bold text-lg">מעלה תמונות...</p>
                                 </div>
                             ) : (
@@ -457,29 +582,14 @@ const EventManagePage: React.FC = () => {
                                                 onChange={async (e) => {
                                                     if (e.target.files && e.target.files[0] && id) {
                                                         try {
-                                                            setUploading(true);
                                                             const file = e.target.files[0];
-
-                                                            // 1. Get presigned URL
-                                                            const coverInfo = await BackendService.getPresignedCoverUrl(
-                                                                id,
-                                                                file.name,
-                                                                file.type
-                                                            );
-
-                                                            // 2. Upload to S3
+                                                            // Simple single cover upload
+                                                            setUploading(true);
+                                                            const coverInfo = await BackendService.getPresignedCoverUrl(id, file.name, file.type);
                                                             await BackendService.uploadToS3(coverInfo.uploadUrl, file);
-
-                                                            // 3. Set as cover
                                                             await BackendService.setCoverImage(id, coverInfo.photoId.toString());
-
-                                                            // 4. Update local state
-                                                            // We might need to refresh the event to get the new cover URL properly if it's computed
                                                             const updatedEvent = await BackendService.getEvent(id);
-                                                            if (updatedEvent) {
-                                                                setEvent(updatedEvent);
-                                                            }
-
+                                                            if (updatedEvent) setEvent(updatedEvent);
                                                             showNotification('תמונת קאבר עודכנה בהצלחה');
                                                         } catch (error) {
                                                             console.error(error);
@@ -511,11 +621,6 @@ const EventManagePage: React.FC = () => {
                                                     <p className="text-slate-400 text-sm mt-1">או גרור תמונה לכאן</p>
                                                 </div>
                                             )}
-                                            {uploading && (
-                                                <div className="absolute inset-0 bg-white/80 flex items-center justify-center z-20">
-                                                    <Loader2 className="w-8 h-8 text-cyan-500 animate-spin" />
-                                                </div>
-                                            )}
                                         </div>
                                     </div>
                                 </div>
@@ -539,7 +644,7 @@ const EventManagePage: React.FC = () => {
                                 </div>
                                 <div>
                                     <h3 className="text-red-900 font-bold text-lg mb-1">אזור מסוכן</h3>
-                                    <p className="text-red-700 text-sm mb-6 max-w-lg">מחיקת האירוע היא פעולה בלתי הפיכה ותמחק את כל התמונות והנתונים הקשורים אליו. אנא וודא שאתה באמת רוצה לעשות זאת.</p>
+                                    <p className="text-red-700 text-sm mb-6 max-w-lg">מחיקת האירוע היא פעולה בלתי הפיכה ותמחק את כל התמונות והנתונים הקשורים אליו.</p>
                                     <button
                                         onClick={handleDeleteEvent}
                                         className="text-red-600 hover:text-white font-bold text-sm border border-red-200 bg-white px-6 py-3 rounded-xl hover:bg-red-600 transition-all shadow-sm hover:shadow-md"

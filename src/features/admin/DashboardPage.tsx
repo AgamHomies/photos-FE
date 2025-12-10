@@ -32,6 +32,8 @@ const DashboardPage: React.FC = () => {
     const [currentPage, setCurrentPage] = useState(1);
     const [deleteModalOpen, setDeleteModalOpen] = useState(false);
     const [eventToDelete, setEventToDelete] = useState<Event | null>(null);
+    const [sortField, setSortField] = useState<keyof Event | 'downloads' | 'guestVisits' | 'photoCount'>('date');
+    const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('desc');
     const itemsPerPage = 5;
 
     const [showToast, setShowToast] = useState(false);
@@ -88,15 +90,63 @@ const DashboardPage: React.FC = () => {
         }
     };
 
+    const handlePublish = async (eventId: string, e: React.MouseEvent) => {
+        e.stopPropagation();
+        try {
+            await BackendService.publishEvent(eventId);
+            await loadData();
+            triggerToast('האירוע פורסם בהצלחה!', 'success');
+        } catch (error) {
+            console.error('Failed to publish event:', error);
+            triggerToast('שגיאה בפרסום האירוע.', 'error');
+        }
+    };
+
+    const handleSort = (field: keyof Event | 'downloads' | 'guestVisits' | 'photoCount') => {
+        if (sortField === field) {
+            setSortDirection(sortDirection === 'asc' ? 'desc' : 'asc');
+        } else {
+            setSortField(field);
+            setSortDirection('desc'); // Default to desc for metrics usually
+        }
+    };
+
     let filteredEvents = events.filter(event =>
+         // ... existing filter logic ...
         event.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
         event.location?.toLowerCase().includes(searchTerm.toLowerCase())
     );
+
+
 
     // Apply active filter
     if (showActiveOnly) {
         filteredEvents = filteredEvents.filter(event => event.status === 'active');
     }
+
+    // Apply Sorting
+    filteredEvents.sort((a, b) => {
+        const aValue = a[sortField] || 0;
+        const bValue = b[sortField] || 0;
+        
+        if (typeof aValue === 'string' && typeof bValue === 'string') {
+             return sortDirection === 'asc' 
+                ? aValue.localeCompare(bValue) 
+                : bValue.localeCompare(aValue);
+        }
+        
+        // Date handling (if stored as string ISO)
+        if (sortField === 'date') {
+             return sortDirection === 'asc' 
+                ? new Date(a.date).getTime() - new Date(b.date).getTime()
+                : new Date(b.date).getTime() - new Date(a.date).getTime();
+        }
+
+        // Numeric
+        return sortDirection === 'asc' 
+            ? (Number(aValue) - Number(bValue)) 
+            : (Number(bValue) - Number(aValue));
+    });
 
     // Pagination
     const totalPages = Math.ceil(filteredEvents.length / itemsPerPage);
@@ -221,12 +271,37 @@ const DashboardPage: React.FC = () => {
                         <table className="w-full text-right">
                             <thead className="bg-slate-50 text-slate-500 text-xs uppercase font-medium">
                                 <tr>
-                                    <th className="px-6 py-4 rounded-tr-2xl">שם אירוע</th>
-                                    <th className="px-6 py-4">תאריך</th>
-                                    <th className="px-6 py-4">תמונות</th>
-                                    <th className="px-6 py-4">כניסות</th>
-                                    <th className="px-6 py-4">הורדות</th>
-                                    <th className="px-6 py-4">לינק ייחודי</th>
+                                    <th className="px-6 py-4 rounded-tr-2xl cursor-pointer hover:bg-slate-100" onClick={() => handleSort('name')}>
+                                        <div className="flex items-center gap-1">
+                                            שם אירוע
+                                            {sortField === 'name' && (sortDirection === 'asc' ? '↑' : '↓')}
+                                        </div>
+                                    </th>
+                                    <th className="px-6 py-4 cursor-pointer hover:bg-slate-100" onClick={() => handleSort('date')}>
+                                        <div className="flex items-center gap-1">
+                                            תאריך
+                                            {sortField === 'date' && (sortDirection === 'asc' ? '↑' : '↓')}
+                                        </div>
+                                    </th>
+                                    <th className="px-6 py-4 cursor-pointer hover:bg-slate-100" onClick={() => handleSort('photoCount')}>
+                                        <div className="flex items-center gap-1">
+                                            תמונות
+                                            {sortField === 'photoCount' && (sortDirection === 'asc' ? '↑' : '↓')}
+                                        </div>
+                                    </th>
+                                    <th className="px-6 py-4 cursor-pointer hover:bg-slate-100" onClick={() => handleSort('guestVisits')}>
+                                        <div className="flex items-center gap-1">
+                                            כניסות אורחים
+                                            {sortField === 'guestVisits' && (sortDirection === 'asc' ? '↑' : '↓')}
+                                        </div>
+                                    </th>
+                                    <th className="px-6 py-4 cursor-pointer hover:bg-slate-100" onClick={() => handleSort('downloads')}>
+                                        <div className="flex items-center gap-1">
+                                            הורדות
+                                            {sortField === 'downloads' && (sortDirection === 'asc' ? '↑' : '↓')}
+                                        </div>
+                                    </th>
+                                    <th className="px-6 py-4 w-64">לינק ייחודי</th>
                                     <th className="px-6 py-4">סטטוס</th>
                                     <th className="px-6 py-4 rounded-tl-2xl">פעולות</th>
                                 </tr>
@@ -264,31 +339,38 @@ const DashboardPage: React.FC = () => {
                                         <td className="px-6 py-4 text-slate-600 text-sm font-medium">{event.guestVisits}</td>
                                         <td className="px-6 py-4 text-slate-600 text-sm font-medium">{event.downloads}</td>
                                         <td className="px-6 py-4">
-                                            <div className="flex gap-2">
-                                                <button
-                                                    onClick={(e) => {
-                                                        e.stopPropagation();
-                                                        window.open(`/gallery/${event.slug || event.id}`, '_blank');
-                                                    }}
-                                                    className="px-3 py-1.5 text-xs font-bold text-slate-600 border border-slate-200 hover:bg-slate-50 rounded-lg transition-colors flex items-center gap-1.5"
-                                                    title="קישור לאורחים"
-                                                >
-                                                    <Users className="w-3 h-3" />
-                                                    <span>לאורחים</span>
-                                                </button>
+                                            {event.isPublished || event.initialProcessingDone ? (
+                                                <div className="flex gap-2">
+                                                    <button
+                                                        onClick={(e) => {
+                                                            e.stopPropagation();
+                                                            window.open(`/gallery/${event.slug || event.id}`, '_blank');
+                                                        }}
+                                                        className="w-28 justify-center px-3 py-1.5 text-xs font-bold text-slate-600 border border-slate-200 hover:bg-slate-50 rounded-lg transition-colors flex items-center gap-1.5"
+                                                        title="קישור לאורחים"
+                                                    >
+                                                        <Users className="w-3 h-3" />
+                                                        <span>לאורחים</span>
+                                                    </button>
 
-                                                <button
-                                                    onClick={(e) => {
-                                                        e.stopPropagation();
-                                                        window.open(`/gallery/${event.coupleSlug || event.id}`, '_blank');
-                                                    }}
-                                                    className="px-3 py-1.5 text-xs font-bold text-cyan-600 bg-cyan-50 hover:bg-cyan-100 rounded-lg transition-colors flex items-center gap-1.5 border border-cyan-100"
-                                                    title="קישור לזוג"
-                                                >
-                                                    <Heart className="w-3 h-3" />
-                                                    <span>לזוג</span>
-                                                </button>
-                                            </div>
+                                                    <button
+                                                        onClick={(e) => {
+                                                            e.stopPropagation();
+                                                            window.open(`/gallery/${event.coupleSlug || event.id}`, '_blank');
+                                                        }}
+                                                        className="w-28 justify-center px-3 py-1.5 text-xs font-bold text-cyan-600 bg-cyan-50 hover:bg-cyan-100 rounded-lg transition-colors flex items-center gap-1.5 border border-cyan-100"
+                                                        title="קישור לזוג"
+                                                    >
+                                                        <Heart className="w-3 h-3" />
+                                                        <span>לזוג</span>
+                                                    </button>
+                                                </div>
+                                            ) : (
+                                                <div className="px-3 py-1.5 text-xs font-bold text-orange-500 bg-orange-50 rounded-lg flex items-center gap-1.5 border border-orange-100 cursor-help" title="התמונות עדיין עוברות עיבוד">
+                                                    <div className="w-2 h-2 rounded-full bg-orange-500 animate-pulse"></div>
+                                                    <span>בעיבוד...</span>
+                                                </div>
+                                            )}
                                         </td>
                                         <td className="px-6 py-4">
                                             <span className={`px-3 py-1 rounded-full text-xs font-bold ${event.status === 'active' ? 'bg-green-100 text-green-600' : 'bg-slate-100 text-slate-500'

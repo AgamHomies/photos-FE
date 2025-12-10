@@ -128,10 +128,42 @@ export const BackendService = {
             : await RealPhotoAPI.getEventPhotos(eventId, page, limit);
     },
 
-    uploadEventPhotos: async (eventId: string, files: File[]): Promise<Photo[]> => {
+    uploadEventPhotos: async (eventId: string, files: File[]): Promise<any> => {
         return USE_MOCK
             ? await MockS3Service.uploadEventPhotos(eventId, files)
             : await RealPhotoAPI.uploadEventPhotos(eventId, files);
+    },
+
+    publishEvent: async (id: string): Promise<Event> => {
+        if (USE_MOCK) {
+            const event = await MockS3Service.getEvent(id);
+            if (event) event.status = 'active'; // Minimal mock
+            return event!;
+        }
+        return await RealEventAPI.publishEvent(id);
+    },
+
+    getProcessingStatus: async (id: string): Promise<any> => {
+        if (USE_MOCK) return { 
+            event_id: id, 
+            total_images_for_event: 100, 
+            total_processed_for_event: 100, 
+            has_initial_batches: true, 
+            all_initial_batches_done: true, 
+            initial_processing_done: true, 
+            is_published: true 
+        };
+        return await RealEventAPI.getProcessingStatus(id);
+    },
+
+    getBatches: async (id: string): Promise<any[]> => {
+        if (USE_MOCK) return [];
+        return await RealEventAPI.getBatches(id);
+    },
+    
+    getBatchStatus: async (eventId: string, batchId: string): Promise<any> => {
+        if (USE_MOCK) return null;
+        return await RealEventAPI.getBatchStatus(eventId, batchId);
     },
 
     deleteEventPhoto: async (eventId: string, photoId: string): Promise<void> => {

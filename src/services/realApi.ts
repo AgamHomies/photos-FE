@@ -238,6 +238,8 @@ export const RealEventAPI = {
             status: (event.status === 'active' || event.status === 'ready' || event.status === 'processing' || event.status === 'draft') ? 'active' : 'expired',
             slug: event.guest_slug,
             coupleSlug: event.couple_slug,
+            isPublished: event.is_published,
+            initialProcessingDone: event.initial_processing_done,
         }));
     },
 
@@ -260,6 +262,8 @@ export const RealEventAPI = {
                 status: (data.status === 'active' || data.status === 'ready' || data.status === 'processing' || data.status === 'draft') ? 'active' : 'expired',
                 slug: data.guest_slug,
                 coupleSlug: data.couple_slug,
+                isPublished: data.is_published,
+                initialProcessingDone: data.initial_processing_done,
             };
         } catch (error) {
             console.error('Failed to get event:', error);
@@ -348,6 +352,61 @@ export const RealEventAPI = {
             body: JSON.stringify({ filename, contentType: contentType }),
         });
     },
+
+    publishEvent: async (id: string): Promise<Event> => {
+        const data = await apiRequest(`/events/${id}/publish`, {
+            method: 'POST',
+        });
+        
+        return {
+            id: data.id,
+            photographerId: data.photographer_id,
+            name: data.title,
+            date: data.event_date.split('T')[0],
+            location: data.location || '',
+            coverImage: data.cover_image_url || 'https://via.placeholder.com/800x600',
+            photoCount: data.images_count || 0,
+            guestVisits: data.stats?.views_count || 0,
+            downloads: data.stats?.downloads_count || 0,
+            uniqueLink: `${window.location.origin}/gallery/${data.guest_slug || data.id}`,
+            expiryDate: data.expiry_date || '',
+            status: (data.status === 'active' || data.status === 'ready' || data.status === 'processing' || data.status === 'draft') ? 'active' : 'expired',
+            slug: data.guest_slug,
+            coupleSlug: data.couple_slug,
+            isPublished: data.is_published,
+            initialProcessingDone: data.initial_processing_done,
+        };
+    },
+
+    getProcessingStatus: async (id: string): Promise<any> => {
+        return await apiRequest(`/events/${id}/processing-status`);
+    },
+
+    getBatches: async (id: string): Promise<any[]> => {
+        const data = await apiRequest(`/events/${id}/batches`);
+        return data.map((batch: any) => ({
+             id: batch.id,
+             eventId: batch.event_id,
+             totalImages: batch.total_images,
+             processedImages: batch.processed_images,
+             status: batch.status,
+             isInitial: batch.is_initial,
+             createdAt: batch.created_at
+        }));
+    },
+    
+    getBatchStatus: async (eventId: string, batchId: string): Promise<any> => {
+        const batch = await apiRequest(`/events/${eventId}/batches/${batchId}/status`);
+        return {
+             id: batch.id,
+             eventId: batch.event_id,
+             totalImages: batch.total_images,
+             processedImages: batch.processed_images,
+             status: batch.status,
+             isInitial: batch.is_initial,
+             createdAt: batch.created_at
+        };
+    }
 };
 
 export const RealPhotoAPI = {
@@ -370,7 +429,7 @@ export const RealPhotoAPI = {
         }
     },
 
-    uploadEventPhotos: async (eventId: string, files: File[]): Promise<Photo[]> => {
+    uploadEventPhotos: async (eventId: string, files: File[]): Promise<any> => {
         const formData = new FormData();
 
         files.forEach((file) => {
@@ -392,15 +451,28 @@ export const RealPhotoAPI = {
         }
 
         const data = await response.json();
-        return data.map((img: any) => ({
-            id: img.id,
-            url: img.url,
-            thumbnailUrl: img.thumbnail_url || img.url,
-            title: img.filename || 'Photo',
-            date: img.created_at,
-            width: img.width,
-            height: img.height,
-        }));
+        
+        // Map response
+        return {
+            batch: {
+                id: data.batch.id,
+                eventId: data.batch.event_id,
+                totalImages: data.batch.total_images,
+                processedImages: data.batch.processed_images,
+                status: data.batch.status,
+                isInitial: data.batch.is_initial,
+                createdAt: data.batch.created_at
+            },
+            images: data.images.map((img: any) => ({
+                id: img.id,
+                url: img.url,
+                thumbnailUrl: img.thumbnail_url || img.url,
+                title: img.filename || 'Photo',
+                date: img.created_at,
+                width: img.width,
+                height: img.height,
+            }))
+        };
     },
 
     deleteEventPhoto: async (eventId: string, photoId: string): Promise<void> => {

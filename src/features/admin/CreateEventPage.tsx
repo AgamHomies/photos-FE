@@ -63,96 +63,18 @@ const CreateEventPage: React.FC = () => {
                 name: formData.name,
                 date: formData.date,
                 location: formData.location,
-                // We'll set the real cover image later
                 coverImage: '',
                 expiryDate: new Date(new Date().setFullYear(new Date().getFullYear() + 1)).toISOString().split('T')[0]
             });
 
-            // 2. Uploading Gallery Photos (Batched)
-            if (galleryFiles.length > 0) {
-                const BATCH_SIZE = 50; // Process 50 images at a time (presign & confirm)
-                const CONCURRENCY_LIMIT = 5; // Upload 5 images in parallel to S3
-
-                let processedCount = 0;
-                const totalFiles = galleryFiles.length;
-
-                // Helper for concurrency control
-                const uploadWithConcurrency = async (tasks: (() => Promise<any>)[], limit: number) => {
-                    const results = [];
-                    const executing: Promise<any>[] = [];
-                    for (const task of tasks) {
-                        const p = Promise.resolve().then(() => task());
-                        results.push(p);
-                        const e: Promise<any> = p.then(() => executing.splice(executing.indexOf(e), 1));
-                        executing.push(e);
-                        if (executing.length >= limit) {
-                            await Promise.race(executing);
-                        }
-                    }
-                    return Promise.all(results);
-                };
-
-                // Process in batches
-                for (let i = 0; i < totalFiles; i += BATCH_SIZE) {
-                    const chunk = galleryFiles.slice(i, i + BATCH_SIZE);
-                    const currentBatchNum = Math.floor(i / BATCH_SIZE) + 1;
-                    const totalBatches = Math.ceil(totalFiles / BATCH_SIZE);
-
-                    setProcessingStage(`מעלה נגלה ${currentBatchNum} מתוך ${totalBatches} (${chunk.length} תמונות)...`);
-
-                    // A. Get presigned URLs for this batch
-                    const fileInfos = chunk.map(f => ({ filename: f.name, contentType: f.type }));
-                    const { urls } = await BackendService.getPresignedUrls(newEvent.id, fileInfos);
-
-                    // B. Upload to S3 with concurrency limit
-                    const uploadTasks = urls.map((urlInfo, index) => async () => {
-                        const file = chunk[index];
-                        await BackendService.uploadToS3(urlInfo.uploadUrl, file);
-                        return urlInfo.photoId;
-                    });
-
-                    const uploadedPhotoIds = await uploadWithConcurrency(uploadTasks, CONCURRENCY_LIMIT);
-
-                    // C. Confirm uploads for this batch
-                    await BackendService.confirmUploads(newEvent.id, uploadedPhotoIds);
-
-                    // Update progress
-                    processedCount += chunk.length;
-                    const progress = 20 + Math.floor((processedCount / totalFiles) * 50); // Map 0-100% of files to 20-70% of total progress
-                    setUploadProgress(progress);
+            // 2. Redirect to Admin Page with files to upload
+            navigate(`/admin/events/${newEvent.id}`, { 
+                state: { 
+                    filesToUpload: galleryFiles,
+                    coverFile: coverImageFile,
+                    isNewEvent: true
                 }
-            }
-
-            // 3. Uploading Cover Image (Presigned URL)
-            if (coverImageFile) {
-                setProcessingStage('מעלה תמונת קאבר...');
-                setUploadProgress(70);
-
-                // Get presigned URL for cover
-                const coverInfo = await BackendService.getPresignedCoverUrl(
-                    newEvent.id,
-                    coverImageFile.name,
-                    coverImageFile.type
-                );
-
-                // Upload to S3
-                await BackendService.uploadToS3(coverInfo.uploadUrl, coverImageFile);
-
-                // Set as cover image
-                await BackendService.setCoverImage(newEvent.id, coverInfo.photoId.toString());
-            }
-
-            // 4. AI Processing
-            setProcessingStage('מבצע זיהוי פנים (Face Indexing)...');
-            setUploadProgress(85);
-            await new Promise(resolve => setTimeout(resolve, 1000));
-
-            // 5. Finalizing
-            setProcessingStage('בונה אוספים ומפיק קישור ייחודי...');
-            setUploadProgress(100);
-
-            setCreatedEventLink(newEvent.uniqueLink);
-            setStep('done');
+            });
 
         } catch (error) {
             console.error(error);

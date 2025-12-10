@@ -366,7 +366,7 @@ export const MockS3Service = {
         }));
     },
 
-    uploadEventPhotos: async (eventId: string, files: File[]): Promise<Photo[]> => {
+    uploadEventPhotos: async (eventId: string, files: File[]): Promise<any> => {
         await new Promise(resolve => setTimeout(resolve, 2000));
         const s3Data = loadData();
         const email = localStorage.getItem(CURRENT_USER_KEY);
@@ -378,7 +378,7 @@ export const MockS3Service = {
             saveData(s3Data);
         }
 
-        return files.map((file, i) => ({
+        const images = files.map((file, i) => ({
             id: `mock-photo-${Date.now()}-${i}`,
             url: URL.createObjectURL(file),
             thumbnailUrl: URL.createObjectURL(file),
@@ -387,6 +387,19 @@ export const MockS3Service = {
             width: 800,
             height: 600
         }));
+        
+        return {
+            batch: {
+                id: `mock-batch-${Date.now()}`,
+                eventId: eventId,
+                totalImages: files.length,
+                processedImages: files.length,
+                status: 'done',
+                isInitial: true,
+                createdAt: new Date().toISOString()
+            },
+            images
+        };
     },
 
     deleteEventPhoto: async (eventId: string, photoId: string): Promise<void> => {

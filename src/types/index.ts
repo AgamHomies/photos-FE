@@ -55,7 +55,37 @@ export interface Event {
   phoneSaves?: number;
   slug?: string;
   coupleSlug?: string;
+
   mode?: 'guest' | 'full';
+  
+  // Publishing & Processing
+  isPublished?: boolean;
+  initialProcessingDone?: boolean; // Frontend property (camelCase)
+}
+
+export interface Batch {
+  id: string;
+  eventId: number;
+  totalImages: number;
+  processedImages: number;
+  status: 'processing' | 'done' | 'failed';
+  isInitial: boolean;
+  createdAt: string;
+}
+
+export interface ProcessingStatus {
+  event_id: number;
+  total_images_for_event: number;
+  total_processed_for_event: number;
+  has_initial_batches: boolean;
+  all_initial_batches_done: boolean;
+  initial_processing_done: boolean;
+  is_published: boolean;
+}
+
+export interface EventUploadResponse {
+  batch: Batch;
+  images: Photo[];
 }
 
 export interface DashboardStats {
