@@ -70,6 +70,29 @@ const DashboardPage: React.FC = () => {
         }
     };
 
+    const silentRefresh = async () => {
+        try {
+            const eventsData = await BackendService.getEvents();
+            setEvents(eventsData);
+        } catch (error) {
+            console.error('Silent refresh failed:', error);
+        }
+    };
+
+    // Polling for processing events
+    useEffect(() => {
+        // Check if any event is still processing (not published AND not initial processing done)
+        const hasProcessingEvents = events.some(e => !e.isPublished && !e.initialProcessingDone);
+
+        if (hasProcessingEvents) {
+            const intervalId = setInterval(() => {
+                silentRefresh();
+            }, 5000); // Check every 5 seconds
+
+            return () => clearInterval(intervalId);
+        }
+    }, [events]);
+
     const openDeleteModal = (event: Event, e: React.MouseEvent) => {
         e.stopPropagation();
         setEventToDelete(event);
