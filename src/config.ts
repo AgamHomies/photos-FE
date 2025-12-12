@@ -7,14 +7,12 @@ const getApiUrl = () => {
   if (process.env.REACT_APP_API_URL) {
     return process.env.REACT_APP_API_URL;
   }
-  
-  // In production, default to HTTPS (should be set via env var)
+
+  // In production, we require the environment variable to be set.
   if (isProduction) {
-    // Default production URL - should be overridden with REACT_APP_API_URL
-    // Update this with your actual production API domain
-    return 'https://api.click2pic.com/api/v1';
+    throw new Error('REACT_APP_API_URL is not defined! Please set this in your environment configuration.');
   }
-  
+
   // Development: use HTTP localhost
   return 'http://localhost:8000/api/v1';
 };
