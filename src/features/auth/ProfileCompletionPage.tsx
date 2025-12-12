@@ -288,7 +288,7 @@ const ProfileCompletionPage: React.FC = () => {
 
                             <div>
                                 <label className="block text-sm font-medium text-slate-700 mb-2">
-                                    העלאת לוגו (אופציונלי)
+                                    העלאת לוגו
                                 </label>
                                 <div className="border-2 border-dashed border-slate-200 rounded-xl p-8 text-center hover:border-cyan-500 transition-colors cursor-pointer">
                                     <input
