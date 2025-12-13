@@ -21,7 +21,9 @@ import {
   Clock,
   ShieldCheck
 } from 'lucide-react';
+
 import Layout from '../../components/Layout';
+import { useAuth } from '../../hooks/useAuth';
 
 const HomePage: React.FC = () => {
   const [openFaq, setOpenFaq] = useState<number | null>(null);
@@ -30,6 +32,16 @@ const HomePage: React.FC = () => {
   const toggleFaq = (index: number) => {
     setOpenFaq(openFaq === index ? null : index);
   };
+
+  // Redirect to admin dashboard if logged in
+  const { isAuthenticated, isLoading } = useAuth(); // Assuming useAuth is available via hook or we import it
+
+  React.useEffect(() => {
+    if (!isLoading && isAuthenticated) {
+      navigate('/admin');
+    }
+  }, [isAuthenticated, isLoading, navigate]);
+
 
   const steps = [
     {
