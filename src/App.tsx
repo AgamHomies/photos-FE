@@ -14,6 +14,8 @@ import SettingsPage from './features/admin/SettingsPage';
 import { CONFIG } from './config';
 import ProtectedRoute from './components/ProtectedRoute';
 
+import { UploadProvider } from './context/UploadContext';
+
 function App() {
   // Log the current mode on app start!@!Q
   console.log(`%c━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━`, 'color: #f59e0b; font-weight: bold');
@@ -27,29 +29,31 @@ function App() {
 
   return (
     <BrowserRouter>
-      <Routes>
-        <Route path="/" element={<HomePage />} />
-        <Route path="/contact" element={<ContactPage />} />
-        <Route path="gallery/:id" element={<GalleryPage mode="guest" />} />
+      <UploadProvider>
+        <Routes>
+          <Route path="/" element={<HomePage />} />
+          <Route path="/contact" element={<ContactPage />} />
+          <Route path="gallery/:id" element={<GalleryPage mode="guest" />} />
 
-        <Route path="auth" element={<AuthPage />} />
-        <Route path="auth/callback" element={<AuthCallbackPage />} />
-        <Route path="auth/reset-password" element={<ResetPasswordPage />} />
+          <Route path="auth" element={<AuthPage />} />
+          <Route path="auth/callback" element={<AuthCallbackPage />} />
+          <Route path="auth/reset-password" element={<ResetPasswordPage />} />
 
-        {/* Profile Completion - Must be OUTSIDE ProtectedRoute */}
-        <Route path="complete-profile" element={<ProfileCompletionPage />} />
-        <Route path="profile-success" element={<ProfileSuccessPage />} />
+          {/* Profile Completion - Must be OUTSIDE ProtectedRoute */}
+          <Route path="complete-profile" element={<ProfileCompletionPage />} />
+          <Route path="profile-success" element={<ProfileSuccessPage />} />
 
-        {/* Protected Admin Routes */}
-        <Route element={<ProtectedRoute />}>
-          <Route path="admin" element={<DashboardPage />} />
-          <Route path="admin/settings" element={<SettingsPage />} />
-          <Route path="admin/create-event" element={<CreateEventPage />} />
-          <Route path="admin/events/:id" element={<EventManagePage />} />
-        </Route>
+          {/* Protected Admin Routes */}
+          <Route element={<ProtectedRoute />}>
+            <Route path="admin" element={<DashboardPage />} />
+            <Route path="admin/settings" element={<SettingsPage />} />
+            <Route path="admin/create-event" element={<CreateEventPage />} />
+            <Route path="admin/events/:id" element={<EventManagePage />} />
+          </Route>
 
-        <Route path="*" element={<Navigate to="/" replace />} />
-      </Routes>
+          <Route path="*" element={<Navigate to="/" replace />} />
+        </Routes>
+      </UploadProvider>
     </BrowserRouter>
   );
 }

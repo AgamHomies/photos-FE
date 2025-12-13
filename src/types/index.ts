@@ -61,6 +61,7 @@ export interface Event {
   // Publishing & Processing
   isPublished?: boolean;
   initialProcessingDone?: boolean; // Frontend property (camelCase)
+  createdAt?: string;
 }
 
 export interface Batch {

@@ -32,7 +32,7 @@ const DashboardPage: React.FC = () => {
     const [currentPage, setCurrentPage] = useState(1);
     const [deleteModalOpen, setDeleteModalOpen] = useState(false);
     const [eventToDelete, setEventToDelete] = useState<Event | null>(null);
-    const [sortField, setSortField] = useState<keyof Event | 'downloads' | 'guestVisits' | 'photoCount'>('date');
+    const [sortField, setSortField] = useState<keyof Event | 'downloads' | 'guestVisits' | 'photoCount'>('createdAt');
     const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('desc');
     const itemsPerPage = 5;
 
@@ -159,10 +159,12 @@ const DashboardPage: React.FC = () => {
         }
         
         // Date handling (if stored as string ISO)
-        if (sortField === 'date') {
+        if (sortField === 'date' || sortField === 'createdAt') {
+             const dateA = a[sortField] ? new Date(a[sortField]!) : new Date(0);
+             const dateB = b[sortField] ? new Date(b[sortField]!) : new Date(0);
              return sortDirection === 'asc' 
-                ? new Date(a.date).getTime() - new Date(b.date).getTime()
-                : new Date(b.date).getTime() - new Date(a.date).getTime();
+                ? dateA.getTime() - dateB.getTime()
+                : dateB.getTime() - dateA.getTime();
         }
 
         // Numeric
@@ -302,8 +304,14 @@ const DashboardPage: React.FC = () => {
                                     </th>
                                     <th className="px-6 py-4 cursor-pointer hover:bg-slate-100" onClick={() => handleSort('date')}>
                                         <div className="flex items-center gap-1">
-                                            תאריך
+                                            תאריך אירוע
                                             {sortField === 'date' && (sortDirection === 'asc' ? '↑' : '↓')}
+                                        </div>
+                                    </th>
+                                    <th className="px-6 py-4 cursor-pointer hover:bg-slate-100" onClick={() => handleSort('createdAt')}>
+                                        <div className="flex items-center gap-1">
+                                            תאריך העלאה
+                                            {sortField === 'createdAt' && (sortDirection === 'asc' ? '↑' : '↓')}
                                         </div>
                                     </th>
                                     <th className="px-6 py-4 cursor-pointer hover:bg-slate-100" onClick={() => handleSort('photoCount')}>
@@ -358,6 +366,9 @@ const DashboardPage: React.FC = () => {
                                             </div>
                                         </td>
                                         <td className="px-6 py-4 text-slate-600 text-sm font-medium">{new Date(event.date).toLocaleDateString('he-IL')}</td>
+                                        <td className="px-6 py-4 text-slate-600 text-sm font-medium">
+                                            {event.createdAt ? new Date(event.createdAt).toLocaleDateString('he-IL') : '-'}
+                                        </td>
                                         <td className="px-6 py-4 text-slate-600 text-sm font-medium">{event.photoCount}</td>
                                         <td className="px-6 py-4 text-slate-600 text-sm font-medium">{event.guestVisits}</td>
                                         <td className="px-6 py-4 text-slate-600 text-sm font-medium">{event.downloads}</td>
@@ -426,7 +437,7 @@ const DashboardPage: React.FC = () => {
                                 ))}
                                 {paginatedEvents.length === 0 && (
                                     <tr>
-                                        <td colSpan={8} className="px-6 py-16 text-center text-slate-500">
+                                        <td colSpan={9} className="px-6 py-16 text-center text-slate-500">
                                             <div className="flex flex-col items-center gap-4">
                                                 <div className="w-16 h-16 bg-slate-50 rounded-full flex items-center justify-center">
                                                     <Calendar className="w-8 h-8 text-slate-300" />

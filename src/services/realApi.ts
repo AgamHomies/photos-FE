@@ -240,6 +240,7 @@ export const RealEventAPI = {
             coupleSlug: event.couple_slug,
             isPublished: event.is_published,
             initialProcessingDone: event.initial_processing_done,
+            createdAt: event.created_at,
         }));
     },
 
@@ -264,6 +265,7 @@ export const RealEventAPI = {
                 coupleSlug: data.couple_slug,
                 isPublished: data.is_published,
                 initialProcessingDone: data.initial_processing_done,
+                createdAt: data.created_at,
             };
         } catch (error) {
             console.error('Failed to get event:', error);
@@ -300,6 +302,7 @@ export const RealEventAPI = {
             status: 'active',
             slug: data.guest_slug,
             coupleSlug: data.couple_slug,
+            createdAt: data.created_at,
         };
     },
 
@@ -331,6 +334,7 @@ export const RealEventAPI = {
             status: (data.status === 'active' || data.status === 'ready' || data.status === 'processing' || data.status === 'draft') ? 'active' : 'expired',
             slug: data.guest_slug,
             coupleSlug: data.couple_slug,
+            createdAt: data.created_at,
         };
     },
 
@@ -375,6 +379,7 @@ export const RealEventAPI = {
             coupleSlug: data.couple_slug,
             isPublished: data.is_published,
             initialProcessingDone: data.initial_processing_done,
+            createdAt: data.created_at,
         };
     },
 
