@@ -336,22 +336,15 @@ const GalleryPage: React.FC<GalleryPageProps> = ({ mode: propMode }) => {
 
          const data = await response.json();
 
-         const link = document.createElement('a');
-         link.href = data.url;
-         link.download = `photo-${photo.id}.jpg`;
-         document.body.appendChild(link);
-         link.click();
-         document.body.removeChild(link);
+         // For mobile compatibility:
+         // Navigating directly to the signed URL with Content-Disposition: attachment
+         // is the most reliable way to trigger a download without opening a new tab.
+         window.location.href = data.url;
 
       } catch (error) {
          console.error('Download error:', error);
-         const link = document.createElement('a');
-         link.href = photo.url;
-         link.download = `photo-${photo.id}.jpg`;
-         link.target = "_blank";
-         document.body.appendChild(link);
-         link.click();
-         document.body.removeChild(link);
+         // Fallback to opening in new tab if anything fails
+         window.open(photo.url, '_blank');
       }
    };
 
@@ -690,12 +683,12 @@ END:VCARD`;
                               <img
                                  src={photo.url}
                                  alt="Gallery Item"
-                                 className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
+                                 className="w-full h-full object-cover transition-transform duration-500 md:group-hover:scale-105"
                                  loading="lazy"
                               />
 
                               {/* Overlay Gradient */}
-                              <div className="absolute inset-x-0 bottom-0 h-1/2 bg-gradient-to-t from-black/50 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none"></div>
+                              <div className="absolute inset-x-0 bottom-0 h-1/2 bg-gradient-to-t from-black/50 to-transparent opacity-0 md:group-hover:opacity-100 transition-opacity duration-300 pointer-events-none"></div>
 
                               {/* Top Right - Select */}
                               <button
@@ -711,8 +704,8 @@ END:VCARD`;
                                  <CheckCircle2 className="w-5 h-5" />
                               </button>
 
-                              {/* Bottom Actions */}
-                              <div className="absolute bottom-3 right-3 left-3 flex justify-end gap-2 opacity-0 group-hover:opacity-100 transition-all translate-y-2 group-hover:translate-y-0">
+                              {/* Bottom Actions - Always visible on mobile, hover on desktop */}
+                              <div className="absolute bottom-3 right-3 left-3 flex justify-end gap-2 opacity-100 md:opacity-0 md:group-hover:opacity-100 transition-all md:translate-y-2 md:group-hover:translate-y-0">
                                  <button
                                     onClick={(e) => handleDownload(photo, e)}
                                     className="w-9 h-9 rounded-full bg-white/90 text-[#4A3B2C] flex items-center justify-center hover:bg-white hover:scale-110 transition-all shadow-lg"
