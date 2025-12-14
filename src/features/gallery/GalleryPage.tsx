@@ -287,15 +287,17 @@ const GalleryPage: React.FC<GalleryPageProps> = ({ mode: propMode }) => {
       if (!lightboxPhoto) return;
 
       const handleKeyDown = (e: KeyboardEvent) => {
-         const currentIndex = photos.findIndex(p => p.id === lightboxPhoto.id);
+         // Use searchResults for guest mode to enable navigation across all images, not just current page
+         const navArray = viewState === 'results' ? searchResults : photos;
+         const currentIndex = navArray.findIndex(p => p.id === lightboxPhoto.id);
 
          if (e.key === 'ArrowLeft') { // Next in RTL
-            if (currentIndex < photos.length - 1) {
-               setLightboxPhoto(photos[currentIndex + 1]);
+            if (currentIndex < navArray.length - 1) {
+               setLightboxPhoto(navArray[currentIndex + 1]);
             }
          } else if (e.key === 'ArrowRight') { // Prev in RTL
             if (currentIndex > 0) {
-               setLightboxPhoto(photos[currentIndex - 1]);
+               setLightboxPhoto(navArray[currentIndex - 1]);
             }
          } else if (e.key === 'Escape') {
             setLightboxPhoto(null);
@@ -304,23 +306,27 @@ const GalleryPage: React.FC<GalleryPageProps> = ({ mode: propMode }) => {
 
       window.addEventListener('keydown', handleKeyDown);
       return () => window.removeEventListener('keydown', handleKeyDown);
-   }, [lightboxPhoto, photos]);
+   }, [lightboxPhoto, photos, searchResults, viewState]);
 
    const handleNextPhoto = (e?: React.MouseEvent) => {
       e?.stopPropagation();
       if (!lightboxPhoto) return;
-      const currentIndex = photos.findIndex(p => p.id === lightboxPhoto.id);
-      if (currentIndex < photos.length - 1) {
-         setLightboxPhoto(photos[currentIndex + 1]);
+      // Use searchResults for guest mode to enable navigation across all images
+      const navArray = viewState === 'results' ? searchResults : photos;
+      const currentIndex = navArray.findIndex(p => p.id === lightboxPhoto.id);
+      if (currentIndex < navArray.length - 1) {
+         setLightboxPhoto(navArray[currentIndex + 1]);
       }
    };
 
    const handlePrevPhoto = (e?: React.MouseEvent) => {
       e?.stopPropagation();
       if (!lightboxPhoto) return;
-      const currentIndex = photos.findIndex(p => p.id === lightboxPhoto.id);
+      // Use searchResults for guest mode to enable navigation across all images
+      const navArray = viewState === 'results' ? searchResults : photos;
+      const currentIndex = navArray.findIndex(p => p.id === lightboxPhoto.id);
       if (currentIndex > 0) {
-         setLightboxPhoto(photos[currentIndex - 1]);
+         setLightboxPhoto(navArray[currentIndex - 1]);
       }
    };
 
@@ -869,8 +875,14 @@ END:VCARD`;
                {/* Navigation Buttons */}
                <button
                   onClick={handleNextPhoto}
-                  className={`absolute left-4 top-1/2 transform -translate-y-1/2 p-3 rounded-full bg-white/10 hover:bg-white/20 text-white transition-all backdrop-blur-sm border border-white/10 ${photos.findIndex(p => p.id === lightboxPhoto.id) >= photos.length - 1 ? 'opacity-30 cursor-not-allowed' : ''}`}
-                  disabled={photos.findIndex(p => p.id === lightboxPhoto.id) >= photos.length - 1}
+                  className={`absolute left-4 top-1/2 transform -translate-y-1/2 p-3 rounded-full bg-white/10 hover:bg-white/20 text-white transition-all backdrop-blur-sm border border-white/10 ${(() => {
+                     const navArray = viewState === 'results' ? searchResults : photos;
+                     return navArray.findIndex(p => p.id === lightboxPhoto.id) >= navArray.length - 1 ? 'opacity-30 cursor-not-allowed' : '';
+                  })()}`}
+                  disabled={(() => {
+                     const navArray = viewState === 'results' ? searchResults : photos;
+                     return navArray.findIndex(p => p.id === lightboxPhoto.id) >= navArray.length - 1;
+                  })()}
                   title="הבא"
                >
                   <ChevronLeft className="w-8 h-8" />
@@ -878,8 +890,14 @@ END:VCARD`;
 
                <button
                   onClick={handlePrevPhoto}
-                  className={`absolute right-4 top-1/2 transform -translate-y-1/2 p-3 rounded-full bg-white/10 hover:bg-white/20 text-white transition-all backdrop-blur-sm border border-white/10 ${photos.findIndex(p => p.id === lightboxPhoto.id) <= 0 ? 'opacity-30 cursor-not-allowed' : ''}`}
-                  disabled={photos.findIndex(p => p.id === lightboxPhoto.id) <= 0}
+                  className={`absolute right-4 top-1/2 transform -translate-y-1/2 p-3 rounded-full bg-white/10 hover:bg-white/20 text-white transition-all backdrop-blur-sm border border-white/10 ${(() => {
+                     const navArray = viewState === 'results' ? searchResults : photos;
+                     return navArray.findIndex(p => p.id === lightboxPhoto.id) <= 0 ? 'opacity-30 cursor-not-allowed' : '';
+                  })()}`}
+                  disabled={(() => {
+                     const navArray = viewState === 'results' ? searchResults : photos;
+                     return navArray.findIndex(p => p.id === lightboxPhoto.id) <= 0;
+                  })()}
                   title="הקודם"
                >
                   <ChevronRight className="w-8 h-8" />
