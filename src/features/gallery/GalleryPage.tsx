@@ -336,6 +336,29 @@ const GalleryPage: React.FC<GalleryPageProps> = ({ mode: propMode }) => {
 
          const data = await response.json();
 
+         const downloadUrl = data.url;
+
+         // Mobile: Try to share the file to allow "Save Image" to Gallery
+         const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
+
+         if (isMobile && navigator.share) {
+            try {
+               const imageResponse = await fetch(downloadUrl);
+               const blob = await imageResponse.blob();
+               const file = new File([blob], `photo-${photo.id}.jpg`, { type: 'image/jpeg' });
+
+               if (navigator.canShare && navigator.canShare({ files: [file] })) {
+                  await navigator.share({
+                     files: [file],
+                     title: 'שמור תמונה',
+                  });
+                  return;
+               }
+            } catch (err) {
+               console.log('Mobile share/save failed, falling back to direct download', err);
+            }
+         }
+
          const link = document.createElement('a');
          link.href = data.url;
          link.download = `photo-${photo.id}.jpg`;
@@ -699,14 +722,16 @@ END:VCARD`;
 
                               {/* Top Right - Select */}
                               <button
+                                 type="button"
                                  onClick={(e) => {
+                                    e.preventDefault();
                                     e.stopPropagation();
                                     togglePhotoSelection(photo.id);
                                  }}
-                                 className={`absolute top-3 right-3 w-8 h-8 rounded-full flex items-center justify-center transition-all ${isSelected ? 'bg-[#C4A882] text-white shadow-md' : 'bg-white/20 hover:bg-white text-white hover:text-[#C4A882] backdrop-blur-sm'
+                                 className={`absolute top-3 right-3 w-10 h-10 z-20 rounded-full flex items-center justify-center transition-all ${isSelected ? 'bg-[#C4A882] text-white shadow-md' : 'bg-white/20 hover:bg-white text-white hover:text-[#C4A882] backdrop-blur-sm'
                                     }`}
                               >
-                                 <CheckCircle2 className="w-5 h-5" />
+                                 <CheckCircle2 className="w-6 h-6" />
                               </button>
 
                               {/* Bottom Actions */}
