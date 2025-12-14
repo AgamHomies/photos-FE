@@ -699,11 +699,13 @@ END:VCARD`;
 
                               {/* Top Right - Select */}
                               <button
+                                 type="button"
                                  onClick={(e) => {
+                                    e.preventDefault();
                                     e.stopPropagation();
                                     togglePhotoSelection(photo.id);
                                  }}
-                                 className={`absolute top-3 right-3 w-8 h-8 rounded-full flex items-center justify-center transition-all ${isSelected ? 'bg-[#C4A882] text-white shadow-md' : 'bg-white/20 hover:bg-white text-white hover:text-[#C4A882] backdrop-blur-sm'
+                                 className={`absolute top-3 right-3 w-10 h-10 z-20 rounded-full flex items-center justify-center transition-all ${isSelected ? 'bg-[#C4A882] text-white shadow-md' : 'bg-white/20 md:hover:bg-white active:bg-white text-white md:hover:text-[#C4A882] active:text-[#C4A882] backdrop-blur-sm'
                                     }`}
                               >
                                  <CheckCircle2 className="w-5 h-5" />
