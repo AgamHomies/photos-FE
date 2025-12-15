@@ -573,7 +573,9 @@ END:VCARD`;
                   <div className="bg-white rounded-3xl shadow-xl overflow-hidden border border-[#E8DFD3]">
                      {/* Card Header (Event Details) */}
                      <div className="text-center py-8 px-6 border-b border-[#E8DFD3]">
-                        <h2 className="text-3xl font-bold text-[#4A3B2C] mb-4">הגלריה שלך מהאירוע</h2>
+                        <h2 className="text-3xl font-bold text-[#4A3B2C] mb-4">
+                           {mode === 'full' ? 'הגלריה של האירוע' : 'הגלריה שלך מהאירוע'}
+                        </h2>
 
                         <div className="flex flex-wrap items-center justify-center gap-4 text-[#8B7355] text-lg font-medium max-w-2xl mx-auto">
                            <div className="flex items-center gap-1.5">
@@ -661,7 +663,9 @@ END:VCARD`;
 
                   {/* Minimal Header for Results */}
                   <div className="text-center mb-10">
-                     <h2 className="text-3xl font-bold text-[#4A3B2C] mb-2">הגלריה שלך מהאירוע</h2>
+                     <h2 className="text-3xl font-bold text-[#4A3B2C] mb-2">
+                        {mode === 'full' ? 'הגלריה של האירוע' : 'הגלריה שלך מהאירוע'}
+                     </h2>
                      <div className="flex items-center justify-center gap-2 text-[#8B7355] text-sm">
                         <span>{event.name}</span>
                         <span>|</span>
