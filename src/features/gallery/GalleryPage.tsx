@@ -341,11 +341,34 @@ const GalleryPage: React.FC<GalleryPageProps> = ({ mode: propMode }) => {
          }
 
          const data = await response.json();
+         const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
 
-         // For mobile compatibility:
-         // Navigating directly to the signed URL with Content-Disposition: attachment
-         // is the most reliable way to trigger a download without opening a new tab.
-         window.location.href = data.url;
+         if (isMobile) {
+            // For mobile compatibility:
+            // Navigating directly to the signed URL with Content-Disposition: attachment
+            // is the most reliable way to trigger a download without opening a new tab.
+            window.location.href = data.url;
+         } else {
+            try {
+               // For desktop: Fetch blob to force download
+               const imageResponse = await fetch(data.url);
+               if (!imageResponse.ok) throw new Error('Image fetch failed');
+
+               const blob = await imageResponse.blob();
+               const url = window.URL.createObjectURL(blob);
+               const link = document.createElement('a');
+               link.href = url;
+               // Try to get filename from content-disposition if possible, or fallback to sensible default
+               link.download = `photo-${photo.id}.jpg`;
+               document.body.appendChild(link);
+               link.click();
+               document.body.removeChild(link);
+               window.URL.revokeObjectURL(url);
+            } catch (err) {
+               console.warn('Blob download failed, falling back to direct navigation', err);
+               window.location.href = data.url;
+            }
+         }
 
       } catch (error) {
          console.error('Download error:', error);
