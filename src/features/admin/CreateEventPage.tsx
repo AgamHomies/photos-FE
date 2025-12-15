@@ -52,6 +52,23 @@ const CreateEventPage: React.FC = () => {
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
+
+        // Validation for mandatory fields
+        if (!formData.name.trim() || !formData.date || !formData.location.trim()) {
+            triggerToast('נא למלא את כל פרטי האירוע', 'error');
+            return;
+        }
+
+        if (!coverImageFile) {
+            triggerToast('נא לבחור תמונת קאבר לאירוע', 'error');
+            return;
+        }
+
+        if (galleryFiles.length === 0) {
+            triggerToast('נא לבחור תמונות לגלריה', 'error');
+            return;
+        }
+
         setStep('processing');
 
         try {
@@ -68,8 +85,8 @@ const CreateEventPage: React.FC = () => {
             });
 
             // 2. Redirect to Admin Page with files to upload
-            navigate(`/admin/events/${newEvent.id}`, { 
-                state: { 
+            navigate(`/admin/events/${newEvent.id}`, {
+                state: {
                     filesToUpload: galleryFiles,
                     coverFile: coverImageFile,
                     isNewEvent: true
