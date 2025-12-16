@@ -103,6 +103,38 @@ const GalleryPage: React.FC<GalleryPageProps> = ({ mode: propMode }) => {
       }
    }, [id]);
 
+   // Deep Linking: Open photo if photoId is in URL
+   useEffect(() => {
+      const params = new URLSearchParams(window.location.search);
+      const photoId = params.get('photoId');
+
+      if (photoId) {
+         const openDeepLinkedPhoto = async () => {
+            // If photo is already in photos array (e.g. page 1), use it
+            const existingPhoto = photos.find(p => p.id == photoId);
+            if (existingPhoto) {
+               setLightboxPhoto(existingPhoto);
+               return;
+            }
+
+            // Otherwise fetch it specifically
+            try {
+               const photoData = await BackendService.getPublicPhoto(photoId);
+               if (photoData) {
+                  setLightboxPhoto(photoData);
+               }
+            } catch (err) {
+               console.error("Failed to load deep linked photo", err);
+            }
+         };
+
+         // Wait a bit for main data to load, or run immediately if independent
+         if (!loading) {
+            openDeepLinkedPhoto();
+         }
+      }
+   }, [loading, photos]);
+
    const loadData = async (eventId: string) => {
       try {
          // First fetch the event to get the real numeric ID
@@ -266,19 +298,58 @@ const GalleryPage: React.FC<GalleryPageProps> = ({ mode: propMode }) => {
 
    const handleShare = async (photo: Photo, e: React.MouseEvent) => {
       e.stopPropagation();
+
+      // Get short link for smart sharing (with dynamic OG tags)
+      // Default fallback (client-side constructed)
+      let shareUrl = `${window.location.origin}/share/photo/${photo.id}?url=${encodeURIComponent(photo.url)}&event=${encodeURIComponent(event?.name || 'אירוע')}&title=${encodeURIComponent(photo.title || 'תמונה מהאירוע')}`;
+
+      try {
+         // Attempt to fetch smart short link from backend
+         const publicPhoto = await BackendService.getPublicPhoto(photo.id);
+         if (publicPhoto && publicPhoto.shareLink) {
+            shareUrl = publicPhoto.shareLink;
+         }
+      } catch (err) {
+         console.error('Failed to get smart share link, falling back to legacy link', err);
+      }
+
+      const unsecuredCopyToClipboard = (text: string) => {
+         const textArea = document.createElement("textarea");
+         textArea.value = text;
+         textArea.style.position = "fixed";
+         textArea.style.left = "-9999px";
+         textArea.style.top = "0";
+         document.body.appendChild(textArea);
+         textArea.focus();
+         textArea.select();
+         try {
+            document.execCommand('copy');
+            triggerToast('הקישור לתמונה הועתק ללוח');
+         } catch (err) {
+            console.error('Fallback: Unable to copy', err);
+            window.prompt("העתק את הקישור:", text);
+         }
+         document.body.removeChild(textArea);
+      };
+
       if (navigator.share) {
          try {
             await navigator.share({
                title: 'תמונה מהאירוע',
                text: `תמונה מהאירוע ${event?.name}`,
-               url: photo.url,
+               url: shareUrl,
             });
          } catch (error) {
             console.log('Error sharing', error);
          }
       } else {
-         navigator.clipboard.writeText(photo.url);
-         triggerToast('הקישור לתמונה הועתק ללוח');
+         if (navigator.clipboard && navigator.clipboard.writeText) {
+            navigator.clipboard.writeText(shareUrl)
+               .then(() => triggerToast('הקישור לתמונה הועתק ללוח'))
+               .catch(() => unsecuredCopyToClipboard(shareUrl));
+         } else {
+            unsecuredCopyToClipboard(shareUrl);
+         }
       }
    };
 
@@ -341,11 +412,34 @@ const GalleryPage: React.FC<GalleryPageProps> = ({ mode: propMode }) => {
          }
 
          const data = await response.json();
+         const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
 
-         // For mobile compatibility:
-         // Navigating directly to the signed URL with Content-Disposition: attachment
-         // is the most reliable way to trigger a download without opening a new tab.
-         window.location.href = data.url;
+         if (isMobile) {
+            // For mobile compatibility:
+            // Navigating directly to the signed URL with Content-Disposition: attachment
+            // is the most reliable way to trigger a download without opening a new tab.
+            window.location.href = data.url;
+         } else {
+            try {
+               // For desktop: Fetch blob to force download
+               const imageResponse = await fetch(data.url);
+               if (!imageResponse.ok) throw new Error('Image fetch failed');
+
+               const blob = await imageResponse.blob();
+               const url = window.URL.createObjectURL(blob);
+               const link = document.createElement('a');
+               link.href = url;
+               // Try to get filename from content-disposition if possible, or fallback to sensible default
+               link.download = `photo-${photo.id}.jpg`;
+               document.body.appendChild(link);
+               link.click();
+               document.body.removeChild(link);
+               window.URL.revokeObjectURL(url);
+            } catch (err) {
+               console.warn('Blob download failed, falling back to direct navigation', err);
+               window.location.href = data.url;
+            }
+         }
 
       } catch (error) {
          console.error('Download error:', error);
@@ -550,7 +644,9 @@ END:VCARD`;
                   <div className="bg-white rounded-3xl shadow-xl overflow-hidden border border-[#E8DFD3]">
                      {/* Card Header (Event Details) */}
                      <div className="text-center py-8 px-6 border-b border-[#E8DFD3]">
-                        <h2 className="text-3xl font-bold text-[#4A3B2C] mb-4">הגלריה שלך מהאירוע</h2>
+                        <h2 className="text-3xl font-bold text-[#4A3B2C] mb-4">
+                           {mode === 'full' ? 'הגלריה של האירוע' : 'הגלריה שלך מהאירוע'}
+                        </h2>
 
                         <div className="flex flex-wrap items-center justify-center gap-4 text-[#8B7355] text-lg font-medium max-w-2xl mx-auto">
                            <div className="flex items-center gap-1.5">
@@ -638,7 +734,9 @@ END:VCARD`;
 
                   {/* Minimal Header for Results */}
                   <div className="text-center mb-10">
-                     <h2 className="text-3xl font-bold text-[#4A3B2C] mb-2">הגלריה שלך מהאירוע</h2>
+                     <h2 className="text-3xl font-bold text-[#4A3B2C] mb-2">
+                        {mode === 'full' ? 'הגלריה של האירוע' : 'הגלריה שלך מהאירוע'}
+                     </h2>
                      <div className="flex items-center justify-center gap-2 text-[#8B7355] text-sm">
                         <span>{event.name}</span>
                         <span>|</span>

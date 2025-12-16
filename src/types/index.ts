@@ -21,6 +21,7 @@ export interface Photo {
   date?: string;
   width?: number;
   height?: number;
+  shareLink?: string;
 }
 
 export interface PhotographerRegistration {
@@ -57,7 +58,7 @@ export interface Event {
   coupleSlug?: string;
 
   mode?: 'guest' | 'full';
-  
+
   // Publishing & Processing
   isPublished?: boolean;
   initialProcessingDone?: boolean; // Frontend property (camelCase)

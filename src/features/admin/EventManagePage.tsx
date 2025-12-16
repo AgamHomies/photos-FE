@@ -15,7 +15,10 @@ import {
     Image as ImageIcon,
     FileText,
     CheckCircle2,
-    XCircle
+    XCircle,
+    Copy,
+    ExternalLink,
+    X
 } from 'lucide-react';
 import { useUpload } from '../../context/UploadContext';
 
@@ -23,14 +26,14 @@ const EventManagePage: React.FC = () => {
     const { id } = useParams<{ id: string }>();
     const navigate = useNavigate();
     const location = useLocation();
-    
+
     const { uploads, startUpload } = useUpload();
-    
+
     const [event, setEvent] = useState<Event | null>(null);
     const [photos, setPhotos] = useState<Photo[]>([]);
     const [batches, setBatches] = useState<any[]>([]);
     const [loading, setLoading] = useState(true);
-    
+
     // Server Progress State (for 80-100% phase or when returning to page)
     const [serverProgress, setServerProgress] = useState(0);
     const [serverProgressStage, setServerProgressStage] = useState('');
@@ -59,6 +62,29 @@ const EventManagePage: React.FC = () => {
         type: 'success'
     });
 
+    const [linkModal, setLinkModal] = useState<{
+        isOpen: boolean;
+        type: 'guest' | 'couple';
+        url: string;
+    }>({ isOpen: false, type: 'guest', url: '' });
+
+    const handleLinkClick = (type: 'guest' | 'couple') => {
+        if (!event) return;
+        const path = type === 'guest' ? event.slug || event.id : event.coupleSlug || event.id;
+        const url = `${window.location.origin}/gallery/${path}`;
+        setLinkModal({ isOpen: true, type, url });
+    };
+
+    const copyLink = async () => {
+        try {
+            await navigator.clipboard.writeText(linkModal.url);
+            showNotification('הקישור הועתק בהצלחה');
+            setLinkModal(prev => ({ ...prev, isOpen: false }));
+        } catch (err) {
+            showNotification('שגיאה בהעתקת הקישור', 'error');
+        }
+    };
+
     const showNotification = (message: string, type: 'success' | 'error' = 'success') => {
         setToast({ show: true, message, type });
         setTimeout(() => setToast(prev => ({ ...prev, show: false })), 3000);
@@ -73,7 +99,7 @@ const EventManagePage: React.FC = () => {
     // 1. Check for redirected upload state
     useEffect(() => {
         const state = location.state as { filesToUpload?: File[], coverFile?: File, isNewEvent?: boolean } | null;
-        
+
         if (id) {
             // First load the event data so the user sees the page (not empty loading screen)
             loadEventData(id).then(() => {
@@ -82,7 +108,7 @@ const EventManagePage: React.FC = () => {
                     hasStartedUpload.current = true;
                     // Clear state immediately to prevent double upload
                     window.history.replaceState({}, document.title);
-                    
+
                     if (id) {
                         startUpload(id, state.filesToUpload, state.coverFile);
                     }
@@ -97,15 +123,15 @@ const EventManagePage: React.FC = () => {
         const isClientUploading = !!activeUpload?.isUploading;
 
         if (prevUploading.current && !isClientUploading && id) {
-             // Client upload just finished. We need to fetch batches to see the new server processing job.
-             // We temporarily force the progress bar to show to bridge the gap.
-             setIsRefreshing(true);
-             setServerProgress(80);
-             setServerProgressStage('מסנכרן נתונים מהשרת...');
-             
-             loadEventData(id).finally(() => {
-                 setIsRefreshing(false);
-             });
+            // Client upload just finished. We need to fetch batches to see the new server processing job.
+            // We temporarily force the progress bar to show to bridge the gap.
+            setIsRefreshing(true);
+            setServerProgress(80);
+            setServerProgressStage('מסנכרן נתונים מהשרת...');
+
+            loadEventData(id).finally(() => {
+                setIsRefreshing(false);
+            });
         }
         prevUploading.current = isClientUploading;
     }, [uploads, id]);
@@ -116,53 +142,53 @@ const EventManagePage: React.FC = () => {
         const isServerProcessing = checkIsProcessing(batches);
         const activeUpload = id ? uploads[id] : null;
         const isClientUploading = activeUpload?.isUploading;
-        
+
         // Poll if we are NOT currently uploading from client (to avoid conflict) 
         // OR if we just finished upload and want to track server progress
         if (id && isServerProcessing) {
-             // If we are transitioning from client upload or just loaded up and processing, 
-             // ensure we start at min 80% to avoid visual glitch 0% -> 80%
+            // If we are transitioning from client upload or just loaded up and processing, 
+            // ensure we start at min 80% to avoid visual glitch 0% -> 80%
             if (serverProgress < 80) setServerProgress(80);
 
             if (!isClientUploading) {
                 interval = setInterval(async () => {
-                try {
-                    const updatedBatches = await BackendService.getBatches(id);
-                    setBatches(updatedBatches);
-                    
-                    // Calculate server-side progress
-                    const total = updatedBatches.reduce((acc: number, b: any) => acc + b.totalImages, 0);
-                    const processed = updatedBatches.reduce((acc: number, b: any) => acc + b.processedImages, 0);
-                    
-                    if (total > 0) {
-                        const rawPct = processed / total;
-                        const serverProg = 80 + Math.floor(rawPct * 20);
-                        // Only update main progress if we are not in client-upload mode
-                        setServerProgress(serverProg);
-                        setServerProgressStage(`מעבד תמונות בשרת (${processed}/${total})...`);
-                    }
+                    try {
+                        const updatedBatches = await BackendService.getBatches(id);
+                        setBatches(updatedBatches);
 
-                    // If all became done, refresh photos/event and AUTO-PUBLISH
-                    if (!checkIsProcessing(updatedBatches)) {
-                        // Check if we need to publish
-                        const processingStatus = await BackendService.getProcessingStatus(id);
-                        if (processingStatus.initial_processing_done && !processingStatus.is_published) {
+                        // Calculate server-side progress
+                        const total = updatedBatches.reduce((acc: number, b: any) => acc + b.totalImages, 0);
+                        const processed = updatedBatches.reduce((acc: number, b: any) => acc + b.processedImages, 0);
+
+                        if (total > 0) {
+                            const rawPct = processed / total;
+                            const serverProg = 80 + Math.floor(rawPct * 20);
+                            // Only update main progress if we are not in client-upload mode
+                            setServerProgress(serverProg);
+                            setServerProgressStage(`מעבד תמונות בשרת (${processed}/${total})...`);
+                        }
+
+                        // If all became done, refresh photos/event and AUTO-PUBLISH
+                        if (!checkIsProcessing(updatedBatches)) {
+                            // Check if we need to publish
+                            const processingStatus = await BackendService.getProcessingStatus(id);
+                            if (processingStatus.initial_processing_done && !processingStatus.is_published) {
                                 try {
                                     await BackendService.publishEvent(id);
                                     showNotification('האירוע פורסם אוטומטית!', 'success');
                                 } catch (err) {
                                     console.error("Auto-publish failed", err);
                                 }
+                            }
+
+                            loadEventData(id);
+                            setServerProgress(100);
+                            setServerProgressStage('העיבוד הסתיים בהצלחה!');
                         }
-                        
-                        loadEventData(id);
-                        setServerProgress(100);
-                        setServerProgressStage('העיבוד הסתיים בהצלחה!');
+                    } catch (e) {
+                        console.error("Polling error", e);
                     }
-                } catch (e) {
-                    console.error("Polling error", e);
-                }
-            }, 3000);
+                }, 3000);
             }
         }
         return () => clearInterval(interval);
@@ -170,8 +196,8 @@ const EventManagePage: React.FC = () => {
 
     const loadEventData = async (eventId: string) => {
         // Don't show full page loader if we are just refreshing data
-        if (!event) setLoading(true); 
-        
+        if (!event) setLoading(true);
+
         try {
             const [eventData, photosData, batchesData] = await Promise.all([
                 BackendService.getEvent(eventId),
@@ -313,7 +339,7 @@ const EventManagePage: React.FC = () => {
     const isServerProcessing = checkIsProcessing(batches);
     const activeUpload = id ? uploads[id] : null;
     const isClientUploading = activeUpload?.isUploading;
-    
+
     // Combined State
     const showProgressBar = isClientUploading || isServerProcessing || isRefreshing;
     const currentProgress = isClientUploading ? activeUpload!.progress : serverProgress;
@@ -325,7 +351,7 @@ const EventManagePage: React.FC = () => {
         <Layout>
             <div className="bg-white border-b border-slate-200 sticky top-0 z-30 shadow-sm">
                 <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
-                    
+
                     {/* Progress Bar (Visible if uploading or processing) */}
                     {showProgressBar && (
                         <div className="mb-6 bg-slate-50 border border-slate-200 rounded-xl p-4">
@@ -337,14 +363,14 @@ const EventManagePage: React.FC = () => {
                                 <span className="font-mono font-bold text-cyan-600">{currentProgress}%</span>
                             </div>
                             <div className="w-full bg-slate-200 rounded-full h-2.5 overflow-hidden">
-                                <div 
-                                    className="bg-cyan-500 h-2.5 rounded-full transition-all duration-500" 
+                                <div
+                                    className="bg-cyan-500 h-2.5 rounded-full transition-all duration-500"
                                     style={{ width: `${currentProgress}%` }}
                                 ></div>
                             </div>
                             <p className="text-xs text-slate-400 mt-2">
-                                {isClientUploading 
-                                    ? 'אנא אל תסגור את החלון עד סיום ההעלאה.' 
+                                {isClientUploading
+                                    ? 'אנא אל תסגור את החלון עד סיום ההעלאה.'
                                     : 'התמונות עוברות עיבוד בשרת. ניתן לערוך פרטים במקביל.'}
                             </p>
                         </div>
@@ -373,14 +399,14 @@ const EventManagePage: React.FC = () => {
                         {showLinks && (
                             <div className="flex gap-3 animate-fade-in">
                                 <button
-                                    onClick={() => window.open(`/gallery/${event.slug || event.id}`, '_blank')}
+                                    onClick={() => handleLinkClick('guest')}
                                     className="w-32 justify-center px-4 py-2 text-sm font-bold text-slate-600 border border-slate-200 hover:bg-slate-50 rounded-xl transition-colors flex items-center gap-2"
                                 >
                                     <Users className="w-4 h-4" />
                                     <span>לאורחים</span>
                                 </button>
                                 <button
-                                    onClick={() => window.open(`/gallery/${event.coupleSlug || event.id}`, '_blank')}
+                                    onClick={() => handleLinkClick('couple')}
                                     className="w-32 justify-center px-4 py-2 text-sm font-bold text-cyan-600 bg-cyan-50 hover:bg-cyan-100 rounded-xl transition-colors flex items-center gap-2 border border-cyan-100"
                                 >
                                     <Heart className="w-4 h-4" />
@@ -621,14 +647,59 @@ const EventManagePage: React.FC = () => {
                     </div>
                 )}
             </div>
+            {/* Link Modal */}
+            {linkModal.isOpen && (
+                <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm animate-fade-in" onClick={() => setLinkModal(prev => ({ ...prev, isOpen: false }))}>
+                    <div className="bg-white rounded-2xl shadow-2xl w-full max-w-sm p-6 animate-scale-in relative" onClick={e => e.stopPropagation()}>
+                        <button
+                            onClick={() => setLinkModal(prev => ({ ...prev, isOpen: false }))}
+                            className="absolute top-4 left-4 text-slate-400 hover:text-slate-600"
+                        >
+                            <X className="w-5 h-5" />
+                        </button>
+
+                        <div className="text-center mb-6">
+                            <div className={`w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4 ${linkModal.type === 'guest' ? 'bg-slate-100 text-slate-600' : 'bg-cyan-50 text-cyan-600'
+                                }`}>
+                                {linkModal.type === 'guest' ? <Users className="w-8 h-8" /> : <Heart className="w-8 h-8" />}
+                            </div>
+                            <h3 className="text-xl font-bold text-slate-900">
+                                {linkModal.type === 'guest' ? 'קישור לאורחים' : 'קישור לזוג'}
+                            </h3>
+                            <p className="text-slate-500 text-sm mt-1">בחר פעולה עבור הקישור</p>
+                        </div>
+
+                        <div className="space-y-3">
+                            <button
+                                onClick={() => {
+                                    window.open(linkModal.url, '_blank');
+                                    setLinkModal(prev => ({ ...prev, isOpen: false }));
+                                }}
+                                className="w-full flex items-center justify-center gap-3 bg-cyan-50 text-cyan-700 font-bold py-3.5 rounded-xl hover:bg-cyan-100 transition-colors border border-cyan-100"
+                            >
+                                <ExternalLink className="w-5 h-5" />
+                                פתח בחלון חדש
+                            </button>
+
+                            <button
+                                onClick={copyLink}
+                                className="w-full flex items-center justify-center gap-3 bg-slate-900 text-white font-bold py-3.5 rounded-xl hover:bg-slate-800 transition-colors shadow-lg shadow-slate-200"
+                            >
+                                <Copy className="w-5 h-5" />
+                                העתק קישור
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
+
             {/* Toast Notification */}
             {toast.show && (
                 <div className="fixed bottom-6 left-1/2 transform -translate-x-1/2 z-50 animate-fade-in-up">
-                    <div className={`px-6 py-3 rounded-full shadow-xl border flex items-center gap-3 ${
-                        toast.type === 'success' 
-                            ? 'bg-slate-900 text-white border-slate-800' 
-                            : 'bg-red-50 text-red-600 border-red-200'
-                    }`}>
+                    <div className={`px-6 py-3 rounded-full shadow-xl border flex items-center gap-3 ${toast.type === 'success'
+                        ? 'bg-slate-900 text-white border-slate-800'
+                        : 'bg-red-50 text-red-600 border-red-200'
+                        }`}>
                         {toast.type === 'success' ? (
                             <CheckCircle2 className="w-5 h-5 text-cyan-400" />
                         ) : (

@@ -112,7 +112,7 @@ export const RealProfileAPI = {
             console.log('RealProfileAPI: Fetching public profile for id:', id);
             const response = await apiRequest(`/photographers/${id}`);
             console.log('RealProfileAPI: Raw data received:', response);
-            
+
             const data = response.data;
 
             return {
@@ -154,7 +154,7 @@ export const RealProfileAPI = {
 
         // Add logo if present
         if (updates.logo) formData.append('logo', updates.logo);
-        
+
         // Handle delete logo
         if (updates.deleteLogo) formData.append('deleteLogo', 'true');
 
@@ -361,7 +361,7 @@ export const RealEventAPI = {
         const data = await apiRequest(`/events/${id}/publish`, {
             method: 'POST',
         });
-        
+
         return {
             id: data.id,
             photographerId: data.photographer_id,
@@ -390,26 +390,26 @@ export const RealEventAPI = {
     getBatches: async (id: string): Promise<any[]> => {
         const data = await apiRequest(`/events/${id}/batches`);
         return data.map((batch: any) => ({
-             id: batch.id,
-             eventId: batch.event_id,
-             totalImages: batch.total_images,
-             processedImages: batch.processed_images,
-             status: batch.status,
-             isInitial: batch.is_initial,
-             createdAt: batch.created_at
+            id: batch.id,
+            eventId: batch.event_id,
+            totalImages: batch.total_images,
+            processedImages: batch.processed_images,
+            status: batch.status,
+            isInitial: batch.is_initial,
+            createdAt: batch.created_at
         }));
     },
-    
+
     getBatchStatus: async (eventId: string, batchId: string): Promise<any> => {
         const batch = await apiRequest(`/events/${eventId}/batches/${batchId}/status`);
         return {
-             id: batch.id,
-             eventId: batch.event_id,
-             totalImages: batch.total_images,
-             processedImages: batch.processed_images,
-             status: batch.status,
-             isInitial: batch.is_initial,
-             createdAt: batch.created_at
+            id: batch.id,
+            eventId: batch.event_id,
+            totalImages: batch.total_images,
+            processedImages: batch.processed_images,
+            status: batch.status,
+            isInitial: batch.is_initial,
+            createdAt: batch.created_at
         };
     }
 };
@@ -456,7 +456,7 @@ export const RealPhotoAPI = {
         }
 
         const data = await response.json();
-        
+
         // Map response
         return {
             batch: {
@@ -477,6 +477,20 @@ export const RealPhotoAPI = {
                 width: img.width,
                 height: img.height,
             }))
+        };
+    },
+
+    getPublicPhoto: async (eventId: string, photoId: string): Promise<any> => {
+        const data = await apiRequest(`/public/events/${eventId}/images/${photoId}`);
+        return {
+            id: data.id,
+            url: data.url,
+            thumbnailUrl: data.thumbnail_url || data.url,
+            title: data.filename || 'Photo',
+            date: '', // Not critical for public view
+            width: data.width,
+            height: data.height,
+            shareLink: data.shareLink
         };
     },
 
@@ -602,6 +616,27 @@ export const RealGalleryAPI = {
             });
         } catch (error) {
             console.error('Failed to track traffic source:', error);
+        }
+    },
+
+    getPublicPhoto: async (photoId: string): Promise<Photo | undefined> => {
+        try {
+            const response = await fetch(`${CONFIG.API_BASE_URL}/public/photos/${photoId}`);
+            if (!response.ok) return undefined;
+            const data = await response.json();
+            return {
+                id: data.id,
+                url: data.url,
+                thumbnailUrl: data.thumbnailUrl,
+                title: data.title,
+                date: '',
+                width: data.width,
+                height: data.height,
+                shareLink: data.shareLink
+            };
+        } catch (error) {
+            console.error('Failed to fetch public photo:', error);
+            return undefined;
         }
     },
 };
