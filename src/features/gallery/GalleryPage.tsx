@@ -266,18 +266,22 @@ const GalleryPage: React.FC<GalleryPageProps> = ({ mode: propMode }) => {
 
    const handleShare = async (photo: Photo, e: React.MouseEvent) => {
       e.stopPropagation();
+
+      // Create shareable URL with query parameters for Open Graph tags
+      const shareUrl = `${window.location.origin}/share/photo/${photo.id}?url=${encodeURIComponent(photo.url)}&event=${encodeURIComponent(event?.name || 'אירוע')}&title=${encodeURIComponent(photo.title || 'תמונה מהאירוע')}`;
+
       if (navigator.share) {
          try {
             await navigator.share({
                title: 'תמונה מהאירוע',
                text: `תמונה מהאירוע ${event?.name}`,
-               url: photo.url,
+               url: shareUrl,
             });
          } catch (error) {
             console.log('Error sharing', error);
          }
       } else {
-         navigator.clipboard.writeText(photo.url);
+         navigator.clipboard.writeText(shareUrl);
          triggerToast('הקישור לתמונה הועתק ללוח');
       }
    };
