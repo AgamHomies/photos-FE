@@ -106,7 +106,8 @@ const GalleryPage: React.FC<GalleryPageProps> = ({ mode: propMode }) => {
    // Deep Linking: Open photo if photoId is in URL
    useEffect(() => {
       const params = new URLSearchParams(window.location.search);
-      const photoId = params.get('photoId');
+      const rawPhotoId = params.get('photoId');
+      const photoId = rawPhotoId ? rawPhotoId.split(':')[0] : null;
 
       if (photoId) {
          const openDeepLinkedPhoto = async () => {
@@ -145,7 +146,9 @@ const GalleryPage: React.FC<GalleryPageProps> = ({ mode: propMode }) => {
    // Handle Shared Selection Deep Link
    useEffect(() => {
       const params = new URLSearchParams(window.location.search);
-      const selectionId = params.get('selectionId');
+      const rawSelectionId = params.get('selectionId');
+      // Sanitize: sometimes users copy paste with line numbers like :1
+      const selectionId = rawSelectionId ? rawSelectionId.split(':')[0] : null;
 
       if (selectionId && id) {
          const loadSelection = async () => {
@@ -158,7 +161,13 @@ const GalleryPage: React.FC<GalleryPageProps> = ({ mode: propMode }) => {
                window.history.replaceState({}, '', newUrl);
 
                const selectedPhotos = await BackendService.getSelection(id, selectionId);
-               setPhotos(selectedPhotos);
+               console.log('GalleryPage: setting selected photos (as searchResults):', selectedPhotos.length);
+               // We set searchResults instead of photos because the useEffect at line 84
+               // manages 'photos' based on 'searchResults' when viewState is 'results'.
+               setSearchResults(selectedPhotos);
+
+               // Force view state to results
+               console.log('GalleryPage: forcing viewState to results');
                setViewState('results');
             } catch (err) {
                console.error("Failed to load selection", err);
@@ -172,6 +181,12 @@ const GalleryPage: React.FC<GalleryPageProps> = ({ mode: propMode }) => {
    }, [id]);
 
    const loadData = async (eventId: string) => {
+      // Capture detailed state synchronously before any async operations
+      // This prevents race conditions where other effects (like selectionId loading)
+      // might clear the URL params while we are fetching data.
+      const initialParams = new URLSearchParams(window.location.search);
+      const hasSelectionId = !!initialParams.get('selectionId');
+
       try {
          // First fetch the event to get the real numeric ID
          const eventData = await BackendService.getEvent(eventId);
@@ -201,13 +216,17 @@ const GalleryPage: React.FC<GalleryPageProps> = ({ mode: propMode }) => {
             // Note: For full mode, we stick to fetching the specific page
             // For guest (landing), we don't show photos initially
 
-            if (currentMode === 'full') {
-               const eventPhotos = await BackendService.getEventPhotos(eventData.id, 1, itemsPerPage);
-               setPhotos(eventPhotos);
-               setPage(1);
-               setViewState('results');
-            } else {
-               setViewState('landing');
+            // If we have a selection ID, we skip all default photo loading/landing logic
+            // and let the loadSelection effect handle the view.
+            if (!hasSelectionId) {
+               if (currentMode === 'full') {
+                  const eventPhotos = await BackendService.getEventPhotos(eventData.id, 1, itemsPerPage);
+                  setPhotos(eventPhotos);
+                  setPage(1);
+                  setViewState('results');
+               } else {
+                  setViewState('landing');
+               }
             }
          }
       } catch (error) {
