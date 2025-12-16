@@ -267,8 +267,38 @@ const GalleryPage: React.FC<GalleryPageProps> = ({ mode: propMode }) => {
    const handleShare = async (photo: Photo, e: React.MouseEvent) => {
       e.stopPropagation();
 
-      // Create shareable URL with query parameters for Open Graph tags
-      const shareUrl = `${window.location.origin}/share/photo/${photo.id}?url=${encodeURIComponent(photo.url)}&event=${encodeURIComponent(event?.name || 'אירוע')}&title=${encodeURIComponent(photo.title || 'תמונה מהאירוע')}`;
+      // Get short link for smart sharing (with dynamic OG tags)
+      // Default fallback (client-side constructed)
+      let shareUrl = `${window.location.origin}/share/photo/${photo.id}?url=${encodeURIComponent(photo.url)}&event=${encodeURIComponent(event?.name || 'אירוע')}&title=${encodeURIComponent(photo.title || 'תמונה מהאירוע')}`;
+
+      try {
+         // Attempt to fetch smart short link from backend
+         const publicPhoto = await BackendService.getPublicPhoto(photo.id);
+         if (publicPhoto && publicPhoto.shareLink) {
+            shareUrl = publicPhoto.shareLink;
+         }
+      } catch (err) {
+         console.error('Failed to get smart share link, falling back to legacy link', err);
+      }
+
+      const unsecuredCopyToClipboard = (text: string) => {
+         const textArea = document.createElement("textarea");
+         textArea.value = text;
+         textArea.style.position = "fixed";
+         textArea.style.left = "-9999px";
+         textArea.style.top = "0";
+         document.body.appendChild(textArea);
+         textArea.focus();
+         textArea.select();
+         try {
+            document.execCommand('copy');
+            triggerToast('הקישור לתמונה הועתק ללוח');
+         } catch (err) {
+            console.error('Fallback: Unable to copy', err);
+            window.prompt("העתק את הקישור:", text);
+         }
+         document.body.removeChild(textArea);
+      };
 
       if (navigator.share) {
          try {
@@ -281,8 +311,13 @@ const GalleryPage: React.FC<GalleryPageProps> = ({ mode: propMode }) => {
             console.log('Error sharing', error);
          }
       } else {
-         navigator.clipboard.writeText(shareUrl);
-         triggerToast('הקישור לתמונה הועתק ללוח');
+         if (navigator.clipboard && navigator.clipboard.writeText) {
+            navigator.clipboard.writeText(shareUrl)
+               .then(() => triggerToast('הקישור לתמונה הועתק ללוח'))
+               .catch(() => unsecuredCopyToClipboard(shareUrl));
+         } else {
+            unsecuredCopyToClipboard(shareUrl);
+         }
       }
    };
 

@@ -144,14 +144,14 @@ export const BackendService = {
     },
 
     getProcessingStatus: async (id: string): Promise<any> => {
-        if (USE_MOCK) return { 
-            event_id: id, 
-            total_images_for_event: 100, 
-            total_processed_for_event: 100, 
-            has_initial_batches: true, 
-            all_initial_batches_done: true, 
-            initial_processing_done: true, 
-            is_published: true 
+        if (USE_MOCK) return {
+            event_id: id,
+            total_images_for_event: 100,
+            total_processed_for_event: 100,
+            has_initial_batches: true,
+            all_initial_batches_done: true,
+            initial_processing_done: true,
+            is_published: true
         };
         return await RealEventAPI.getProcessingStatus(id);
     },
@@ -160,7 +160,7 @@ export const BackendService = {
         if (USE_MOCK) return [];
         return await RealEventAPI.getBatches(id);
     },
-    
+
     getBatchStatus: async (eventId: string, batchId: string): Promise<any> => {
         if (USE_MOCK) return null;
         return await RealEventAPI.getBatchStatus(eventId, batchId);
@@ -217,6 +217,15 @@ export const BackendService = {
     // ============================================
     // Face Search
     // ============================================
+    getPublicPhoto: async (photoId: string): Promise<Photo | undefined> => {
+        if (USE_MOCK) {
+            // Mock implementation
+            const gallery = await MockS3Service.getGallery();
+            return gallery.find(p => p.id === photoId);
+        }
+        return await RealGalleryAPI.getPublicPhoto(photoId);
+    },
+
     searchFaces: async (slug: string, selfieFile: File): Promise<Photo[]> => {
         if (USE_MOCK) {
             console.warn('Face search not implemented for mock, returning empty array');
