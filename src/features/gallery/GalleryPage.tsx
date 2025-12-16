@@ -142,6 +142,35 @@ const GalleryPage: React.FC<GalleryPageProps> = ({ mode: propMode }) => {
       }
    }, [loading, photos]);
 
+   // Handle Shared Selection Deep Link
+   useEffect(() => {
+      const params = new URLSearchParams(window.location.search);
+      const selectionId = params.get('selectionId');
+
+      if (selectionId && id) {
+         const loadSelection = async () => {
+            setLoading(true);
+            try {
+               // Clear URL param
+               const newParams = new URLSearchParams(window.location.search);
+               newParams.delete('selectionId');
+               const newUrl = window.location.pathname + (newParams.toString() ? '?' + newParams.toString() : '');
+               window.history.replaceState({}, '', newUrl);
+
+               const selectedPhotos = await BackendService.getSelection(id, selectionId);
+               setPhotos(selectedPhotos);
+               setViewState('results');
+            } catch (err) {
+               console.error("Failed to load selection", err);
+               triggerToast('טעינת הבחירה נכשלה', 'error');
+            } finally {
+               setLoading(false);
+            }
+         };
+         loadSelection();
+      }
+   }, [id]);
+
    const loadData = async (eventId: string) => {
       try {
          // First fetch the event to get the real numeric ID
@@ -357,6 +386,65 @@ const GalleryPage: React.FC<GalleryPageProps> = ({ mode: propMode }) => {
          } else {
             unsecuredCopyToClipboard(shareUrl);
          }
+      }
+   };
+
+   const handleShareSelection = async () => {
+      if (selectedPhotos.size === 0 || !id) return;
+
+      const imageIds = Array.from(selectedPhotos).map(id => parseInt(id));
+
+      try {
+         const result = await BackendService.shareSelection(id, imageIds);
+
+         // Logic to copy/share the link
+         const shareUrl = result.shareLink;
+         const shareTitle = `${selectedPhotos.size} תמונות מ${event?.name || 'האירוע'}`;
+
+         if (navigator.share) {
+            try {
+               await navigator.share({
+                  title: shareTitle,
+                  text: `לחצו לצפייה ב-${selectedPhotos.size} תמונות שבחרתי`,
+                  url: shareUrl,
+               });
+            } catch (error) {
+               console.log('Error sharing', error);
+            }
+         } else {
+            // Fallback to clipboard
+            const unsecuredCopyToClipboard = (text: string) => {
+               const textArea = document.createElement("textarea");
+               textArea.value = text;
+               textArea.style.position = "fixed";
+               textArea.style.left = "-9999px";
+               document.body.appendChild(textArea);
+               textArea.select();
+               try {
+                  document.execCommand('copy');
+                  triggerToast('הקישור לאוסף הועתק ללוח');
+               } catch (err) {
+                  console.error('Fallback copy failed', err);
+                  window.prompt("העתק את הקישור:", text);
+               }
+               document.body.removeChild(textArea);
+            };
+
+            if (navigator.clipboard && navigator.clipboard.writeText) {
+               navigator.clipboard.writeText(shareUrl)
+                  .then(() => triggerToast('הקישור לאוסף הועתק ללוח'))
+                  .catch(() => unsecuredCopyToClipboard(shareUrl));
+            } else {
+               unsecuredCopyToClipboard(shareUrl);
+            }
+         }
+
+         // Optional: Deselect after sharing? User might want to keep selection.
+         // deselectAllPhotos(); 
+
+      } catch (error) {
+         console.error('Failed to share selection:', error);
+         triggerToast('יצירת הקישור נכשלה', 'error');
       }
    };
 
@@ -770,6 +858,15 @@ END:VCARD`;
                            className="text-sm font-medium text-[#8B7355] hover:text-[#C4A882]"
                         >
                            {selectedPhotos.size === photos.length ? 'נקה בחירה' : 'בחר הכל'}
+                        </button>
+
+                        <button
+                           onClick={handleShareSelection}
+                           disabled={selectedPhotos.size === 0}
+                           className={`px-5 py-2.5 rounded-full text-sm font-bold shadow-sm transition-all flex items-center gap-2 ${selectedPhotos.size > 0 ? 'bg-white text-[#C4A882] border border-[#C4A882] hover:bg-[#FDFBF7]' : 'bg-gray-100 text-gray-400 cursor-not-allowed'}`}
+                        >
+                           <Share2 className="w-4 h-4" />
+                           {selectedPhotos.size > 0 ? `שתף (${selectedPhotos.size})` : 'שתף'}
                         </button>
                         <button
                            onClick={handleDownloadAll}

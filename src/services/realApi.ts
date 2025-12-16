@@ -639,4 +639,33 @@ export const RealGalleryAPI = {
             return undefined;
         }
     },
+
+    shareSelection: async (slug: string, imageIds: number[]): Promise<{ selectionId: string; shareLink: string }> => {
+        const response = await fetch(`${CONFIG.API_BASE_URL}/public/events/${slug}/share-selection`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ image_ids: imageIds })
+        });
+
+        if (!response.ok) {
+            throw new Error('Failed to create share selection');
+        }
+        return await response.json();
+    },
+
+    getSelection: async (slug: string, selectionHash: string): Promise<Photo[]> => {
+        const response = await fetch(`${CONFIG.API_BASE_URL}/public/events/${slug}/selection/${selectionHash}`);
+        if (!response.ok) {
+            throw new Error('Failed to fetch selection');
+        }
+        const data = await response.json();
+        return data.map((img: any) => ({
+            id: img.id,
+            url: img.url,
+            thumbnailUrl: img.thumbnail_url || img.url,
+            title: img.title || 'Photo',
+            width: img.width,
+            height: img.height,
+        }));
+    },
 };

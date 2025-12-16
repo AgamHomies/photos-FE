@@ -252,6 +252,24 @@ export const BackendService = {
         }
         return await RealGalleryAPI.trackTrafficSource(slug, source);
     },
+    // ============================================
+    // Share Extensions
+    // ============================================
+    shareSelection: async (slug: string, imageIds: number[]): Promise<{ selectionId: string; shareLink: string }> => {
+        if (USE_MOCK) {
+            console.warn('shareSelection not implemented for mock');
+            return { selectionId: 'mock-hash', shareLink: 'http://localhost:3000/s/mock-hash' };
+        }
+        return await RealGalleryAPI.shareSelection(slug, imageIds);
+    },
+
+    getSelection: async (slug: string, selectionHash: string): Promise<Photo[]> => {
+        if (USE_MOCK) {
+            console.warn('getSelection not implemented for mock');
+            return [];
+        }
+        return await RealGalleryAPI.getSelection(slug, selectionHash);
+    },
 };
 
 // Export for backward compatibility
