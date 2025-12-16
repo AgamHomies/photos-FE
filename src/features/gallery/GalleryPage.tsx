@@ -110,6 +110,13 @@ const GalleryPage: React.FC<GalleryPageProps> = ({ mode: propMode }) => {
 
       if (photoId) {
          const openDeepLinkedPhoto = async () => {
+            // 1. Clear the URL param immediately to prevent re-triggering
+            // We do this first or parallel to ensure subsequent renders don't see it
+            const newParams = new URLSearchParams(window.location.search);
+            newParams.delete('photoId');
+            const newUrl = window.location.pathname + (newParams.toString() ? '?' + newParams.toString() : '');
+            window.history.replaceState({}, '', newUrl);
+
             // If photo is already in photos array (e.g. page 1), use it
             const existingPhoto = photos.find(p => p.id == photoId);
             if (existingPhoto) {
