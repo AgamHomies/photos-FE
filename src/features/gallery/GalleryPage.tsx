@@ -103,6 +103,38 @@ const GalleryPage: React.FC<GalleryPageProps> = ({ mode: propMode }) => {
       }
    }, [id]);
 
+   // Deep Linking: Open photo if photoId is in URL
+   useEffect(() => {
+      const params = new URLSearchParams(window.location.search);
+      const photoId = params.get('photoId');
+
+      if (photoId) {
+         const openDeepLinkedPhoto = async () => {
+            // If photo is already in photos array (e.g. page 1), use it
+            const existingPhoto = photos.find(p => p.id == photoId);
+            if (existingPhoto) {
+               setLightboxPhoto(existingPhoto);
+               return;
+            }
+
+            // Otherwise fetch it specifically
+            try {
+               const photoData = await BackendService.getPublicPhoto(photoId);
+               if (photoData) {
+                  setLightboxPhoto(photoData);
+               }
+            } catch (err) {
+               console.error("Failed to load deep linked photo", err);
+            }
+         };
+
+         // Wait a bit for main data to load, or run immediately if independent
+         if (!loading) {
+            openDeepLinkedPhoto();
+         }
+      }
+   }, [loading, photos]);
+
    const loadData = async (eventId: string) => {
       try {
          // First fetch the event to get the real numeric ID
