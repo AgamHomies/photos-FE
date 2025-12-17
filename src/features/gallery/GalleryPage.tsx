@@ -32,6 +32,13 @@ interface GalleryPageProps {
 const GalleryPage: React.FC<GalleryPageProps> = ({ mode: propMode }) => {
    const { id } = useParams<{ id: string }>();
    const [event, setEvent] = useState<Event | null>(null);
+   const eventRef = useRef<Event | null>(null); // Ref to access event inside closures without dependencies
+   
+   // Sync ref with state
+   useEffect(() => {
+      eventRef.current = event;
+   }, [event]);
+
    const [photographer, setPhotographer] = useState<PhotographerProfile | null>(null);
    const [loading, setLoading] = useState(true);
    const [mode, setMode] = useState<'guest' | 'full'>(propMode || 'guest');
@@ -177,8 +184,15 @@ const GalleryPage: React.FC<GalleryPageProps> = ({ mode: propMode }) => {
             } catch (err) {
                console.error("Failed to load selection", err);
                triggerToast('טעינת הבחירה נכשלה', 'error');
+
             } finally {
-               setLoading(false);
+               // Only turn off loading if event is already loaded to prevent "Event not found" flash
+               // If event is not loaded yet, loadData will handle turning off loading
+               if (eventRef.current) {
+                  setLoading(false);
+               } else {
+                  console.log('GalleryPage: selection loaded, but event not ready. Keeping loading=true');
+               }
             }
          };
          loadSelection();
