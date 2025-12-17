@@ -161,14 +161,19 @@ const GalleryPage: React.FC<GalleryPageProps> = ({ mode: propMode }) => {
                window.history.replaceState({}, '', newUrl);
 
                const selectedPhotos = await BackendService.getSelection(id, selectionId);
-               console.log('GalleryPage: setting selected photos (as searchResults):', selectedPhotos.length);
-               // We set searchResults instead of photos because the useEffect at line 84
-               // manages 'photos' based on 'searchResults' when viewState is 'results'.
-               setSearchResults(selectedPhotos);
+               console.log('GalleryPage: setting selected photos (directly to photos):', selectedPhotos.length);
 
-               // Force view state to results
-               console.log('GalleryPage: forcing viewState to results');
-               setViewState('results');
+               // Set photos directly so they are available for lightbox navigation
+               setPhotos(selectedPhotos);
+
+               // Open the first photo immediately
+               if (selectedPhotos.length > 0) {
+                  setLightboxPhoto(selectedPhotos[0]);
+               }
+
+               // Set view state to landing so if they close lightbox, they see the selfie upload
+               console.log('GalleryPage: setting viewState to landing');
+               setViewState('landing');
             } catch (err) {
                console.error("Failed to load selection", err);
                triggerToast('טעינת הבחירה נכשלה', 'error');
