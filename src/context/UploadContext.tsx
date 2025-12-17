@@ -75,7 +75,7 @@ export const UploadProvider: React.FC<{ children: ReactNode }> = ({ children }) 
                     const totalBatches = Math.ceil(totalFiles / BATCH_SIZE);
 
                     updateUploadState(eventId, {
-                        stage: `מעלה נגלה ${currentBatchNum} מתוך ${totalBatches}...`
+                        stage: `מעלה חלק ${currentBatchNum} מתוך ${totalBatches}...`
                     });
 
                     // 1. Presign
@@ -88,7 +88,7 @@ export const UploadProvider: React.FC<{ children: ReactNode }> = ({ children }) 
                         await BackendService.uploadToS3(urlInfo.uploadUrl, file);
                         return urlInfo.photoId;
                     });
-                    
+
                     const uploadedPhotoIds = await uploadWithConcurrency(uploadTasks, CONCURRENCY_LIMIT);
 
                     // 3. Confirm
@@ -97,7 +97,7 @@ export const UploadProvider: React.FC<{ children: ReactNode }> = ({ children }) 
                     processedCount += chunk.length;
                     // Client upload is 0-80% of total "perceived" progress
                     const clientProgress = Math.floor((processedCount / totalFiles) * 80);
-                    
+
                     updateUploadState(eventId, { progress: clientProgress });
                 }
             }
@@ -114,12 +114,12 @@ export const UploadProvider: React.FC<{ children: ReactNode }> = ({ children }) 
             // We keep isUploading: true but essentially "done" with client part
             // Actually, we can just remove it from here and let the page handle polling, 
             // OR we can keep it around so the user sees "Waiting for server..."
-            updateUploadState(eventId, { 
-                progress: 80, 
+            updateUploadState(eventId, {
+                progress: 80,
                 stage: 'העלאה הושלמה, ממתין לעיבוד...',
                 isUploading: true // Keep true until polling takes over or we clear
             });
-            
+
             // Give it a moment then clear, to allow polling to takeover UI
             setTimeout(() => {
                 clearUpload(eventId);
@@ -127,9 +127,9 @@ export const UploadProvider: React.FC<{ children: ReactNode }> = ({ children }) 
 
         } catch (error) {
             console.error(error);
-            updateUploadState(eventId, { 
-                isUploading: false, 
-                error: 'שגיאה בהעלאת תמונות' 
+            updateUploadState(eventId, {
+                isUploading: false,
+                error: 'שגיאה בהעלאת תמונות'
             });
         }
     }, [clearUpload]);
