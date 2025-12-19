@@ -588,6 +588,8 @@ export const RealGalleryAPI = {
                 url: img.url,
                 thumbnailUrl: img.thumbnail_url,
                 title: `Photo ${img.id}`,
+                matchScore: img.match_score,
+                takenAt: img.taken_at
             }));
         } catch (error) {
             console.error('Failed to search faces:', error);

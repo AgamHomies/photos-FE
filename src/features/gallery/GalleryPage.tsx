@@ -21,7 +21,8 @@ import {
    Copy,
    Heart,
    ChevronLeft,
-   ChevronRight
+   ChevronRight,
+   ArrowUpDown
 } from 'lucide-react';
 import { Toast } from '../../components';
 
@@ -33,7 +34,7 @@ const GalleryPage: React.FC<GalleryPageProps> = ({ mode: propMode }) => {
    const { id } = useParams<{ id: string }>();
    const [event, setEvent] = useState<Event | null>(null);
    const eventRef = useRef<Event | null>(null); // Ref to access event inside closures without dependencies
-   
+
    // Sync ref with state
    useEffect(() => {
       eventRef.current = event;
@@ -62,6 +63,7 @@ const GalleryPage: React.FC<GalleryPageProps> = ({ mode: propMode }) => {
    const resultsRef = useRef<HTMLDivElement>(null);
 
    // Responsive itemsPerPage logic
+   // Responsive itemsPerPage logic
    useEffect(() => {
       const handleResize = () => {
          if (window.innerWidth < 768) {
@@ -80,6 +82,32 @@ const GalleryPage: React.FC<GalleryPageProps> = ({ mode: propMode }) => {
       return () => window.removeEventListener('resize', handleResize);
    }, []);
 
+   const [sortBy, setSortBy] = useState<'time' | 'matchScore'>('time');
+
+   // Sort search results based on active sort mode
+   const sortedSearchResults = React.useMemo(() => {
+      if (viewState !== 'results') return [];
+
+      const sorted = [...searchResults];
+      if (sortBy === 'matchScore') {
+         sorted.sort((a, b) => (b.matchScore || 0) - (a.matchScore || 0));
+      } else {
+         // Sort by time (takenAt)
+         sorted.sort((a, b) => {
+            const timeA = a.takenAt ? new Date(a.takenAt).getTime() : 0;
+            const timeB = b.takenAt ? new Date(b.takenAt).getTime() : 0;
+            // Handle NaN
+            const valA = isNaN(timeA) ? 0 : timeA;
+            const valB = isNaN(timeB) ? 0 : timeB;
+            return valB - valA;
+         });
+      }
+      return sorted;
+   }, [searchResults, sortBy, viewState]);
+
+
+
+
    // Update displayed photos when page, itemsPerPage, or searchResults change
    useEffect(() => {
       if (mode === 'full') return; // In full mode, photos are controlled by manual fetches
@@ -88,10 +116,9 @@ const GalleryPage: React.FC<GalleryPageProps> = ({ mode: propMode }) => {
          // Client-side pagination for results
          const start = (page - 1) * itemsPerPage;
          const end = start + itemsPerPage;
-         setPhotos(searchResults.slice(start, end));
+         setPhotos(sortedSearchResults.slice(start, end));
       }
-   }, [page, itemsPerPage, searchResults, viewState, mode, event]);
-
+   }, [page, itemsPerPage, sortedSearchResults, viewState, mode, event]);
 
    // Toast notification state
    const [showToast, setShowToast] = useState(false);
@@ -356,6 +383,7 @@ const GalleryPage: React.FC<GalleryPageProps> = ({ mode: propMode }) => {
          const matches = await BackendService.searchFaces(id, selfieFile);
 
          setSearchResults(matches); // Store all matches
+         setSortBy('matchScore'); // Default to matchScore sort on new search
          setPage(1); // Reset to first page
          // Photos will be updated by useEffect based on page 1 and itemsPerPage
          setViewState('results');
@@ -628,10 +656,10 @@ const GalleryPage: React.FC<GalleryPageProps> = ({ mode: propMode }) => {
       if (isMobile) {
          // Create vCard for mobile
          const vCardData = `BEGIN:VCARD
-VERSION:3.0
-FN:${photographer.name}
-TEL;TYPE=CELL:${photographer.phone}
-END:VCARD`;
+                  VERSION:3.0
+                  FN:${photographer.name}
+                  TEL;TYPE=CELL:${photographer.phone}
+                  END:VCARD`;
 
          const blob = new Blob([vCardData], { type: 'text/vcard' });
          const url = window.URL.createObjectURL(blob);
@@ -888,9 +916,19 @@ END:VCARD`;
                               {totalItems}
                            </span>
                         </h3>
+                        {mode !== 'full' && (
+                           <button
+                              onClick={() => setSortBy(prev => prev === 'time' ? 'matchScore' : 'time')}
+                              className="text-sm font-medium text-[#8B7355] hover:text-[#C4A882] flex items-center gap-1 mr-4 border-r border-[#F0EBE3] pr-4"
+                           >
+                              <ArrowUpDown className="w-4 h-4" />
+                              {sortBy === 'time' ? 'מיין לפי רמת התאמה' : 'מיין לפי זמנים'}
+                           </button>
+                        )}
                      </div>
 
                      <div className="flex items-center gap-3">
+
                         <button
                            onClick={selectedPhotos.size === photos.length ? deselectAllPhotos : selectAllPhotos}
                            className="text-sm font-medium text-[#8B7355] hover:text-[#C4A882]"

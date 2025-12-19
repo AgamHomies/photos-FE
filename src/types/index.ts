@@ -22,6 +22,8 @@ export interface Photo {
   width?: number;
   height?: number;
   shareLink?: string;
+  matchScore?: number;
+  takenAt?: string;
 }
 
 export interface PhotographerRegistration {
