@@ -281,13 +281,30 @@ export const MockS3Service = {
         return stats;
     },
 
-    getEvents: async (): Promise<Event[]> => {
+    getEvents: async (page: number = 1, limit: number = 20, search?: string): Promise<{ items: Event[], total: number }> => {
         await new Promise(resolve => setTimeout(resolve, 700));
         const email = localStorage.getItem(CURRENT_USER_KEY);
-        if (!email) return [];
+        if (!email) return { items: [], total: 0 };
 
         const s3Data = loadData();
-        return s3Data.events[email] || [];
+        let allEvents = s3Data.events[email] || [];
+
+        if (search) {
+            const lowerSearch = search.toLowerCase();
+            allEvents = allEvents.filter(e =>
+                e.name.toLowerCase().includes(lowerSearch) ||
+                (e.location && e.location.toLowerCase().includes(lowerSearch))
+            );
+        }
+
+        const startIndex = (page - 1) * limit;
+        const endIndex = startIndex + limit;
+        const pageItems = allEvents.slice(startIndex, endIndex);
+
+        return {
+            items: pageItems,
+            total: allEvents.length
+        };
     },
 
     createEvent: async (eventData: Partial<Event>): Promise<Event> => {
@@ -387,7 +404,7 @@ export const MockS3Service = {
             width: 800,
             height: 600
         }));
-        
+
         return {
             batch: {
                 id: `mock-batch-${Date.now()}`,

@@ -68,10 +68,10 @@ export const BackendService = {
     // ============================================
     // Events
     // ============================================
-    getEvents: async (): Promise<Event[]> => {
+    getEvents: async (page: number = 1, limit: number = 20, search?: string): Promise<{ items: Event[], total: number }> => {
         return USE_MOCK
-            ? await MockS3Service.getEvents()
-            : await RealEventAPI.getEvents();
+            ? await MockS3Service.getEvents(page, limit, search)
+            : await RealEventAPI.getEvents(page, limit, search);
     },
 
     getEvent: async (id: string): Promise<Event | undefined> => {

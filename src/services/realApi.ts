@@ -219,10 +219,14 @@ export const RealProfileAPI = {
 // Events API
 // ============================================
 export const RealEventAPI = {
-    getEvents: async (): Promise<Event[]> => {
-        const data = await apiRequest('/events/');
+    getEvents: async (page: number = 1, limit: number = 20, search?: string): Promise<{ items: Event[], total: number }> => {
+        let url = `/events/?page=${page}&limit=${limit}`;
+        if (search) {
+            url += `&search=${encodeURIComponent(search)}`;
+        }
+        const data = await apiRequest(url);
 
-        return data.map((event: any) => ({
+        const items = data.items.map((event: any) => ({
             id: event.id,
             photographerId: event.photographer_id,
             name: event.title,
@@ -242,6 +246,11 @@ export const RealEventAPI = {
             initialProcessingDone: event.initial_processing_done,
             createdAt: event.created_at,
         }));
+
+        return {
+            items,
+            total: data.total
+        };
     },
 
     getEvent: async (id: string): Promise<Event | undefined> => {

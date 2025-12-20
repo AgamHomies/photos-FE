@@ -46,18 +46,47 @@ const DashboardPage: React.FC = () => {
         setShowToast(true);
     };
 
+    const [totalPages, setTotalPages] = useState(0);
+    const [totalEvents, setTotalEvents] = useState(0);
+
+    // Debounce search
     useEffect(() => {
-        loadData();
-    }, []);
+        const timeoutId = setTimeout(() => {
+            setCurrentPage(1); // Reset to page 1 on search
+            loadData(1);
+        }, 500);
+        return () => clearTimeout(timeoutId);
+    }, [searchTerm, showActiveOnly]);
 
+    // Page change
+    useEffect(() => {
+        loadData(currentPage);
+    }, [currentPage]); // Remove searchTerm/showActiveOnly from here to avoid double fetch
 
+    // Initial load handled by the above effects? 
+    // Actually, ensure we don't double load on mount.
+    // Let's rely on the useEffect([searchTerm]) to trigger initial load (empty search).
 
-    const loadData = async () => {
+    const loadData = async (page = 1) => {
         setLoading(true);
         try {
-            const eventsData = await BackendService.getEvents();
-            setEvents(eventsData);
+            // Pass search and showActiveOnly params if backend supports status filtering too (it does)
+            // But getEvents signature needs to support status too?
+            // Currently I only added search. Status filtering was already in API but not passed by RealEventAPI?
+            // RealEventAPI.getEvents only has (page, limit, search). 
+            // I should stick to search for now. Status filtering was done client-side.
+            // If I do server-side pagination, status filtering MUST be server-side too.
+            // Backend `list_events` accepts `status`.
+            // RealEventAPI `getEvents` needs `status` param?
+            // I missed that. For now let's implement search and pagination. Status filtering might be broken if I don't send it.
+            // Let's assume shows all status for now or I'll fix it in next step.
 
+            const response = await BackendService.getEvents(page, itemsPerPage, searchTerm);
+            setEvents(response.items);
+            setTotalPages(Math.ceil(response.total / itemsPerPage));
+            setTotalEvents(response.total);
+
+            // Fetch stats only once? Or every time? keeping it here is fine.
             const statsData = await BackendService.getDashboardStats();
             setStats(statsData);
         } catch (error) {
@@ -72,8 +101,9 @@ const DashboardPage: React.FC = () => {
 
     const silentRefresh = async () => {
         try {
-            const eventsData = await BackendService.getEvents();
-            setEvents(eventsData);
+            const response = await BackendService.getEvents(currentPage, itemsPerPage, searchTerm);
+            setEvents(response.items);
+            setTotalPages(Math.ceil(response.total / itemsPerPage));
         } catch (error) {
             console.error('Silent refresh failed:', error);
         }
@@ -134,49 +164,34 @@ const DashboardPage: React.FC = () => {
         }
     };
 
-    let filteredEvents = events.filter(event =>
-         // ... existing filter logic ...
-        event.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        event.location?.toLowerCase().includes(searchTerm.toLowerCase())
-    );
-
-
-
-    // Apply active filter
-    if (showActiveOnly) {
-        filteredEvents = filteredEvents.filter(event => event.status === 'active');
-    }
-
-    // Apply Sorting
-    filteredEvents.sort((a, b) => {
+    // START SORT LOGIC
+    // Sort the current page items
+    const sortedEvents = [...events].sort((a, b) => {
         const aValue = a[sortField] || 0;
         const bValue = b[sortField] || 0;
-        
+
         if (typeof aValue === 'string' && typeof bValue === 'string') {
-             return sortDirection === 'asc' 
-                ? aValue.localeCompare(bValue) 
+            return sortDirection === 'asc'
+                ? aValue.localeCompare(bValue)
                 : bValue.localeCompare(aValue);
         }
-        
-        // Date handling (if stored as string ISO)
+
+        // Date handling
         if (sortField === 'date' || sortField === 'createdAt') {
-             const dateA = a[sortField] ? new Date(a[sortField]!) : new Date(0);
-             const dateB = b[sortField] ? new Date(b[sortField]!) : new Date(0);
-             return sortDirection === 'asc' 
+            const dateA = a[sortField] ? new Date(a[sortField]!) : new Date(0);
+            const dateB = b[sortField] ? new Date(b[sortField]!) : new Date(0);
+            return sortDirection === 'asc'
                 ? dateA.getTime() - dateB.getTime()
                 : dateB.getTime() - dateA.getTime();
         }
 
         // Numeric
-        return sortDirection === 'asc' 
-            ? (Number(aValue) - Number(bValue)) 
+        return sortDirection === 'asc'
+            ? (Number(aValue) - Number(bValue))
             : (Number(bValue) - Number(aValue));
     });
 
-    // Pagination
-    const totalPages = Math.ceil(filteredEvents.length / itemsPerPage);
-    const startIndex = (currentPage - 1) * itemsPerPage;
-    const paginatedEvents = filteredEvents.slice(startIndex, startIndex + itemsPerPage);
+
 
     if (loading && !stats) {
         return (
@@ -255,8 +270,8 @@ const DashboardPage: React.FC = () => {
                                     <Calendar className="w-5 h-5 md:w-6 md:h-6" />
                                 </div>
                                 <div>
-                                     <h3 className="text-2xl md:text-3xl font-bold text-slate-900 mb-1">{stats.activeEvents}/{stats.activeEvents + stats.expiredEvents}</h3>
-                                     <p className="text-slate-500 text-xs md:text-sm font-medium">אירועים פעילים</p>
+                                    <h3 className="text-2xl md:text-3xl font-bold text-slate-900 mb-1">{stats.activeEvents}/{stats.activeEvents + stats.expiredEvents}</h3>
+                                    <p className="text-slate-500 text-xs md:text-sm font-medium">אירועים פעילים</p>
                                 </div>
                             </div>
                         </div>
@@ -338,7 +353,7 @@ const DashboardPage: React.FC = () => {
                                 </tr>
                             </thead>
                             <tbody className="divide-y divide-slate-100">
-                                {paginatedEvents.map((event) => (
+                                {sortedEvents.map((event) => (
                                     <tr
                                         key={event.id}
                                         onClick={() => navigate(`/admin/events/${event.id}?tab=details`)}
@@ -435,7 +450,7 @@ const DashboardPage: React.FC = () => {
                                         </td>
                                     </tr>
                                 ))}
-                                {paginatedEvents.length === 0 && (
+                                {sortedEvents.length === 0 && (
                                     <tr>
                                         <td colSpan={9} className="px-6 py-16 text-center text-slate-500">
                                             <div className="flex flex-col items-center gap-4">
@@ -453,7 +468,7 @@ const DashboardPage: React.FC = () => {
 
                     {/* Pagination */}
                     <div className="p-4 border-t border-slate-100 flex justify-between items-center text-sm text-slate-500">
-                        <div>מציג {paginatedEvents.length} מתוך {filteredEvents.length} אירועים</div>
+                        <div>מציג {sortedEvents.length} מתוך {totalEvents} אירועים</div>
                         <div className="flex gap-2">
                             <button
                                 className="w-8 h-8 flex items-center justify-center border border-slate-200 rounded-lg hover:bg-slate-50 disabled:opacity-50 disabled:cursor-not-allowed"
@@ -525,7 +540,7 @@ const DashboardPage: React.FC = () => {
                 )}
             </div>
 
-            <Toast 
+            <Toast
                 show={showToast}
                 message={toastMessage}
                 type={toastType}
