@@ -573,13 +573,24 @@ const GalleryPage: React.FC<GalleryPageProps> = ({ mode: propMode }) => {
          }
 
          const data = await response.json();
-         const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
+         // Detecting iOS specifically
+         const isIOS = /iPhone|iPad|iPod/i.test(navigator.userAgent);
+         const isMobile = /Android/i.test(navigator.userAgent) || isIOS;
 
          if (isMobile) {
-            // For mobile compatibility:
-            // Navigating directly to the signed URL with Content-Disposition: attachment
-            // is the most reliable way to trigger a download without opening a new tab.
-            window.location.href = data.url;
+            if (isIOS) {
+               // iOS doesn't support programmatic file downloads well (blocked by security)
+               // Best UX is to open in new tab and tell user to long-press save
+               const win = window.open(data.url, '_blank');
+               if (!win) {
+                  triggerToast('חלון ההורדה נחסם. אנא אפשר חלונות קופצים.', 'error');
+               } else {
+                  triggerToast('לחץ לחיצה ארוכה על התמונה ושמור אותה.', 'success');
+               }
+            } else {
+               // Android works better with location.href for downloads
+               window.location.href = data.url;
+            }
          } else {
             try {
                // For desktop: Fetch blob to force download
@@ -590,7 +601,6 @@ const GalleryPage: React.FC<GalleryPageProps> = ({ mode: propMode }) => {
                const url = window.URL.createObjectURL(blob);
                const link = document.createElement('a');
                link.href = url;
-               // Try to get filename from content-disposition if possible, or fallback to sensible default
                link.download = `photo-${photo.id}.jpg`;
                document.body.appendChild(link);
                link.click();
@@ -605,7 +615,15 @@ const GalleryPage: React.FC<GalleryPageProps> = ({ mode: propMode }) => {
       } catch (error) {
          console.error('Download error:', error);
          // Fallback to opening in new tab if anything fails
-         window.open(photo.url, '_blank');
+         const win = window.open(photo.url, '_blank');
+         if (!win) {
+            triggerToast('ההורדה נחסמה. אנא אפשר חלונות קופצים בדפדפן או נסה לחיצה ארוכה ושמירה.', 'error');
+         } else {
+            // Check if iOS to verify if we should show the hint
+            if (/iPhone|iPad|iPod/i.test(navigator.userAgent)) {
+               triggerToast('לחץ לחיצה ארוכה על התמונה ושמור אותה.', 'success');
+            }
+         }
       }
    };
 
