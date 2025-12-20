@@ -18,7 +18,9 @@ import {
     Eye,
     Edit,
     Heart,
-    Share2
+    Share2,
+    Copy,
+    X
 } from 'lucide-react';
 import { Toast } from '../../components';
 
@@ -44,6 +46,39 @@ const DashboardPage: React.FC = () => {
         setToastMessage(message);
         setToastType(type);
         setShowToast(true);
+    };
+
+    const [linkModalConfig, setLinkModalConfig] = useState<{
+        isOpen: boolean;
+        type: 'guest' | 'couple';
+        url: string;
+        title: string;
+    }>({
+        isOpen: false,
+        type: 'guest',
+        url: '',
+        title: ''
+    });
+
+    const openLinkModal = (e: React.MouseEvent, type: 'guest' | 'couple', path: string) => {
+        e.stopPropagation();
+        setLinkModalConfig({
+            isOpen: true,
+            type,
+            url: `${window.location.origin}${path}`,
+            title: type === 'guest' ? 'קישור לאורחים' : 'קישור לזוג'
+        });
+    };
+
+    const handleCopyLink = async () => {
+        try {
+            await navigator.clipboard.writeText(linkModalConfig.url);
+            triggerToast('הקישור הועתק ללוח בהצלחה!');
+            setLinkModalConfig(prev => ({ ...prev, isOpen: false }));
+        } catch (err) {
+            console.error('Failed to copy:', err);
+            triggerToast('שגיאה בהעתקת הקישור', 'error');
+        }
     };
 
     const [totalPages, setTotalPages] = useState(0);
@@ -391,10 +426,7 @@ const DashboardPage: React.FC = () => {
                                             {event.isPublished || event.initialProcessingDone ? (
                                                 <div className="flex gap-2">
                                                     <button
-                                                        onClick={(e) => {
-                                                            e.stopPropagation();
-                                                            window.open(`/gallery/${event.slug || event.id}`, '_blank');
-                                                        }}
+                                                        onClick={(e) => openLinkModal(e, 'guest', `/gallery/${event.slug || event.id}`)}
                                                         className="w-28 justify-center px-3 py-1.5 text-xs font-bold text-slate-600 border border-slate-200 hover:bg-slate-50 rounded-lg transition-colors flex items-center gap-1.5"
                                                         title="קישור לאורחים"
                                                     >
@@ -403,10 +435,7 @@ const DashboardPage: React.FC = () => {
                                                     </button>
 
                                                     <button
-                                                        onClick={(e) => {
-                                                            e.stopPropagation();
-                                                            window.open(`/gallery/${event.coupleSlug || event.id}`, '_blank');
-                                                        }}
+                                                        onClick={(e) => openLinkModal(e, 'couple', `/gallery/${event.coupleSlug || event.id}`)}
                                                         className="w-28 justify-center px-3 py-1.5 text-xs font-bold text-cyan-600 bg-cyan-50 hover:bg-cyan-100 rounded-lg transition-colors flex items-center gap-1.5 border border-cyan-100"
                                                         title="קישור לזוג"
                                                     >
@@ -532,6 +561,54 @@ const DashboardPage: React.FC = () => {
                                         className="flex-1 px-6 py-3 bg-red-500 hover:bg-red-600 text-white rounded-xl font-bold transition-all shadow-lg hover:shadow-red-500/30"
                                     >
                                         מחק לצמיתות
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                )}
+                {/* Link Action Modal */}
+                {linkModalConfig.isOpen && (
+                    <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4 animate-fade-in">
+                        <div className="bg-white rounded-3xl shadow-2xl max-w-sm w-full p-6 relative">
+                            {/* Close Button */}
+                            <button
+                                onClick={() => setLinkModalConfig(prev => ({ ...prev, isOpen: false }))}
+                                className="absolute top-4 right-4 p-2 text-slate-400 hover:text-slate-600 transition-colors"
+                            >
+                                <X className="w-5 h-5" />
+                            </button>
+
+                            <div className="flex flex-col items-center text-center mt-2">
+                                {/* Icon */}
+                                <div className={`w-14 h-14 rounded-full flex items-center justify-center mb-4 ${linkModalConfig.type === 'guest' ? 'bg-slate-50 text-slate-600' : 'bg-pink-50 text-pink-500'}`}>
+                                    {linkModalConfig.type === 'guest' ? (
+                                        <Users className="w-7 h-7" />
+                                    ) : (
+                                        <Heart className="w-7 h-7" />
+                                    )}
+                                </div>
+
+                                {/* Title */}
+                                <h3 className="text-xl font-bold text-slate-900 mb-1">{linkModalConfig.title}</h3>
+                                <p className="text-slate-500 text-sm mb-6">בחר פעולה עבור הקישור</p>
+
+                                {/* Buttons */}
+                                <div className="w-full flex flex-col gap-3">
+                                    <button
+                                        onClick={() => window.open(linkModalConfig.url, '_blank')}
+                                        className="w-full py-3 px-4 rounded-xl border border-cyan-100 bg-cyan-50 text-cyan-700 font-bold hover:bg-cyan-100 transition-colors flex items-center justify-center gap-2"
+                                    >
+                                        <span>פתח בחלון חדש</span>
+                                        <ExternalLink className="w-4 h-4" />
+                                    </button>
+
+                                    <button
+                                        onClick={handleCopyLink}
+                                        className="w-full py-3 px-4 rounded-xl bg-slate-900 text-white font-bold hover:bg-slate-800 transition-colors flex items-center justify-center gap-2 shadow-lg shadow-slate-200"
+                                    >
+                                        <span>העתק קישור</span>
+                                        <Copy className="w-4 h-4" />
                                     </button>
                                 </div>
                             </div>

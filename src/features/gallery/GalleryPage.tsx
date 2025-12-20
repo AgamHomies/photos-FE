@@ -383,7 +383,7 @@ const GalleryPage: React.FC<GalleryPageProps> = ({ mode: propMode }) => {
          const matches = await BackendService.searchFaces(id, selfieFile);
 
          setSearchResults(matches); // Store all matches
-         setSortBy('matchScore'); // Default to matchScore sort on new search
+         setSortBy('time'); // Default to time sort on new search
          setPage(1); // Reset to first page
          // Photos will be updated by useEffect based on page 1 and itemsPerPage
          setViewState('results');
@@ -919,10 +919,12 @@ const GalleryPage: React.FC<GalleryPageProps> = ({ mode: propMode }) => {
                         {mode !== 'full' && (
                            <button
                               onClick={() => setSortBy(prev => prev === 'time' ? 'matchScore' : 'time')}
-                              className="text-sm font-medium text-[#8B7355] hover:text-[#C4A882] flex items-center gap-1 mr-4 border-r border-[#F0EBE3] pr-4"
+                              className={`text-sm font-bold flex items-center gap-2 mr-4 border-r border-[#F0EBE3] pr-4 transition-all duration-300 ${sortBy === 'matchScore' ? 'text-[#C4A882]' : 'text-[#A89680] hover:text-[#C4A882]'}`}
                            >
-                              <ArrowUpDown className="w-4 h-4" />
-                              {sortBy === 'time' ? 'מיין לפי רמת התאמה' : 'מיין לפי זמנים'}
+                              <div className={`flex items-center gap-2 px-3 py-1.5 rounded-full transition-all ${sortBy === 'matchScore' ? 'bg-[#C4A882] text-white shadow-md' : 'bg-[#F0EBE3] text-[#A89680] hover:bg-[#E8DFD3]'}`}>
+                                 <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-4 h-4"><circle cx="12" cy="12" r="10" /><circle cx="12" cy="12" r="6" /><circle cx="12" cy="12" r="2" /></svg>
+                                 <span>מיקוד</span>
+                              </div>
                            </button>
                         )}
                      </div>
