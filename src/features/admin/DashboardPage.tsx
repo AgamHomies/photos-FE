@@ -70,14 +70,35 @@ const DashboardPage: React.FC = () => {
         });
     };
 
-    const handleCopyLink = async () => {
+    const unsecuredCopyToClipboard = (text: string) => {
+        const textArea = document.createElement("textarea");
+        textArea.value = text;
+        document.body.appendChild(textArea);
+        textArea.focus();
+        textArea.select();
         try {
-            await navigator.clipboard.writeText(linkModalConfig.url);
+            document.execCommand('copy');
             triggerToast('הקישור הועתק ללוח בהצלחה!');
             setLinkModalConfig(prev => ({ ...prev, isOpen: false }));
         } catch (err) {
-            console.error('Failed to copy:', err);
+            console.error('Unable to copy to clipboard', err);
             triggerToast('שגיאה בהעתקת הקישור', 'error');
+        }
+        document.body.removeChild(textArea);
+    };
+
+    const handleCopyLink = async () => {
+        if (navigator.clipboard && navigator.clipboard.writeText) {
+            try {
+                await navigator.clipboard.writeText(linkModalConfig.url);
+                triggerToast('הקישור הועתק ללוח בהצלחה!');
+                setLinkModalConfig(prev => ({ ...prev, isOpen: false }));
+            } catch (err) {
+                console.warn('Clipboard API failed, trying fallback', err);
+                unsecuredCopyToClipboard(linkModalConfig.url);
+            }
+        } else {
+            unsecuredCopyToClipboard(linkModalConfig.url);
         }
     };
 
