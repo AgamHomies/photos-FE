@@ -22,7 +22,8 @@ import {
    Heart,
    ChevronLeft,
    ChevronRight,
-   ArrowUpDown
+   ArrowUpDown,
+   Sparkles
 } from 'lucide-react';
 import { Toast } from '../../components';
 
@@ -940,8 +941,12 @@ const GalleryPage: React.FC<GalleryPageProps> = ({ mode: propMode }) => {
                               className={`text-sm font-bold flex items-center gap-2 mr-4 border-r border-[#F0EBE3] pr-4 transition-all duration-300 ${sortBy === 'matchScore' ? 'text-[#C4A882]' : 'text-[#A89680] hover:text-[#C4A882]'}`}
                            >
                               <div className={`flex items-center gap-2 px-3 py-1.5 rounded-full transition-all ${sortBy === 'matchScore' ? 'bg-[#C4A882] text-white shadow-md' : 'bg-[#F0EBE3] text-[#A89680] hover:bg-[#E8DFD3]'}`}>
-                                 <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-4 h-4"><circle cx="12" cy="12" r="10" /><circle cx="12" cy="12" r="6" /><circle cx="12" cy="12" r="2" /></svg>
-                                 <span>מיקוד</span>
+                                 <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-4 h-4">
+                                    <circle cx="12" cy="12" r="10" />
+                                    <circle cx="12" cy="12" r="6" />
+                                    <circle cx="12" cy="12" r="2" />
+                                 </svg>
+                                 <span>מיקוד AI</span>
                               </div>
                            </button>
                         )}
