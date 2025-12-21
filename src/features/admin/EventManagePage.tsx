@@ -19,8 +19,7 @@ import {
     XCircle,
     Copy,
     ExternalLink,
-    X,
-    Share2
+    X
 } from 'lucide-react';
 import { useUpload } from '../../context/UploadContext';
 
@@ -68,27 +67,18 @@ const EventManagePage: React.FC = () => {
         isOpen: boolean;
         type: 'guest' | 'couple';
         url: string;
-        directUrl?: string;
         title: string;
-    }>({ isOpen: false, type: 'guest', url: '', directUrl: '', title: '' });
+    }>({ isOpen: false, type: 'guest', url: '', title: '' });
 
     const handleLinkClick = (type: 'guest' | 'couple') => {
         if (!event) return;
         const path = type === 'guest' ? event.slug || event.id : event.coupleSlug || event.id;
         // Use backend proxy for rich previews
-        let url = `${CONFIG.API_BASE_URL}/public/e/${path}`;
-        let directUrl = `${window.location.origin}/gallery/${path}`;
-
-        if (type === 'couple') {
-            url += '?mode=full';
-            directUrl += '?mode=full';
-        }
-
+        const url = `${CONFIG.API_BASE_URL}/public/e/${path}`;
         setLinkModal({
             isOpen: true,
             type,
             url,
-            directUrl,
             title: type === 'guest' ? 'קישור לאורחים' : 'קישור לזוג'
         });
     };
@@ -716,36 +706,11 @@ const EventManagePage: React.FC = () => {
                             {/* Buttons */}
                             <div className="w-full flex flex-col gap-3">
                                 <button
-                                    onClick={() => window.open(linkModal.directUrl || linkModal.url, '_blank')}
+                                    onClick={() => window.open(linkModal.url, '_blank')}
                                     className="w-full py-3 px-4 rounded-xl border border-cyan-100 bg-cyan-50 text-cyan-700 font-bold hover:bg-cyan-100 transition-colors flex items-center justify-center gap-2"
                                 >
                                     <span>פתח בחלון חדש</span>
                                     <ExternalLink className="w-4 h-4" />
-                                </button>
-
-                                <button
-                                    onClick={async () => {
-                                        const shareData = {
-                                            title: event?.name || 'Click2Pic Gallery',
-                                            text: `היי! הנה התמונות מ${event?.name || 'האירוע'}`,
-                                            url: linkModal.url
-                                        };
-
-                                        if (navigator.share) {
-                                            try {
-                                                await navigator.share(shareData);
-                                            } catch (err) {
-                                                console.log('Share failed', err);
-                                            }
-                                        } else {
-                                            // Fallback to WhatsApp
-                                            window.open(`https://wa.me/?text=${encodeURIComponent(linkModal.url)}`, '_blank');
-                                        }
-                                    }}
-                                    className="w-full py-3 px-4 rounded-xl border border-cyan-100 bg-cyan-50 text-cyan-700 font-bold hover:bg-cyan-100 transition-colors flex items-center justify-center gap-2"
-                                >
-                                    <span>שתף קישור</span>
-                                    <Share2 className="w-4 h-4" />
                                 </button>
 
                                 <button
