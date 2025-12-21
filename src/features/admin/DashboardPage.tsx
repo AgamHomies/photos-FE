@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { BackendService } from '../../services/backendService';
 import { DashboardStats, Event } from '../../types';
+import { CONFIG } from '../../config';
 import Layout from '../../components/Layout';
 import {
     Download,
@@ -52,21 +53,40 @@ const DashboardPage: React.FC = () => {
         isOpen: boolean;
         type: 'guest' | 'couple';
         url: string;
+        directUrl?: string;
         title: string;
+        eventName?: string;
     }>({
         isOpen: false,
         type: 'guest',
         url: '',
-        title: ''
+        directUrl: '',
+        title: '',
+        eventName: ''
     });
 
-    const openLinkModal = (e: React.MouseEvent, type: 'guest' | 'couple', path: string) => {
+    const openLinkModal = (e: React.MouseEvent, type: 'guest' | 'couple', path: string, eventName: string) => {
         e.stopPropagation();
+
+        // Proxy URL (Rich Preview)
+        const slug = path.split('/').pop() || '';
+        let url = `${CONFIG.API_BASE_URL}/public/e/${slug}`;
+
+        // Direct URL (Frontend)
+        let directUrl = `${window.location.origin}${path}`;
+
+        if (type === 'couple') {
+            url += '?mode=full';
+            directUrl += '?mode=full';
+        }
+
         setLinkModalConfig({
             isOpen: true,
             type,
-            url: `${window.location.origin}${path}`,
-            title: type === 'guest' ? 'קישור לאורחים' : 'קישור לזוג'
+            url,
+            directUrl,
+            title: type === 'guest' ? 'קישור לאורחים' : 'קישור לזוג',
+            eventName
         });
     };
 
@@ -447,7 +467,7 @@ const DashboardPage: React.FC = () => {
                                             {event.isPublished || event.initialProcessingDone ? (
                                                 <div className="flex gap-2">
                                                     <button
-                                                        onClick={(e) => openLinkModal(e, 'guest', `/gallery/${event.slug || event.id}`)}
+                                                        onClick={(e) => openLinkModal(e, 'guest', `/gallery/${event.slug || event.id}`, event.name)}
                                                         className="w-28 justify-center px-3 py-1.5 text-xs font-bold text-slate-600 border border-slate-200 hover:bg-slate-50 rounded-lg transition-colors flex items-center gap-1.5"
                                                         title="קישור לאורחים"
                                                     >
@@ -456,7 +476,7 @@ const DashboardPage: React.FC = () => {
                                                     </button>
 
                                                     <button
-                                                        onClick={(e) => openLinkModal(e, 'couple', `/gallery/${event.coupleSlug || event.id}`)}
+                                                        onClick={(e) => openLinkModal(e, 'couple', `/gallery/${event.coupleSlug || event.id}`, event.name)}
                                                         className="w-28 justify-center px-3 py-1.5 text-xs font-bold text-cyan-600 bg-cyan-50 hover:bg-cyan-100 rounded-lg transition-colors flex items-center gap-1.5 border border-cyan-100"
                                                         title="קישור לזוג"
                                                     >
@@ -617,11 +637,35 @@ const DashboardPage: React.FC = () => {
                                 {/* Buttons */}
                                 <div className="w-full flex flex-col gap-3">
                                     <button
-                                        onClick={() => window.open(linkModalConfig.url, '_blank')}
+                                        onClick={() => window.open(linkModalConfig.directUrl || linkModalConfig.url, '_blank')}
                                         className="w-full py-3 px-4 rounded-xl border border-cyan-100 bg-cyan-50 text-cyan-700 font-bold hover:bg-cyan-100 transition-colors flex items-center justify-center gap-2"
                                     >
                                         <span>פתח בחלון חדש</span>
                                         <ExternalLink className="w-4 h-4" />
+                                    </button>
+                                    <button
+                                        onClick={async () => {
+                                            const shareData = {
+                                                title: linkModalConfig.eventName || 'אירוע השנה',
+                                                text: `היי! הנה התמונות מ${linkModalConfig.eventName || 'האירוע'}`,
+                                                url: linkModalConfig.url
+                                            };
+
+                                            if (navigator.share) {
+                                                try {
+                                                    await navigator.share(shareData);
+                                                } catch (err) {
+                                                    console.log('Share failed', err);
+                                                }
+                                            } else {
+                                                // Fallback to WhatsApp
+                                                window.open(`https://wa.me/?text=${encodeURIComponent(linkModalConfig.url)}`, '_blank');
+                                            }
+                                        }}
+                                        className="w-full py-3 px-4 rounded-xl border border-cyan-100 bg-cyan-50 text-cyan-700 font-bold hover:bg-cyan-100 transition-colors flex items-center justify-center gap-2"
+                                    >
+                                        <span>שתף קישור</span>
+                                        <Share2 className="w-4 h-4" />
                                     </button>
 
                                     <button
