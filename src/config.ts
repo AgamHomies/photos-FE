@@ -13,8 +13,10 @@ const getApiUrl = () => {
     throw new Error('REACT_APP_API_URL is not defined! Please set this in your environment configuration.');
   }
 
-  // Development: use HTTP localhost
-  return 'http://localhost:8000/api/v1';
+  // Development: use dynamic hostname to allow LAN access (mobile testing)
+  // This allows accessing via http://192.168.1.x:5173 and hitting API at http://192.168.1.x:8000
+  const hostname = window.location.hostname;
+  return `http://${hostname}:8000/api/v1`;
 };
 
 export const CONFIG = {
