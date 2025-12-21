@@ -241,7 +241,11 @@ const GalleryPage: React.FC<GalleryPageProps> = ({ mode: propMode }) => {
          if (eventData) {
             setEvent(eventData);
             // Determine mode from event data if available
-            const currentMode = eventData.mode || propMode || 'guest';
+            let currentMode = eventData.mode || propMode || 'guest';
+            if (eventData.coupleSlug === eventId) {
+               currentMode = 'full';
+            }
+
             setMode(currentMode);
 
             console.log('Event loaded:', { id: eventData.id, photographerId: eventData.photographerId });
@@ -578,39 +582,24 @@ const GalleryPage: React.FC<GalleryPageProps> = ({ mode: propMode }) => {
          const isIOS = /iPhone|iPad|iPod/i.test(navigator.userAgent);
          const isMobile = /Android/i.test(navigator.userAgent) || isIOS;
 
-         if (isMobile) {
-            if (isIOS) {
-               // iOS doesn't support programmatic file downloads well (blocked by security)
-               // Best UX is to open in new tab and tell user to long-press save
-               const win = window.open(data.url, '_blank');
-               if (!win) {
-                  triggerToast('חלון ההורדה נחסם. אנא אפשר חלונות קופצים.', 'error');
-               } else {
-                  triggerToast('לחץ לחיצה ארוכה על התמונה ושמור אותה.', 'success');
-               }
+         if (isMobile && isIOS) {
+            // iOS doesn't support programmatic file downloads well (blocked by security)
+            // Best UX is to open in new tab and tell user to long-press save
+            const win = window.open(data.url, '_blank');
+            if (!win) {
+               triggerToast('חלון ההורדה נחסם. אנא אפשר חלונות קופצים.', 'error');
             } else {
-               // Android works better with location.href for downloads
-               window.location.href = data.url;
+               triggerToast('לחץ לחיצה ארוכה על התמונה ושמור אותה.', 'success');
             }
          } else {
-            try {
-               // For desktop: Fetch blob to force download
-               const imageResponse = await fetch(data.url);
-               if (!imageResponse.ok) throw new Error('Image fetch failed');
-
-               const blob = await imageResponse.blob();
-               const url = window.URL.createObjectURL(blob);
-               const link = document.createElement('a');
-               link.href = url;
-               link.download = `photo-${photo.id}.jpg`;
-               document.body.appendChild(link);
-               link.click();
-               document.body.removeChild(link);
-               window.URL.revokeObjectURL(url);
-            } catch (err) {
-               console.warn('Blob download failed, falling back to direct navigation', err);
-               window.location.href = data.url;
-            }
+            // For Desktop & Android: Create a temporary link and click it
+            // We rely on the backend sending 'Content-Disposition: attachment'
+            const link = document.createElement('a');
+            link.href = data.url;
+            link.setAttribute('download', `photo-${photo.id}.jpg`);
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
          }
 
       } catch (error) {
