@@ -2,6 +2,7 @@ import React, { useEffect, useState, useRef } from 'react';
 import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import { BackendService } from '../../services/backendService';
 import { Event, Photo } from '../../types';
+import { CONFIG } from '../../config';
 import Layout from '../../components/Layout';
 import {
     ArrowRight,
@@ -72,7 +73,8 @@ const EventManagePage: React.FC = () => {
     const handleLinkClick = (type: 'guest' | 'couple') => {
         if (!event) return;
         const path = type === 'guest' ? event.slug || event.id : event.coupleSlug || event.id;
-        const url = `${window.location.origin}/gallery/${path}`;
+        // Use backend proxy for rich previews
+        const url = `${CONFIG.API_BASE_URL}/public/e/${path}`;
         setLinkModal({
             isOpen: true,
             type,
@@ -81,13 +83,35 @@ const EventManagePage: React.FC = () => {
         });
     };
 
-    const copyLink = async () => {
+    const unsecuredCopyToClipboard = (text: string) => {
+        const textArea = document.createElement("textarea");
+        textArea.value = text;
+        document.body.appendChild(textArea);
+        textArea.focus();
+        textArea.select();
         try {
-            await navigator.clipboard.writeText(linkModal.url);
+            document.execCommand('copy');
             showNotification('הקישור הועתק בהצלחה');
             setLinkModal(prev => ({ ...prev, isOpen: false }));
         } catch (err) {
+            console.error('Unable to copy to clipboard', err);
             showNotification('שגיאה בהעתקת הקישור', 'error');
+        }
+        document.body.removeChild(textArea);
+    };
+
+    const copyLink = async () => {
+        if (navigator.clipboard && navigator.clipboard.writeText) {
+            try {
+                await navigator.clipboard.writeText(linkModal.url);
+                showNotification('הקישור הועתק בהצלחה');
+                setLinkModal(prev => ({ ...prev, isOpen: false }));
+            } catch (err) {
+                console.warn('Clipboard API failed, trying fallback', err);
+                unsecuredCopyToClipboard(linkModal.url);
+            }
+        } else {
+            unsecuredCopyToClipboard(linkModal.url);
         }
     };
 
