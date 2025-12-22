@@ -43,7 +43,7 @@ function App() {
           <Route path="complete-profile" element={<ProfileCompletionPage />} />
           <Route path="profile-success" element={<ProfileSuccessPage />} />
 
-          {/* Protected Admin Routes */}
+          {/* Protected Admin Routes !*/}
           <Route element={<ProtectedRoute />}>
             <Route path="admin" element={<DashboardPage />} />
             <Route path="admin/settings" element={<SettingsPage />} />
