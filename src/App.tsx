@@ -17,7 +17,7 @@ import ProtectedRoute from './components/ProtectedRoute';
 import { UploadProvider } from './context/UploadContext';
 
 function App() {
-  // Log the current mode on app start!@!Q
+  // Log the current mode on app start!@!QQQ
   console.log(`%c━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━`, 'color: #f59e0b; font-weight: bold');
   console.log(`%c🚀 Click2Pic Frontend Started`, 'color: #10b981; font-size: 16px; font-weight: bold');
   console.log(`%c━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━`, 'color: #f59e0b; font-weight: bold');
