@@ -281,6 +281,84 @@ const EventManagePage: React.FC = () => {
         }
     };
 
+    // Helper to traverse directories recursively
+    const scanFiles = async (entry: any): Promise<File[]> => {
+        if (entry.isFile) {
+            return new Promise((resolve) => {
+                entry.file((file: File) => {
+                    resolve([file]);
+                });
+            });
+        } else if (entry.isDirectory) {
+            const dirReader = entry.createReader();
+            const allEntries: any[] = [];
+
+            const readAllEntries = async (): Promise<any[]> => {
+                return new Promise((resolve) => {
+                    dirReader.readEntries(async (entries: any[]) => {
+                        if (entries.length === 0) {
+                            resolve(allEntries);
+                        } else {
+                            allEntries.push(...entries);
+                            await readAllEntries();
+                            resolve(allEntries);
+                        }
+                    });
+                });
+            };
+
+            await readAllEntries();
+            const promises = allEntries.map((e) => scanFiles(e));
+            const files = await Promise.all(promises);
+            return files.flat();
+        }
+        return [];
+    };
+
+    const handleDragOver = (e: React.DragEvent) => {
+        e.preventDefault();
+        e.stopPropagation();
+    };
+
+    const handleDrop = async (e: React.DragEvent) => {
+        e.preventDefault();
+        e.stopPropagation();
+
+        const items = e.dataTransfer.items;
+        const files: File[] = [];
+
+        if (items) {
+            const promises: Promise<File[]>[] = [];
+            for (let i = 0; i < items.length; i++) {
+                const item = items[i];
+                if (item.kind === 'file') {
+                    const entry = item.webkitGetAsEntry?.() || (item as any).getAsEntry?.();
+                    if (entry) {
+                        promises.push(scanFiles(entry));
+                    } else {
+                        const file = item.getAsFile();
+                        if (file) promises.push(Promise.resolve([file]));
+                    }
+                }
+            }
+            const results = await Promise.all(promises);
+            files.push(...results.flat());
+        } else {
+            files.push(...Array.from(e.dataTransfer.files));
+        }
+
+        const imageFiles = files.filter(file => file.type.startsWith('image/'));
+
+        if (files.length > 0 && imageFiles.length === 0) {
+            showNotification('לא נמצאו תמונות בקבצים/תיקיות שנגררו', 'error');
+            return;
+        }
+
+        if (imageFiles.length > 0) {
+            handleBulkUpload(imageFiles);
+        }
+    };
+
     // Simple manual upload handler (for the "Upload More" button)
     const handleManualUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
         if (e.target.files && e.target.files.length > 0) {
@@ -488,7 +566,11 @@ const EventManagePage: React.FC = () => {
                 {activeTab === 'photos' && (
                     <div className="space-y-8">
                         {/* Upload Section */}
-                        <div className={`bg-white p-10 rounded-3xl border-2 border-dashed border-slate-200 text-center transition-all relative group ${isClientUploading ? 'opacity-50 pointer-events-none' : 'hover:bg-slate-50 hover:border-cyan-500'}`}>
+                        <div
+                            className={`bg-white p-10 rounded-3xl border-2 border-dashed border-slate-200 text-center transition-all relative group ${isClientUploading ? 'opacity-50 pointer-events-none' : 'hover:bg-slate-50 hover:border-cyan-500'}`}
+                            onDragOver={handleDragOver}
+                            onDrop={handleDrop}
+                        >
                             <input
                                 id="manage-file-input"
                                 type="file"
@@ -524,7 +606,7 @@ const EventManagePage: React.FC = () => {
                                         <Upload className="w-8 h-8 text-cyan-600" />
                                     </div>
                                     <h3 className="text-xl font-bold text-slate-900 mb-2">העלאת תמונות נוספות</h3>
-                                    <p className="text-slate-500 mb-4">גרור לכאן תמונות או בחר אפשרות:</p>
+                                    <p className="text-slate-500 mb-4">גרור לכאן תמונות או תיקיות או בחר אפשרות:</p>
 
                                     <div className="flex gap-4 pointer-events-auto">
                                         <button
