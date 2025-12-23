@@ -1,6 +1,6 @@
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Upload, Image as ImageIcon, Check, Calendar, MapPin, Camera, ScanFace, Send, Star } from 'lucide-react';
+import { Upload, Image as ImageIcon, Check, Calendar, MapPin, Camera, ScanFace, Send, Star, FolderUp } from 'lucide-react';
 import { BackendService } from '../../services/backendService';
 import Layout from '../../components/Layout';
 import { Toast } from '../../components';
@@ -20,6 +20,7 @@ const CreateEventPage: React.FC = () => {
     const [uploadProgress, setUploadProgress] = useState(0);
     const [processingStage, setProcessingStage] = useState('');
     const [createdEventLink, setCreatedEventLink] = useState('');
+    const folderInputRef = useRef<HTMLInputElement>(null);
 
     const [showToast, setShowToast] = useState(false);
     const [toastMessage, setToastMessage] = useState('');
@@ -46,7 +47,15 @@ const CreateEventPage: React.FC = () => {
 
     const handleGalleryFilesChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         if (e.target.files) {
-            setGalleryFiles(Array.from(e.target.files));
+            const files = Array.from(e.target.files);
+            const imageFiles = files.filter(file => file.type.startsWith('image/'));
+
+            if (files.length > 0 && imageFiles.length === 0) {
+                triggerToast('לא נמצאו תמונות בתיקייה שנבחרה', 'error');
+                return;
+            }
+
+            setGalleryFiles(imageFiles);
         }
     };
 
@@ -213,24 +222,57 @@ const CreateEventPage: React.FC = () => {
                                     <h2>העלאת תמונות האירוע</h2>
                                 </div>
 
-                                <div className="border-2 border-dashed border-slate-200 rounded-xl p-8 text-center hover:border-cyan-500 transition-colors cursor-pointer relative group">
+                                <div className="border-2 border-dashed border-slate-200 rounded-xl p-8 text-center hover:border-cyan-500 transition-colors relative group">
                                     <input
+                                        id="gallery-file-input"
                                         type="file"
                                         multiple
                                         accept="image/*"
                                         onChange={handleGalleryFilesChange}
                                         className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10"
                                     />
-                                    <div className="flex flex-col items-center justify-center py-4">
+
+                                    {/* Hidden Folder Input */}
+                                    <input
+                                        type="file"
+                                        multiple
+                                        // @ts-ignore
+                                        webkitdirectory=""
+                                        // @ts-ignore
+                                        directory=""
+                                        onChange={handleGalleryFilesChange}
+                                        className="hidden"
+                                        ref={folderInputRef}
+                                    />
+
+                                    <div className="flex flex-col items-center justify-center py-4 relative z-20 pointer-events-none">
                                         <div className="w-12 h-12 bg-slate-100 rounded-full flex items-center justify-center mb-3 text-slate-400 group-hover:text-cyan-500 transition-colors">
                                             <ImageIcon className="w-6 h-6" />
                                         </div>
-                                        <p className="text-slate-600 font-medium">בחר תמונות להעלאה</p>
-                                        <p className="text-slate-400 text-sm mt-1">תמיכה בהעלאת מספר תמונות בו זמנית</p>
-                                        <p className="text-slate-400 text-xs mt-1">גרור תמונות לכאן או לחץ לבחירה</p>
+                                        <p className="text-slate-600 font-medium text-lg">גרור תמונות לכאן</p>
+                                        <p className="text-slate-400 text-sm mt-1 mb-4">או בחר אפשרות העלאה:</p>
+
+                                        <div className="flex gap-4 pointer-events-auto">
+                                            <button
+                                                type="button"
+                                                onClick={() => document.getElementById('gallery-file-input')?.click()}
+                                                className="bg-cyan-50 text-cyan-700 px-4 py-2 rounded-lg font-bold hover:bg-cyan-100 transition-colors text-sm"
+                                            >
+                                                בחר תמונות
+                                            </button>
+                                            <button
+                                                type="button"
+                                                onClick={() => folderInputRef.current?.click()}
+                                                className="bg-slate-100 text-slate-700 px-4 py-2 rounded-lg font-bold hover:bg-slate-200 transition-colors text-sm flex items-center gap-2"
+                                            >
+                                                <FolderUp className="w-4 h-4" />
+                                                בחר תיקייה
+                                            </button>
+                                        </div>
                                     </div>
+
                                     {galleryFiles.length > 0 && (
-                                        <div className="mt-4 inline-flex items-center gap-2 bg-green-50 text-green-700 px-4 py-2 rounded-full text-sm font-bold">
+                                        <div className="mt-4 inline-flex items-center gap-2 bg-green-50 text-green-700 px-4 py-2 rounded-full text-sm font-bold relative z-20">
                                             <Check className="w-4 h-4" />
                                             נבחרו {galleryFiles.length} תמונות
                                         </div>

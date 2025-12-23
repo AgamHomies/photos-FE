@@ -19,7 +19,8 @@ import {
     XCircle,
     Copy,
     ExternalLink,
-    X
+    X,
+    FolderUp
 } from 'lucide-react';
 import { useUpload } from '../../context/UploadContext';
 
@@ -41,6 +42,7 @@ const EventManagePage: React.FC = () => {
     const hasStartedUpload = useRef(false);
     const [isRefreshing, setIsRefreshing] = useState(false);
     const prevUploading = useRef(false);
+    const folderInputRef = useRef<HTMLInputElement>(null);
 
     const queryParams = new URLSearchParams(location.search);
     const initialTab = (queryParams.get('tab') as 'photos' | 'details') || 'photos';
@@ -282,7 +284,17 @@ const EventManagePage: React.FC = () => {
     // Simple manual upload handler (for the "Upload More" button)
     const handleManualUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
         if (e.target.files && e.target.files.length > 0) {
-            handleBulkUpload(Array.from(e.target.files));
+            const files = Array.from(e.target.files);
+            const imageFiles = files.filter(file => file.type.startsWith('image/'));
+
+            if (files.length > 0 && imageFiles.length === 0) {
+                showNotification('לא נמצאו תמונות בתיקייה שנבחרה', 'error');
+                return;
+            }
+
+            if (imageFiles.length > 0) {
+                handleBulkUpload(imageFiles);
+            }
         }
     };
 
@@ -476,8 +488,9 @@ const EventManagePage: React.FC = () => {
                 {activeTab === 'photos' && (
                     <div className="space-y-8">
                         {/* Upload Section */}
-                        <div className={`bg-white p-10 rounded-3xl border-2 border-dashed border-slate-200 text-center transition-all relative group cursor-pointer ${isClientUploading ? 'opacity-50 pointer-events-none' : 'hover:bg-slate-50 hover:border-cyan-500'}`}>
+                        <div className={`bg-white p-10 rounded-3xl border-2 border-dashed border-slate-200 text-center transition-all relative group ${isClientUploading ? 'opacity-50 pointer-events-none' : 'hover:bg-slate-50 hover:border-cyan-500'}`}>
                             <input
+                                id="manage-file-input"
                                 type="file"
                                 multiple
                                 accept="image/*"
@@ -485,19 +498,52 @@ const EventManagePage: React.FC = () => {
                                 className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10"
                                 disabled={!!isClientUploading}
                             />
+
+                            {/* Hidden Folder Input */}
+                            <input
+                                type="file"
+                                multiple
+                                // @ts-ignore
+                                webkitdirectory=""
+                                // @ts-ignore
+                                directory=""
+                                onChange={handleManualUpload}
+                                className="hidden"
+                                ref={folderInputRef}
+                                disabled={!!isClientUploading}
+                            />
+
                             {isClientUploading ? (
                                 <div className="flex flex-col items-center">
                                     <Loader2 className="w-12 h-12 text-slate-400 animate-spin mb-4" />
                                     <p className="text-slate-600 font-bold text-lg">מעלה תמונות...</p>
                                 </div>
                             ) : (
-                                <>
+                                <div className="flex flex-col items-center justify-center relative z-20 pointer-events-none">
                                     <div className="bg-cyan-50 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4 group-hover:scale-110 transition-transform">
                                         <Upload className="w-8 h-8 text-cyan-600" />
                                     </div>
                                     <h3 className="text-xl font-bold text-slate-900 mb-2">העלאת תמונות נוספות</h3>
-                                    <p className="text-slate-500">גרור לכאן תמונות או לחץ לבחירה</p>
-                                </>
+                                    <p className="text-slate-500 mb-4">גרור לכאן תמונות או בחר אפשרות:</p>
+
+                                    <div className="flex gap-4 pointer-events-auto">
+                                        <button
+                                            type="button"
+                                            onClick={() => document.getElementById('manage-file-input')?.click()}
+                                            className="bg-white border border-slate-200 text-slate-700 px-4 py-2 rounded-lg font-bold hover:bg-slate-50 transition-colors text-sm shadow-sm"
+                                        >
+                                            בחר תמונות
+                                        </button>
+                                        <button
+                                            type="button"
+                                            onClick={() => folderInputRef.current?.click()}
+                                            className="bg-cyan-50 text-cyan-700 px-4 py-2 rounded-lg font-bold hover:bg-cyan-100 transition-colors text-sm flex items-center gap-2"
+                                        >
+                                            <FolderUp className="w-4 h-4" />
+                                            בחר תיקייה
+                                        </button>
+                                    </div>
+                                </div>
                             )}
                         </div>
 
