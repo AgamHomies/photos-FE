@@ -73,8 +73,8 @@ const EventManagePage: React.FC = () => {
     const handleLinkClick = (type: 'guest' | 'couple') => {
         if (!event) return;
         const path = type === 'guest' ? event.slug || event.id : event.coupleSlug || event.id;
-        // Use backend proxy for rich previews
-        const url = `${CONFIG.API_BASE_URL}/public/e/${path}`;
+        // Use frontend route instead of backend proxy
+        const url = `${window.location.origin}/gallery/${path}`;
         setLinkModal({
             isOpen: true,
             type,
