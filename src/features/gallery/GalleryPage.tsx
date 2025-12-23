@@ -587,7 +587,7 @@ const GalleryPage: React.FC<GalleryPageProps> = ({ mode: propMode }) => {
             // Best UX is to open in new tab and tell user to long-press save
             const win = window.open(data.url, '_blank');
             if (!win) {
-               triggerToast('חלון ההורדה נחסם. אנא אפשר חלונות קופצים.', 'error');
+               triggerToast('חלון ההורדה נחסם. על מנת לבצע את הפעולה יש לאפשר חלונות קופצים.', 'error');
             } else {
                triggerToast('לחץ לחיצה ארוכה על התמונה ושמור אותה.', 'success');
             }
