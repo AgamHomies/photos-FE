@@ -663,13 +663,14 @@ const GalleryPage: React.FC<GalleryPageProps> = ({ mode: propMode }) => {
 
       if (isMobile) {
          // Create vCard for mobile
+         // Create vCard for mobile - Remove indentation to ensure valid format
          const vCardData = `BEGIN:VCARD
-                  VERSION:3.0
-                  FN:${photographer.name}
-                  TEL;TYPE=CELL:${photographer.phone}
-                  END:VCARD`;
+VERSION:3.0
+FN:${photographer.name}
+TEL;TYPE=CELL:${photographer.phone}
+END:VCARD`;
 
-         const blob = new Blob([vCardData], { type: 'text/vcard' });
+         const blob = new Blob([vCardData], { type: 'text/vcard;charset=utf-8' });
          const url = window.URL.createObjectURL(blob);
          const link = document.createElement('a');
          link.href = url;
