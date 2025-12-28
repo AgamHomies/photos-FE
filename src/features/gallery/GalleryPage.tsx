@@ -23,7 +23,9 @@ import {
    ChevronLeft,
    ChevronRight,
    ArrowUpDown,
-   Sparkles
+   Sparkles,
+   ChevronsLeft,
+   ChevronsRight
 } from 'lucide-react';
 import { Toast } from '../../components';
 
@@ -83,7 +85,7 @@ const GalleryPage: React.FC<GalleryPageProps> = ({ mode: propMode }) => {
       return () => window.removeEventListener('resize', handleResize);
    }, []);
 
-   const [sortBy, setSortBy] = useState<'time' | 'matchScore'>('time');
+   const [sortBy, setSortBy] = useState<'time' | 'matchScore'>('matchScore');
 
    // Sort search results based on active sort mode
    const sortedSearchResults = React.useMemo(() => {
@@ -273,10 +275,34 @@ const GalleryPage: React.FC<GalleryPageProps> = ({ mode: propMode }) => {
                if (currentMode === 'full') {
                   const eventPhotos = await BackendService.getEventPhotos(eventData.id, 1, itemsPerPage);
                   setPhotos(eventPhotos);
-                  setPage(1);
                   setViewState('results');
                } else {
-                  setViewState('landing');
+                  // Check for persisted search results if view=results is in URL
+                  const viewParam = initialParams.get('view');
+                  if (viewParam === 'results') {
+                     try {
+                        const savedResults = sessionStorage.getItem(`guest_results_${eventId}`);
+                        if (savedResults) {
+                           const parsedResults = JSON.parse(savedResults);
+                           setSearchResults(parsedResults);
+                           setViewState('results');
+                           setSortBy('matchScore');
+                           // Also restore page? Maybe not needed for MVP
+                        } else {
+                           // URL says results but no data found (expired?), revert to landing
+                           console.log('No saved results found, reverting to landing');
+                           setViewState('landing');
+                           // Clean URL
+                           const newUrl = window.location.pathname;
+                           window.history.replaceState({}, '', newUrl);
+                        }
+                     } catch (e) {
+                        console.error('Failed to parse saved results', e);
+                        setViewState('landing');
+                     }
+                  } else {
+                     setViewState('landing');
+                  }
                }
             }
          }
@@ -377,6 +403,18 @@ const GalleryPage: React.FC<GalleryPageProps> = ({ mode: propMode }) => {
       }
    };
 
+   const clearSearch = () => {
+      setViewState('landing');
+      setSearchResults([]);
+      setPhotos([]);
+      if (id) {
+         sessionStorage.removeItem(`guest_results_${id}`);
+      }
+      // Clear URL query params
+      const newUrl = window.location.pathname;
+      window.history.pushState({}, '', newUrl);
+   };
+
    const performFaceSearch = async (selfieFile: File) => {
       try {
          if (!id) {
@@ -388,10 +426,15 @@ const GalleryPage: React.FC<GalleryPageProps> = ({ mode: propMode }) => {
          const matches = await BackendService.searchFaces(id, selfieFile);
 
          setSearchResults(matches); // Store all matches
-         setSortBy('time'); // Default to time sort on new search
+         setSortBy('matchScore'); // Default to matchScore match sort on new search
          setPage(1); // Reset to first page
          // Photos will be updated by useEffect based on page 1 and itemsPerPage
          setViewState('results');
+
+         // Persist results and update URL
+         sessionStorage.setItem(`guest_results_${id}`, JSON.stringify(matches));
+         const newUrl = `${window.location.pathname}?view=results`;
+         window.history.pushState({}, '', newUrl);
 
          setTimeout(() => {
             resultsRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -1027,39 +1070,90 @@ END:VCARD`;
 
                   {/* Pagination Controls */}
                   {totalPages > 1 && (
-                     <div className="flex justify-center items-center gap-6 mt-12 mb-8" dir="rtl">
-                        {/* Previous Button (Right in RTL) */}
-                        <button
-                           onClick={() => handlePageChange(page - 1)}
-                           disabled={page === 1}
-                           className="w-12 h-12 rounded-full bg-white shadow-md border border-[#F0EBE3] flex items-center justify-center text-[#8B7355] hover:bg-[#FAF9F6] disabled:opacity-40 disabled:cursor-not-allowed transition-all transform hover:-translate-y-0.5 active:translate-y-0"
-                           title="הקודם"
-                        >
-                           <ChevronRight className="w-6 h-6" />
-                        </button>
+                     <div className="flex flex-col items-center gap-4 mt-12 mb-8" dir="rtl">
+                        <div className="flex justify-center items-center gap-3">
+                           {/* First Button */}
+                           <button
+                              onClick={() => handlePageChange(1)}
+                              disabled={page === 1}
+                              className="w-10 h-10 rounded-full bg-white shadow-sm border border-[#F0EBE3] flex items-center justify-center text-[#8B7355] hover:bg-[#FAF9F6] disabled:opacity-40 disabled:cursor-not-allowed transition-all"
+                              title="לעמוד הראשון"
+                           >
+                              <ChevronsRight className="w-5 h-5" />
+                           </button>
 
-                        <div className="flex items-center gap-3 text-[#8B7355] font-medium text-xl">
-                           <span>עמוד</span>
+                           {/* Previous Button */}
+                           <button
+                              onClick={() => handlePageChange(page - 1)}
+                              disabled={page === 1}
+                              className="w-12 h-12 rounded-full bg-white shadow-md border border-[#F0EBE3] flex items-center justify-center text-[#8B7355] hover:bg-[#FAF9F6] disabled:opacity-40 disabled:cursor-not-allowed transition-all transform hover:-translate-y-0.5 active:translate-y-0"
+                              title="הקודם"
+                           >
+                              <ChevronRight className="w-6 h-6" />
+                           </button>
 
-                           <div className="w-12 h-12 rounded-full bg-[#C4A882] text-white font-bold flex items-center justify-center shadow-md">
-                              {page}
+                           <div className="flex items-center gap-3 text-[#8B7355] font-medium text-xl mx-2">
+                              {/* <span>עמוד</span> */}
+
+                              <div className="w-12 h-12 rounded-full bg-[#C4A882] text-white font-bold flex items-center justify-center shadow-md overflow-hidden relative group cursor-text">
+                                 <input
+                                    type="text"
+                                    inputMode="numeric"
+                                    pattern="[0-9]*"
+                                    defaultValue={page}
+                                    key={page} // Force re-render on page change to update value
+                                    className="w-full h-full bg-transparent text-center text-white font-bold text-lg focus:outline-none placeholder-white/50"
+                                    onKeyDown={(e) => {
+                                       if (e.key === 'Enter') {
+                                          const val = parseInt(e.currentTarget.value);
+                                          if (!isNaN(val) && val >= 1 && val <= totalPages) {
+                                             handlePageChange(val);
+                                             e.currentTarget.blur();
+                                          } else {
+                                             // Reset if invalid
+                                             e.currentTarget.value = page.toString();
+                                          }
+                                       }
+                                    }}
+                                    onBlur={(e) => {
+                                       const val = parseInt(e.currentTarget.value);
+                                       if (!isNaN(val) && val >= 1 && val <= totalPages) {
+                                          if (val !== page) handlePageChange(val);
+                                       } else {
+                                          e.currentTarget.value = page.toString();
+                                       }
+                                    }}
+                                    onClick={(e) => e.currentTarget.select()}
+                                    aria-label="עבור לעמוד"
+                                 />
+                              </div>
+
+                              <div className="flex items-center gap-1 text-base">
+                                 <span>מתוך</span>
+                                 <span>{totalPages}</span>
+                              </div>
                            </div>
 
-                           <div className="flex items-center gap-1">
-                              <span>מתוך</span>
-                              <span>{totalPages}</span>
-                           </div>
+                           {/* Next Button */}
+                           <button
+                              onClick={() => handlePageChange(page + 1)}
+                              disabled={page === totalPages}
+                              className="w-12 h-12 rounded-full bg-white shadow-md border border-[#F0EBE3] flex items-center justify-center text-[#8B7355] hover:bg-[#FAF9F6] disabled:opacity-40 disabled:cursor-not-allowed transition-all transform hover:-translate-y-0.5 active:translate-y-0"
+                              title="הבא"
+                           >
+                              <ChevronLeft className="w-6 h-6" />
+                           </button>
+
+                           {/* Last Button */}
+                           <button
+                              onClick={() => handlePageChange(totalPages)}
+                              disabled={page === totalPages}
+                              className="w-10 h-10 rounded-full bg-white shadow-sm border border-[#F0EBE3] flex items-center justify-center text-[#8B7355] hover:bg-[#FAF9F6] disabled:opacity-40 disabled:cursor-not-allowed transition-all"
+                              title="לעמוד האחרון"
+                           >
+                              <ChevronsLeft className="w-5 h-5" />
+                           </button>
                         </div>
-
-                        {/* Next Button (Left in RTL) */}
-                        <button
-                           onClick={() => handlePageChange(page + 1)}
-                           disabled={page === totalPages}
-                           className="w-12 h-12 rounded-full bg-white shadow-md border border-[#F0EBE3] flex items-center justify-center text-[#8B7355] hover:bg-[#FAF9F6] disabled:opacity-40 disabled:cursor-not-allowed transition-all transform hover:-translate-y-0.5 active:translate-y-0"
-                           title="הבא"
-                        >
-                           <ChevronLeft className="w-6 h-6" />
-                        </button>
                      </div>
                   )}
 
@@ -1067,7 +1161,7 @@ END:VCARD`;
                      <div className="text-center py-20 bg-white rounded-3xl border border-[#F0EBE3] mt-8">
                         <p className="text-[#8B7355] text-lg">לא נמצאו תמונות. נסה סלפי אחר.</p>
                         <button
-                           onClick={() => setViewState('landing')}
+                           onClick={clearSearch}
                            className="mt-4 text-[#C4A882] font-bold underline"
                         >
                            נסה שוב
