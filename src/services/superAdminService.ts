@@ -14,6 +14,7 @@ export interface PlatformStats {
     total_downloads: number;
     total_contact_saves: number;
     total_views: number;
+    total_social_traffic: number;
     active_events: number;
     draft_events: number;
 }
@@ -21,12 +22,14 @@ export interface PlatformStats {
 export interface PhotographerStats {
     id: number;
     email: string;
+    profile_name?: string;
     created_at: string;
     total_events: number;
     total_images: number;
     total_downloads: number;
     total_contact_saves: number;
     total_views: number;
+    active_events: number;
 }
 
 export interface PhotographerDetail {
@@ -36,6 +39,8 @@ export interface PhotographerDetail {
     profile_name: string | null;
     profile_bio: string | null;
     contact_email: string | null;
+    phone: string | null;
+    address: string | null;
     stats: {
         total_events: number;
         total_images: number;
@@ -44,6 +49,7 @@ export interface PhotographerDetail {
         total_views: number;
         active_events: number;
         draft_events: number;
+        total_social_traffic: number;
     };
 }
 
@@ -120,10 +126,7 @@ class SuperAdminService {
      * Get platform overview statistics
      */
     async getPlatformStats(): Promise<PlatformStats> {
-        const headers = this.getAuthHeader();
-        const response = await fetch(`${API_BASE_URL}/super-admin/stats/overview`, {
-            headers,
-        });
+        const response = await fetch(`${API_BASE_URL}/super-admin/stats/overview`);
 
         if (!response.ok) {
             throw new Error('Failed to fetch platform stats');
@@ -136,12 +139,11 @@ class SuperAdminService {
      * Get all photographers with statistics
      */
     async getPhotographers(search?: string): Promise<PhotographerStats[]> {
-        const headers = this.getAuthHeader();
         const url = search
             ? `${API_BASE_URL}/super-admin/photographers?search=${encodeURIComponent(search)}`
             : `${API_BASE_URL}/super-admin/photographers`;
 
-        const response = await fetch(url, { headers });
+        const response = await fetch(url);
 
         if (!response.ok) {
             throw new Error('Failed to fetch photographers');
@@ -154,10 +156,8 @@ class SuperAdminService {
      * Get detailed information about a photographer
      */
     async getPhotographerDetail(photographerId: number): Promise<PhotographerDetail> {
-        const headers = this.getAuthHeader();
         const response = await fetch(
-            `${API_BASE_URL}/super-admin/photographers/${photographerId}`,
-            { headers }
+            `${API_BASE_URL}/super-admin/photographers/${photographerId}`
         );
 
         if (!response.ok) {
@@ -171,10 +171,8 @@ class SuperAdminService {
      * Get all events for a photographer
      */
     async getPhotographerEvents(photographerId: number): Promise<EventSummary[]> {
-        const headers = this.getAuthHeader();
         const response = await fetch(
-            `${API_BASE_URL}/super-admin/photographers/${photographerId}/events`,
-            { headers }
+            `${API_BASE_URL}/super-admin/photographers/${photographerId}/events`
         );
 
         if (!response.ok) {

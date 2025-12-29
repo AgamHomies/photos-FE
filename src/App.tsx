@@ -54,8 +54,8 @@ function App() {
             <Route path="admin/events/:id" element={<EventManagePage />} />
           </Route>
 
-          {/* Super Admin Routes */}
-          <Route path="super-admin/login" element={<SuperAdminLogin />} />
+          {/* Super Admin Routes - No login required */}
+          <Route path="super-admin" element={<Navigate to="/super-admin/dashboard" replace />} />
           <Route path="super-admin/dashboard" element={<SuperAdminDashboard />} />
           <Route path="super-admin/photographer/:id" element={<PhotographerDetailPage />} />
 

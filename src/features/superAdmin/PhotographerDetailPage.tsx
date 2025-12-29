@@ -9,7 +9,8 @@ import {
     Eye,
     User,
     Mail,
-    FileText
+    FileText,
+    Share2
 } from 'lucide-react';
 import SuperAdminService, { PhotographerDetail, EventSummary } from '../../services/superAdminService';
 
@@ -45,35 +46,35 @@ const PhotographerDetailPage: React.FC = () => {
 
     if (loading) {
         return (
-            <div className="min-h-screen bg-gradient-to-br from-[#FAF9F6] to-[#F0EBE3] flex items-center justify-center">
-                <div className="text-[#8B7355] text-xl">טוען...</div>
+            <div className="min-h-screen bg-gradient-to-br bg-gray-50 flex items-center justify-center">
+                <div className="text-gray-900 text-xl">טוען...</div>
             </div>
         );
     }
 
     if (error || !photographer) {
         return (
-            <div className="min-h-screen bg-gradient-to-br from-[#FAF9F6] to-[#F0EBE3] flex items-center justify-center">
+            <div className="min-h-screen bg-gradient-to-br bg-gray-50 flex items-center justify-center">
                 <div className="text-red-600">{error || 'Photographer not found'}</div>
             </div>
         );
     }
 
     return (
-        <div className="min-h-screen bg-gradient-to-br from-[#FAF9F6] to-[#F0EBE3]" dir="rtl">
+        <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-blue-50" dir="rtl">
             {/* Header */}
-            <div className="bg-white shadow-sm border-b border-[#F0EBE3]">
+            <div className="bg-white shadow-sm border-b border-blue-100">
                 <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
                     <div className="flex items-center gap-4">
                         <button
                             onClick={() => navigate('/super-admin/dashboard')}
-                            className="p-2 hover:bg-[#FAF9F6] rounded-xl transition-colors"
+                            className="p-2 hover:bg-blue-50 rounded-xl transition-colors"
                         >
-                            <ArrowRight className="w-5 h-5 text-[#8B7355]" />
+                            <ArrowRight className="w-5 h-5 text-gray-900" />
                         </button>
                         <div>
-                            <h1 className="text-2xl font-bold text-[#8B7355]">פרטי צלם</h1>
-                            <p className="text-sm text-[#8B7355]/70">{photographer.email}</p>
+                            <h1 className="text-2xl font-bold text-gray-900">פרטי צלם</h1>
+                            <p className="text-sm text-gray-900/70">{photographer.email}</p>
                         </div>
                     </div>
                 </div>
@@ -81,34 +82,44 @@ const PhotographerDetailPage: React.FC = () => {
 
             <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
                 {/* Photographer Info Card */}
-                <div className="bg-white rounded-3xl shadow-xl p-6 border border-[#F0EBE3] mb-6">
+                <div className="bg-white rounded-3xl shadow-xl p-6 border border-blue-100 mb-6">
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                         {/* Profile Info */}
                         <div>
-                            <h3 className="text-lg font-bold text-[#8B7355] mb-4 flex items-center gap-2">
+                            <h3 className="text-lg font-bold text-gray-900 mb-4 flex items-center gap-2">
                                 <User className="w-5 h-5" />
                                 פרטים אישיים
                             </h3>
                             <div className="space-y-3">
                                 <div>
-                                    <div className="text-sm text-[#8B7355]/60 mb-1">אימייל</div>
-                                    <div className="font-medium text-[#8B7355]">{photographer.email}</div>
+                                    <div className="text-sm text-gray-900/60 mb-1">אימייל</div>
+                                    <div className="font-medium text-gray-900">{photographer.email}</div>
                                 </div>
                                 {photographer.profile_name && (
                                     <div>
-                                        <div className="text-sm text-[#8B7355]/60 mb-1">שם</div>
-                                        <div className="font-medium text-[#8B7355]">{photographer.profile_name}</div>
+                                        <div className="text-sm text-gray-900/60 mb-1">שם</div>
+                                        <div className="font-medium text-gray-900">{photographer.profile_name}</div>
+                                    </div>
+                                )}
+                                <div>
+                                    <div className="text-sm text-gray-900/60 mb-1">טלפון</div>
+                                    <div className="font-medium text-gray-900 text-right" dir="ltr">{photographer.phone}</div>
+                                </div>
+                                {photographer.address && (
+                                    <div>
+                                        <div className="text-sm text-gray-900/60 mb-1">כתובת</div>
+                                        <div className="font-medium text-gray-900">{photographer.address}</div>
                                     </div>
                                 )}
                                 {photographer.contact_email && (
                                     <div>
-                                        <div className="text-sm text-[#8B7355]/60 mb-1">אימייל ליצירת קשר</div>
-                                        <div className="font-medium text-[#8B7355]">{photographer.contact_email}</div>
+                                        <div className="text-sm text-gray-900/60 mb-1">אימייל ליצירת קשר</div>
+                                        <div className="font-medium text-gray-900">{photographer.contact_email}</div>
                                     </div>
                                 )}
                                 <div>
-                                    <div className="text-sm text-[#8B7355]/60 mb-1">תאריך הצטרפות</div>
-                                    <div className="font-medium text-[#8B7355]">
+                                    <div className="text-sm text-gray-900/60 mb-1">תאריך הצטרפות</div>
+                                    <div className="font-medium text-gray-900">
                                         {new Date(photographer.created_at).toLocaleDateString('he-IL')}
                                     </div>
                                 </div>
@@ -117,68 +128,83 @@ const PhotographerDetailPage: React.FC = () => {
 
                         {/* Statistics */}
                         <div>
-                            <h3 className="text-lg font-bold text-[#8B7355] mb-4">סטטיסטיקות</h3>
+                            <h3 className="text-lg font-bold text-gray-900 mb-4">סטטיסטיקות</h3>
                             <div className="grid grid-cols-2 gap-3">
-                                <div className="bg-[#FAF9F6] p-4 rounded-xl">
+                                <div className="bg-white p-4 rounded-2xl border border-blue-100 shadow-sm">
                                     <div className="flex items-center gap-2 mb-2">
-                                        <Calendar className="w-4 h-4 text-[#C4A882]" />
-                                        <div className="text-xs text-[#8B7355]/60">אירועים</div>
+                                        <div className="p-2 bg-orange-50 rounded-lg">
+                                            <Calendar className="w-4 h-4 text-orange-600" />
+                                        </div>
+                                        <div className="text-xs text-gray-900/60">אירועים</div>
                                     </div>
-                                    <div className="text-2xl font-bold text-[#8B7355]">
+                                    <div className="text-2xl font-bold text-gray-900">
                                         {photographer.stats.total_events}
                                     </div>
-                                    <div className="text-xs text-[#8B7355]/60 mt-1">
+                                    <div className="text-xs text-gray-900/60 mt-1">
                                         {photographer.stats.active_events} פעילים
                                     </div>
                                 </div>
 
-                                <div className="bg-[#FAF9F6] p-4 rounded-xl">
+                                <div className="bg-white p-4 rounded-2xl border border-blue-100 shadow-sm">
                                     <div className="flex items-center gap-2 mb-2">
-                                        <Image className="w-4 h-4 text-[#C4A882]" />
-                                        <div className="text-xs text-[#8B7355]/60">תמונות</div>
+                                        <div className="p-2 bg-cyan-50 rounded-lg">
+                                            <Image className="w-4 h-4 text-cyan-600" />
+                                        </div>
+                                        <div className="text-xs text-gray-900/60">תמונות</div>
                                     </div>
-                                    <div className="text-2xl font-bold text-[#8B7355]">
-                                        {photographer.stats.total_images}
+                                    <div className="text-2xl font-bold text-gray-900">
+                                        {photographer.stats.total_images.toLocaleString()}
                                     </div>
                                 </div>
 
-                                <div className="bg-[#FAF9F6] p-4 rounded-xl">
+                                <div className="bg-white p-4 rounded-2xl border border-blue-100 shadow-sm">
                                     <div className="flex items-center gap-2 mb-2">
-                                        <Download className="w-4 h-4 text-[#C4A882]" />
-                                        <div className="text-xs text-[#8B7355]/60">הורדות</div>
+                                        <div className="p-2 bg-blue-50 rounded-lg">
+                                            <Download className="w-4 h-4 text-blue-600" />
+                                        </div>
+                                        <div className="text-xs text-gray-900/60">הורדות</div>
                                     </div>
-                                    <div className="text-2xl font-bold text-[#8B7355]">
-                                        {photographer.stats.total_downloads}
+                                    <div className="text-2xl font-bold text-gray-900">
+                                        {photographer.stats.total_downloads.toLocaleString()}
                                     </div>
                                 </div>
 
-                                <div className="bg-[#FAF9F6] p-4 rounded-xl">
+                                <div className="bg-white p-4 rounded-2xl border border-blue-100 shadow-sm">
                                     <div className="flex items-center gap-2 mb-2">
-                                        <Phone className="w-4 h-4 text-[#C4A882]" />
-                                        <div className="text-xs text-[#8B7355]/60">שמירות</div>
+                                        <div className="p-2 bg-green-50 rounded-lg">
+                                            <Phone className="w-4 h-4 text-green-600" />
+                                        </div>
+                                        <div className="text-xs text-gray-900/60">שמירות</div>
                                     </div>
-                                    <div className="text-2xl font-bold text-[#8B7355]">
-                                        {photographer.stats.total_contact_saves}
+                                    <div className="text-2xl font-bold text-gray-900">
+                                        {photographer.stats.total_contact_saves.toLocaleString()}
                                     </div>
                                 </div>
 
-                                <div className="bg-[#FAF9F6] p-4 rounded-xl">
+                                <div className="bg-white p-4 rounded-2xl border border-blue-100 shadow-sm">
                                     <div className="flex items-center gap-2 mb-2">
-                                        <Eye className="w-4 h-4 text-[#C4A882]" />
-                                        <div className="text-xs text-[#8B7355]/60">צפיות</div>
+                                        <div className="p-2 bg-purple-50 rounded-lg">
+                                            <Eye className="w-4 h-4 text-purple-600" />
+                                        </div>
+                                        <div className="text-xs text-gray-900/60">צפיות</div>
                                     </div>
-                                    <div className="text-2xl font-bold text-[#8B7355]">
-                                        {photographer.stats.total_views}
+                                    <div className="text-2xl font-bold text-gray-900">
+                                        {photographer.stats.total_views.toLocaleString()}
                                     </div>
                                 </div>
 
-                                <div className="bg-[#FAF9F6] p-4 rounded-xl">
+                                <div className="bg-white p-4 rounded-2xl border border-blue-100 shadow-sm">
                                     <div className="flex items-center gap-2 mb-2">
-                                        <FileText className="w-4 h-4 text-[#C4A882]" />
-                                        <div className="text-xs text-[#8B7355]/60">טיוטות</div>
+                                        <div className="p-2 bg-pink-50 rounded-lg">
+                                            <Share2 className="w-4 h-4 text-pink-600" />
+                                        </div>
+                                        <div className="text-xs text-gray-900/60">כניסות לפרופיל</div>
                                     </div>
-                                    <div className="text-2xl font-bold text-[#8B7355]">
-                                        {photographer.stats.draft_events}
+                                    <div className="text-2xl font-bold text-gray-900">
+                                        {photographer.stats.total_social_traffic.toLocaleString()}
+                                    </div>
+                                    <div className="text-xs text-gray-900/60 mt-1">
+                                        פייסבוק • אינסטגרם • טיקטוק
                                     </div>
                                 </div>
                             </div>
@@ -187,11 +213,11 @@ const PhotographerDetailPage: React.FC = () => {
                 </div>
 
                 {/* Events List */}
-                <div className="bg-white rounded-3xl shadow-xl p-6 border border-[#F0EBE3]">
-                    <h3 className="text-xl font-bold text-[#8B7355] mb-4">אירועים</h3>
+                <div className="bg-white rounded-3xl shadow-xl p-6 border border-blue-100">
+                    <h3 className="text-xl font-bold text-gray-900 mb-4">אירועים</h3>
 
                     {events.length === 0 ? (
-                        <div className="text-center py-12 text-[#8B7355]/60">
+                        <div className="text-center py-12 text-gray-900/60">
                             אין אירועים
                         </div>
                     ) : (
@@ -199,18 +225,18 @@ const PhotographerDetailPage: React.FC = () => {
                             {events.map((event) => (
                                 <div
                                     key={event.id}
-                                    className="p-4 border border-[#F0EBE3] rounded-xl hover:shadow-md transition-shadow"
+                                    className="p-4 border border-blue-100 rounded-xl hover:shadow-md transition-shadow"
                                 >
                                     <div className="flex items-start justify-between mb-3">
                                         <div className="flex-1">
-                                            <h4 className="font-bold text-[#8B7355] mb-1">{event.name}</h4>
-                                            <div className="flex items-center gap-4 text-sm text-[#8B7355]/60">
+                                            <h4 className="font-bold text-gray-900 mb-1">{event.name}</h4>
+                                            <div className="flex items-center gap-4 text-sm text-gray-900/60">
                                                 <span>{event.slug}</span>
-                                                <span className={`px-2 py-1 rounded-full text-xs ${event.status === 'active'
-                                                        ? 'bg-green-100 text-green-700'
-                                                        : 'bg-gray-100 text-gray-700'
+                                                <span className={`px-2 py-1 rounded-full text-xs ${event.status === 'ready' || event.status === 'active'
+                                                    ? 'bg-green-100 text-green-700'
+                                                    : 'bg-gray-100 text-gray-700'
                                                     }`}>
-                                                    {event.status === 'active' ? 'פעיל' : 'טיוטה'}
+                                                    {event.status === 'ready' || event.status === 'active' ? 'פעיל' : 'טיוטה'}
                                                 </span>
                                                 <span>{new Date(event.created_at).toLocaleDateString('he-IL')}</span>
                                             </div>
@@ -218,21 +244,21 @@ const PhotographerDetailPage: React.FC = () => {
                                     </div>
 
                                     <div className="grid grid-cols-4 gap-3 text-sm">
-                                        <div className="bg-[#FAF9F6] p-2 rounded-lg text-center">
-                                            <div className="text-xs text-[#8B7355]/60 mb-1">תמונות</div>
-                                            <div className="font-bold text-[#8B7355]">{event.image_count}</div>
+                                        <div className="bg-blue-50 p-2 rounded-lg text-center">
+                                            <div className="text-xs text-gray-900/60 mb-1">תמונות</div>
+                                            <div className="font-bold text-gray-900">{event.image_count}</div>
                                         </div>
-                                        <div className="bg-[#FAF9F6] p-2 rounded-lg text-center">
-                                            <div className="text-xs text-[#8B7355]/60 mb-1">הורדות</div>
-                                            <div className="font-bold text-[#8B7355]">{event.downloads}</div>
+                                        <div className="bg-blue-50 p-2 rounded-lg text-center">
+                                            <div className="text-xs text-gray-900/60 mb-1">הורדות</div>
+                                            <div className="font-bold text-gray-900">{event.downloads}</div>
                                         </div>
-                                        <div className="bg-[#FAF9F6] p-2 rounded-lg text-center">
-                                            <div className="text-xs text-[#8B7355]/60 mb-1">שמירות</div>
-                                            <div className="font-bold text-[#8B7355]">{event.contact_saves}</div>
+                                        <div className="bg-blue-50 p-2 rounded-lg text-center">
+                                            <div className="text-xs text-gray-900/60 mb-1">שמירות</div>
+                                            <div className="font-bold text-gray-900">{event.contact_saves}</div>
                                         </div>
-                                        <div className="bg-[#FAF9F6] p-2 rounded-lg text-center">
-                                            <div className="text-xs text-[#8B7355]/60 mb-1">צפיות</div>
-                                            <div className="font-bold text-[#8B7355]">{event.views}</div>
+                                        <div className="bg-blue-50 p-2 rounded-lg text-center">
+                                            <div className="text-xs text-gray-900/60 mb-1">צפיות</div>
+                                            <div className="font-bold text-gray-900">{event.views}</div>
                                         </div>
                                     </div>
                                 </div>
@@ -246,3 +272,5 @@ const PhotographerDetailPage: React.FC = () => {
 };
 
 export default PhotographerDetailPage;
+
+
