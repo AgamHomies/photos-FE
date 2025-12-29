@@ -24,6 +24,7 @@ interface PhotographerData {
     phone: string | null;
     created_at: string;
     event_count: number;
+    active_event_count: number;
     total_downloads: number;
     total_page_visits: number;
     total_phone_saves: number;
@@ -201,9 +202,18 @@ const SuperAdminPage: React.FC = () => {
                                                 </div>
                                             </td>
                                             <td className="px-6 py-6 text-center">
-                                                <span className="inline-flex items-center justify-center px-3 py-1 rounded-full bg-cyan-50 text-cyan-700 text-xs font-bold border border-cyan-100">
-                                                    {p.event_count} אירועים
-                                                </span>
+                                                <div className="flex items-center justify-center gap-2">
+                                                    <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-green-50 text-green-700 text-xs font-bold border border-green-200">
+                                                        <span className="w-2 h-2 bg-green-500 rounded-full"></span>
+                                                        {p.active_event_count} פעילים
+                                                    </span>
+                                                    {(p.event_count - p.active_event_count) > 0 && (
+                                                        <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-slate-50 text-slate-600 text-xs font-bold border border-slate-200">
+                                                            <span className="w-2 h-2 bg-slate-400 rounded-full"></span>
+                                                            {p.event_count - p.active_event_count} לא פעילים
+                                                        </span>
+                                                    )}
+                                                </div>
                                             </td>
                                             <td className="px-6 py-6">
                                                 <div className="flex items-center justify-center gap-4">
