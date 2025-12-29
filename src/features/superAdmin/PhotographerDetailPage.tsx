@@ -72,6 +72,13 @@ const PhotographerDetailPage: React.FC = () => {
                         >
                             <ArrowRight className="w-5 h-5 text-gray-900" />
                         </button>
+                        {photographer.logo_url && (
+                            <img
+                                src={photographer.logo_url}
+                                alt="Logo"
+                                className="w-12 h-12 rounded-full object-cover border border-gray-200"
+                            />
+                        )}
                         <div>
                             <h1 className="text-2xl font-bold text-gray-900">פרטי צלם</h1>
                             <p className="text-sm text-gray-900/70">{photographer.email}</p>

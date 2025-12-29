@@ -41,6 +41,7 @@ export interface PhotographerDetail {
     contact_email: string | null;
     phone: string | null;
     address: string | null;
+    logo_url: string | null;
     stats: {
         total_events: number;
         total_images: number;
