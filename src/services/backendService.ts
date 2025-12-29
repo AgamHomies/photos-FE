@@ -65,6 +65,14 @@ export const BackendService = {
         return await RealProfileAPI.completeProfile(profileData);
     },
 
+    getAllPhotographers: async (): Promise<any[]> => {
+        if (USE_MOCK) {
+            console.warn('getAllPhotographers not implemented for mock');
+            return [];
+        }
+        return await RealProfileAPI.getAllPhotographers();
+    },
+
     // ============================================
     // Events
     // ============================================

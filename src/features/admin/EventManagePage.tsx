@@ -20,7 +20,10 @@ import {
     Copy,
     ExternalLink,
     X,
-    FolderUp
+    FolderUp,
+    Camera,
+    Calendar,
+    MapPin
 } from 'lucide-react';
 import { useUpload } from '../../context/UploadContext';
 
@@ -76,7 +79,7 @@ const EventManagePage: React.FC = () => {
         if (!event) return;
         const path = type === 'guest' ? event.slug || event.id : event.coupleSlug || event.id;
         // Use frontend route instead of backend proxy
-        const url = `${window.location.origin}/gallery/${path}`;
+        const url = `${CONFIG.API_BASE_URL}/public/e/${path}`;
         setLinkModal({
             isOpen: true,
             type,
@@ -733,42 +736,93 @@ const EventManagePage: React.FC = () => {
                                         />
                                     </div>
 
-                                    {/* Cover Image Upload */}
-                                    <div className="md:col-span-2 mb-6">
-                                        <label className="block text-sm font-medium text-slate-700 mb-2">תמונת קאבר</label>
-                                        <div className="border-2 border-dashed border-slate-200 rounded-xl p-6 text-center hover:border-cyan-500 transition-colors cursor-pointer relative group bg-slate-50">
-                                            <input
-                                                type="file"
-                                                accept="image/*"
-                                                onChange={async (e) => {
-                                                    if (e.target.files && e.target.files[0] && id) {
-                                                        const file = e.target.files[0];
-                                                        // Simple single cover upload
-                                                        if (id) startUpload(id, [], file);
-                                                    }
-                                                }}
-                                                className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10"
-                                                disabled={!!isClientUploading}
-                                            />
-                                            {event.coverImage ? (
-                                                <div className="relative h-48 w-full rounded-lg overflow-hidden">
-                                                    <img src={event.coverImage} alt="Cover" className="w-full h-full object-cover" />
-                                                    <div className="absolute inset-0 bg-black/40 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
-                                                        <div className="text-white font-medium flex items-center gap-2">
-                                                            <Upload className="w-5 h-5" />
-                                                            <span>לחץ להחלפה</span>
+                                    {/* Integrated Cover Image & Guest Preview */}
+                                    <div className="md:col-span-2 space-y-4">
+                                        <div className="flex flex-col gap-1">
+                                            <label className="block text-sm font-medium text-slate-700">תמונת קאבר ותצוגה מקדימה</label>
+                                            <p className="text-xs text-slate-500">כך תיראה הגלריה עבור האורחים שלכם</p>
+                                        </div>
+
+                                        <div className="bg-[#FDFBF7] rounded-3xl shadow-xl overflow-hidden border border-[#E8DFD3] font-sans text-[#5C4A3A] text-right" dir="rtl">
+                                            {/* Header Mimic */}
+                                            <div className="text-center py-8 px-6 border-b border-[#E8DFD3] bg-white">
+                                                <h2 className="text-2xl font-bold text-[#4A3B2C] mb-4">
+                                                    הגלריה שלך מהאירוע
+                                                </h2>
+
+                                                <div className="flex flex-wrap items-center justify-center gap-4 text-[#8B7355] text-sm font-medium max-w-2xl mx-auto">
+                                                    <div className="flex items-center gap-1.5">
+                                                        <Heart className="w-3.5 h-3.5 text-[#C4A882]" />
+                                                        <span>{editForm.name || 'שם האירוע'}</span>
+                                                    </div>
+                                                    <span className="hidden md:inline w-px h-4 bg-[#E8DFD3]"></span>
+                                                    <div className="flex items-center gap-2">
+                                                        <Calendar className="w-3.5 h-3.5 text-[#C4A882]" />
+                                                        <span>{editForm.date ? new Date(editForm.date).toLocaleDateString('he-IL', { day: 'numeric', month: 'long', year: 'numeric' }) : 'תאריך האירוע'}</span>
+                                                    </div>
+                                                    <span className="hidden md:inline w-px h-4 bg-[#E8DFD3]"></span>
+                                                    <div className="flex items-center gap-2">
+                                                        <MapPin className="w-3.5 h-3.5 text-[#C4A882]" />
+                                                        <span>{editForm.location || 'מיקום האירוע'}</span>
+                                                    </div>
+                                                </div>
+                                            </div>
+
+                                            {/* Split Layout Mimic */}
+                                            <div className="flex flex-col md:flex-row h-auto md:h-[350px] bg-white">
+                                                {/* Left Side (Content) */}
+                                                <div className="w-full md:w-1/2 p-8 flex flex-col justify-center items-center text-center bg-[#FAF9F6] order-2 md:order-1">
+                                                    <div className="w-12 h-12 bg-[#F0EBE3] rounded-full flex items-center justify-center mb-4">
+                                                        <Camera className="w-6 h-6 text-[#C4A882]" />
+                                                    </div>
+
+                                                    <h3 className="text-xl font-bold text-[#4A3B2C] mb-2">מצאו את התמונות שלכם</h3>
+
+                                                    <p className="text-[#8B7355] mb-6 max-w-xs leading-relaxed text-xs">
+                                                        העלו סלפי ברור של עצמכם — והמערכת שלנו תזהה אוטומטית ותציג לכם רק את התמונות שבהן הופעתם.
+                                                    </p>
+
+                                                    <div className="bg-[#C4A882] text-white px-6 py-3 rounded-full font-bold shadow-md flex items-center gap-2 text-sm">
+                                                        <Camera className="w-4 h-4" />
+                                                        <span>העלה סלפי למציאת התמונות</span>
+                                                    </div>
+                                                </div>
+
+                                                {/* Right Side (Cover Image Upload) */}
+                                                <div className="w-full md:w-1/2 h-64 md:h-full relative order-1 md:order-2 group cursor-pointer">
+                                                    <input
+                                                        type="file"
+                                                        accept="image/*"
+                                                        onChange={async (e) => {
+                                                            if (e.target.files && e.target.files[0] && id) {
+                                                                const file = e.target.files[0];
+                                                                if (id) startUpload(id, [], file);
+                                                            }
+                                                        }}
+                                                        className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-20"
+                                                        disabled={!!isClientUploading}
+                                                    />
+                                                    {event.coverImage ? (
+                                                        <img
+                                                            src={event.coverImage}
+                                                            alt="Cover Preview"
+                                                            className="w-full h-full object-cover shadow-inner"
+                                                        />
+                                                    ) : (
+                                                        <div className="w-full h-full bg-slate-50 flex flex-col items-center justify-center text-slate-400 border-r border-[#E8DFD3]">
+                                                            <Upload className="w-10 h-10 mb-2" />
+                                                            <span className="text-sm font-bold">לחץ להעלאת קאבר</span>
                                                         </div>
+                                                    )}
+                                                    <div className="absolute inset-0 bg-black/40 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity z-10">
+                                                        <span className="text-white font-bold flex items-center gap-2">
+                                                            <Upload className="w-5 h-5" />
+                                                            לחץ להחלפה
+                                                        </span>
                                                     </div>
+                                                    <div className="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent md:hidden"></div>
                                                 </div>
-                                            ) : (
-                                                <div className="flex flex-col items-center justify-center py-8">
-                                                    <div className="w-12 h-12 bg-white rounded-full flex items-center justify-center mb-3 text-slate-400 group-hover:text-cyan-500 transition-colors shadow-sm">
-                                                        <ImageIcon className="w-6 h-6" />
-                                                    </div>
-                                                    <p className="text-slate-600 font-medium">לחץ להעלאת תמונת קאבר</p>
-                                                    <p className="text-slate-400 text-sm mt-1">או גרור תמונה לכאן</p>
-                                                </div>
-                                            )}
+                                            </div>
                                         </div>
                                     </div>
                                 </div>
@@ -803,74 +857,79 @@ const EventManagePage: React.FC = () => {
                             </div>
                         </div>
                     </div>
-                )}
-            </div>
+                )
+                }
+            </div >
             {/* Link Modal */}
-            {linkModal.isOpen && (
-                <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4 animate-fade-in">
-                    <div className="bg-white rounded-3xl shadow-2xl max-w-sm w-full p-6 relative">
-                        {/* Close Button */}
-                        <button
-                            onClick={() => setLinkModal(prev => ({ ...prev, isOpen: false }))}
-                            className="absolute top-4 right-4 p-2 text-slate-400 hover:text-slate-600 transition-colors"
-                        >
-                            <X className="w-5 h-5" />
-                        </button>
+            {
+                linkModal.isOpen && (
+                    <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4 animate-fade-in">
+                        <div className="bg-white rounded-3xl shadow-2xl max-w-sm w-full p-6 relative">
+                            {/* Close Button */}
+                            <button
+                                onClick={() => setLinkModal(prev => ({ ...prev, isOpen: false }))}
+                                className="absolute top-4 right-4 p-2 text-slate-400 hover:text-slate-600 transition-colors"
+                            >
+                                <X className="w-5 h-5" />
+                            </button>
 
-                        <div className="flex flex-col items-center text-center mt-2">
-                            {/* Icon */}
-                            <div className={`w-14 h-14 rounded-full flex items-center justify-center mb-4 ${linkModal.type === 'guest' ? 'bg-slate-50 text-slate-600' : 'bg-pink-50 text-pink-500'}`}>
-                                {linkModal.type === 'guest' ? (
-                                    <Users className="w-7 h-7" />
-                                ) : (
-                                    <Heart className="w-7 h-7" />
-                                )}
-                            </div>
+                            <div className="flex flex-col items-center text-center mt-2">
+                                {/* Icon */}
+                                <div className={`w-14 h-14 rounded-full flex items-center justify-center mb-4 ${linkModal.type === 'guest' ? 'bg-slate-50 text-slate-600' : 'bg-pink-50 text-pink-500'}`}>
+                                    {linkModal.type === 'guest' ? (
+                                        <Users className="w-7 h-7" />
+                                    ) : (
+                                        <Heart className="w-7 h-7" />
+                                    )}
+                                </div>
 
-                            {/* Title */}
-                            <h3 className="text-xl font-bold text-slate-900 mb-1">{linkModal.title}</h3>
-                            <p className="text-slate-500 text-sm mb-6">בחר פעולה עבור הקישור</p>
+                                {/* Title */}
+                                <h3 className="text-xl font-bold text-slate-900 mb-1">{linkModal.title}</h3>
+                                <p className="text-slate-500 text-sm mb-6">בחר פעולה עבור הקישור</p>
 
-                            {/* Buttons */}
-                            <div className="w-full flex flex-col gap-3">
-                                <button
-                                    onClick={() => window.open(linkModal.url, '_blank')}
-                                    className="w-full py-3 px-4 rounded-xl border border-cyan-100 bg-cyan-50 text-cyan-700 font-bold hover:bg-cyan-100 transition-colors flex items-center justify-center gap-2"
-                                >
-                                    <span>פתח בחלון חדש</span>
-                                    <ExternalLink className="w-4 h-4" />
-                                </button>
+                                {/* Buttons */}
+                                <div className="w-full flex flex-col gap-3">
+                                    <button
+                                        onClick={() => window.open(linkModal.url, '_blank')}
+                                        className="w-full py-3 px-4 rounded-xl border border-cyan-100 bg-cyan-50 text-cyan-700 font-bold hover:bg-cyan-100 transition-colors flex items-center justify-center gap-2"
+                                    >
+                                        <span>פתח בחלון חדש</span>
+                                        <ExternalLink className="w-4 h-4" />
+                                    </button>
 
-                                <button
-                                    onClick={copyLink}
-                                    className="w-full py-3 px-4 rounded-xl bg-slate-900 text-white font-bold hover:bg-slate-800 transition-colors flex items-center justify-center gap-2 shadow-lg shadow-slate-200"
-                                >
-                                    <span>העתק קישור</span>
-                                    <Copy className="w-4 h-4" />
-                                </button>
+                                    <button
+                                        onClick={copyLink}
+                                        className="w-full py-3 px-4 rounded-xl bg-slate-900 text-white font-bold hover:bg-slate-800 transition-colors flex items-center justify-center gap-2 shadow-lg shadow-slate-200"
+                                    >
+                                        <span>העתק קישור</span>
+                                        <Copy className="w-4 h-4" />
+                                    </button>
+                                </div>
                             </div>
                         </div>
                     </div>
-                </div>
-            )}
+                )
+            }
 
             {/* Toast Notification */}
-            {toast.show && (
-                <div className="fixed bottom-6 left-1/2 transform -translate-x-1/2 z-50 animate-fade-in-up">
-                    <div className={`px-6 py-3 rounded-full shadow-xl border flex items-center gap-3 ${toast.type === 'success'
-                        ? 'bg-slate-900 text-white border-slate-800'
-                        : 'bg-red-50 text-red-600 border-red-200'
-                        }`}>
-                        {toast.type === 'success' ? (
-                            <CheckCircle2 className="w-5 h-5 text-cyan-400" />
-                        ) : (
-                            <XCircle className="w-5 h-5" />
-                        )}
-                        <span className="font-medium text-sm">{toast.message}</span>
+            {
+                toast.show && (
+                    <div className="fixed bottom-6 left-1/2 transform -translate-x-1/2 z-50 animate-fade-in-up">
+                        <div className={`px-6 py-3 rounded-full shadow-xl border flex items-center gap-3 ${toast.type === 'success'
+                            ? 'bg-slate-900 text-white border-slate-800'
+                            : 'bg-red-50 text-red-600 border-red-200'
+                            }`}>
+                            {toast.type === 'success' ? (
+                                <CheckCircle2 className="w-5 h-5 text-cyan-400" />
+                            ) : (
+                                <XCircle className="w-5 h-5" />
+                            )}
+                            <span className="font-medium text-sm">{toast.message}</span>
+                        </div>
                     </div>
-                </div>
-            )}
-        </Layout>
+                )
+            }
+        </Layout >
     );
 };
 

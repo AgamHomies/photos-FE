@@ -213,6 +213,11 @@ export const RealProfileAPI = {
 
         return true;
     },
+
+    getAllPhotographers: async (): Promise<any[]> => {
+        const response = await apiRequest('/photographers/');
+        return response.data;
+    },
 };
 
 // ============================================

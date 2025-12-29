@@ -1,6 +1,6 @@
 import React, { useState, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Upload, Image as ImageIcon, Check, Calendar, MapPin, Camera, ScanFace, Send, Star, FolderUp } from 'lucide-react';
+import { Upload, Image as ImageIcon, Check, Calendar, MapPin, Camera, ScanFace, Send, Star, FolderUp, Heart } from 'lucide-react';
 import { BackendService } from '../../services/backendService';
 import Layout from '../../components/Layout';
 import { Toast } from '../../components';
@@ -258,39 +258,96 @@ const CreateEventPage: React.FC = () => {
                                 </div>
                             </div>
 
-                            {/* Card 2: Cover Image */}
+                            {/* Card 2: Cover Image - Integrated Guest View */}
                             <div className="bg-white rounded-2xl shadow-sm border border-slate-100 p-4 md:p-8">
                                 <div className="flex items-center gap-2 mb-6 text-slate-800 font-bold text-lg">
                                     <ImageIcon className="w-5 h-5 text-cyan-500" />
-                                    <h2>תמונת קאבר</h2>
+                                    <div className="flex flex-col">
+                                        <h2>תמונת קאבר</h2>
+                                        <p className="text-xs text-slate-500 font-normal">כך תיראה הגלריה עבור האורחים שלכם</p>
+                                    </div>
                                 </div>
 
-                                <div className="border-2 border-dashed border-slate-200 rounded-xl p-8 text-center hover:border-cyan-500 transition-colors cursor-pointer relative group">
-                                    <input
-                                        type="file"
-                                        accept="image/*"
-                                        onChange={handleCoverImageChange}
-                                        className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10"
-                                    />
-                                    {coverPreview ? (
-                                        <div className="relative h-48 w-full rounded-lg overflow-hidden">
-                                            <img src={coverPreview} alt="Cover Preview" className="w-full h-full object-cover" />
-                                            <div className="absolute inset-0 bg-black/40 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
-                                                <span className="text-white font-medium">לחץ להחלפה</span>
+                                <div className="max-w-4xl mx-auto">
+                                    <div className="bg-[#FDFBF7] rounded-3xl shadow-xl overflow-hidden border border-[#E8DFD3] font-sans text-[#5C4A3A] text-right" dir="rtl">
+                                        {/* Header Mimic */}
+                                        <div className="text-center py-8 px-6 border-b border-[#E8DFD3] bg-white">
+                                            <h2 className="text-2xl font-bold text-[#4A3B2C] mb-4">
+                                                הגלריה שלך מהאירוע
+                                            </h2>
+
+                                            <div className="flex flex-wrap items-center justify-center gap-4 text-[#8B7355] text-sm font-medium max-w-2xl mx-auto">
+                                                <div className="flex items-center gap-1.5">
+                                                    <Heart className="w-3.5 h-3.5 text-[#C4A882]" />
+                                                    <span>{formData.name || 'שם האירוע'}</span>
+                                                </div>
+                                                <span className="hidden md:inline w-px h-4 bg-[#E8DFD3]"></span>
+                                                <div className="flex items-center gap-2">
+                                                    <Calendar className="w-3.5 h-3.5 text-[#C4A882]" />
+                                                    <span>{formData.date ? new Date(formData.date).toLocaleDateString('he-IL', { day: 'numeric', month: 'long', year: 'numeric' }) : 'תאריך האירוע'}</span>
+                                                </div>
+                                                <span className="hidden md:inline w-px h-4 bg-[#E8DFD3]"></span>
+                                                <div className="flex items-center gap-2">
+                                                    <MapPin className="w-3.5 h-3.5 text-[#C4A882]" />
+                                                    <span>{formData.location || 'מיקום האירוע'}</span>
+                                                </div>
                                             </div>
                                         </div>
-                                    ) : (
-                                        <div className="flex flex-col items-center justify-center py-4">
-                                            <div className="w-12 h-12 bg-slate-100 rounded-full flex items-center justify-center mb-3 text-slate-400 group-hover:text-cyan-500 transition-colors">
-                                                <Upload className="w-6 h-6" />
+
+                                        {/* Split Layout Mimic */}
+                                        <div className="flex flex-col md:flex-row h-auto md:h-[350px] bg-white">
+                                            {/* Left Side (Content) */}
+                                            <div className="w-full md:w-1/2 p-8 flex flex-col justify-center items-center text-center bg-[#FAF9F6] order-2 md:order-1">
+                                                <div className="w-12 h-12 bg-[#F0EBE3] rounded-full flex items-center justify-center mb-4">
+                                                    <Camera className="w-6 h-6 text-[#C4A882]" />
+                                                </div>
+
+                                                <h3 className="text-xl font-bold text-[#4A3B2C] mb-2">מצאו את התמונות שלכם</h3>
+
+                                                <p className="text-[#8B7355] mb-6 max-w-xs leading-relaxed text-xs">
+                                                    העלו סלפי ברור של עצמכם — והמערכת שלנו תזהה אוטומטית ותציג לכם רק את התמונות שבהן הופעתם.
+                                                </p>
+
+                                                <div className="bg-[#C4A882] text-white px-6 py-3 rounded-full font-bold shadow-md flex items-center gap-2 text-sm">
+                                                    <Camera className="w-4 h-4" />
+                                                    <span>העלה סלפי למציאת התמונות</span>
+                                                </div>
                                             </div>
-                                            <p className="text-slate-600 font-medium">לחץ להעלאת תמונת קאבר</p>
-                                            <p className="text-slate-400 text-sm mt-1">או גרור תמונה לכאן</p>
-                                            <p className="text-slate-400 text-xs mt-1">מומלץ יחס 16:9</p>
+
+                                            {/* Right Side (Cover Image Upload) */}
+                                            <div className="w-full md:w-1/2 h-64 md:h-full relative order-1 md:order-2 group cursor-pointer">
+                                                <input
+                                                    type="file"
+                                                    accept="image/*"
+                                                    onChange={handleCoverImageChange}
+                                                    className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-20"
+                                                />
+                                                {coverPreview ? (
+                                                    <img
+                                                        src={coverPreview}
+                                                        alt="Cover Preview"
+                                                        className="w-full h-full object-cover shadow-inner"
+                                                    />
+                                                ) : (
+                                                    <div className="w-full h-full bg-slate-50 flex flex-col items-center justify-center text-slate-400 border-r border-[#E8DFD3]">
+                                                        <Upload className="w-10 h-10 mb-2" />
+                                                        <span className="text-sm font-bold">לחץ להעלאת קאבר</span>
+                                                    </div>
+                                                )}
+                                                <div className="absolute inset-0 bg-black/40 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity z-10">
+                                                    <span className="text-white font-bold flex items-center gap-2">
+                                                        <Upload className="w-5 h-5" />
+                                                        לחץ להחלפה
+                                                    </span>
+                                                </div>
+                                                <div className="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent md:hidden"></div>
+                                            </div>
                                         </div>
-                                    )}
+                                    </div>
                                 </div>
                             </div>
+
+
 
                             {/* Card 3: Gallery Images */}
                             <div className="bg-white rounded-2xl shadow-sm border border-slate-100 p-4 md:p-8">
@@ -483,7 +540,7 @@ const CreateEventPage: React.FC = () => {
                 type={toastType}
                 onClose={() => setShowToast(false)}
             />
-        </Layout>
+        </Layout >
     );
 };
 
