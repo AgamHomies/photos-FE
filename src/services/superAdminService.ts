@@ -127,7 +127,9 @@ class SuperAdminService {
      * Get platform overview statistics
      */
     async getPlatformStats(): Promise<PlatformStats> {
-        const response = await fetch(`${API_BASE_URL}/super-admin/stats/overview`);
+        const response = await fetch(`${API_BASE_URL}/super-admin/stats/overview`, {
+            headers: this.getAuthHeader()
+        });
 
         if (!response.ok) {
             throw new Error('Failed to fetch platform stats');
@@ -144,7 +146,9 @@ class SuperAdminService {
             ? `${API_BASE_URL}/super-admin/photographers?search=${encodeURIComponent(search)}`
             : `${API_BASE_URL}/super-admin/photographers`;
 
-        const response = await fetch(url);
+        const response = await fetch(url, {
+            headers: this.getAuthHeader()
+        });
 
         if (!response.ok) {
             throw new Error('Failed to fetch photographers');
@@ -158,7 +162,10 @@ class SuperAdminService {
      */
     async getPhotographerDetail(photographerId: number): Promise<PhotographerDetail> {
         const response = await fetch(
-            `${API_BASE_URL}/super-admin/photographers/${photographerId}`
+            `${API_BASE_URL}/super-admin/photographers/${photographerId}`,
+            {
+                headers: this.getAuthHeader()
+            }
         );
 
         if (!response.ok) {
@@ -173,7 +180,10 @@ class SuperAdminService {
      */
     async getPhotographerEvents(photographerId: number): Promise<EventSummary[]> {
         const response = await fetch(
-            `${API_BASE_URL}/super-admin/photographers/${photographerId}/events`
+            `${API_BASE_URL}/super-admin/photographers/${photographerId}/events`,
+            {
+                headers: this.getAuthHeader()
+            }
         );
 
         if (!response.ok) {
