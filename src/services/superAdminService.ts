@@ -22,7 +22,7 @@ export interface PlatformStats {
 export interface PhotographerStats {
     id: number;
     email: string;
-    profile_name?: string;
+    name: string | null;
     created_at: string;
     total_events: number;
     total_images: number;
@@ -36,8 +36,8 @@ export interface PhotographerDetail {
     id: number;
     email: string;
     created_at: string;
-    profile_name: string | null;
-    profile_bio: string | null;
+    name: string | null;
+    short_description: string | null;
     contact_email: string | null;
     phone: string | null;
     address: string | null;

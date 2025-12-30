@@ -102,10 +102,10 @@ const PhotographerDetailPage: React.FC = () => {
                                     <div className="text-sm text-gray-900/60 mb-1">אימייל</div>
                                     <div className="font-medium text-gray-900">{photographer.email}</div>
                                 </div>
-                                {photographer.profile_name && (
+                                {photographer.name && (
                                     <div>
                                         <div className="text-sm text-gray-900/60 mb-1">שם</div>
-                                        <div className="font-medium text-gray-900">{photographer.profile_name}</div>
+                                        <div className="font-medium text-gray-900">{photographer.name}</div>
                                     </div>
                                 )}
                                 <div>

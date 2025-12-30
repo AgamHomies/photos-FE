@@ -44,14 +44,7 @@ const SuperAdminDashboard: React.FC = () => {
         }
     };
 
-    const handleSearch = async () => {
-        try {
-            const results = await SuperAdminService.getPhotographers(searchQuery);
-            setPhotographers(results);
-        } catch (err: any) {
-            setError(err.message);
-        }
-    };
+
 
     const handleLogout = async () => {
         await SuperAdminService.logout();
@@ -62,7 +55,7 @@ const SuperAdminDashboard: React.FC = () => {
         const searchLower = searchQuery.toLowerCase();
         return (
             p.email.toLowerCase().includes(searchLower) ||
-            (p.profile_name && p.profile_name.toLowerCase().includes(searchLower))
+            (p.name && p.name.toLowerCase().includes(searchLower))
         );
     });
 
@@ -230,8 +223,8 @@ const SuperAdminDashboard: React.FC = () => {
                                 <div className="flex items-start justify-between mb-3">
                                     <div className="flex-1">
                                         <h3 className="font-bold text-gray-900 mb-1">{photographer.email}</h3>
-                                        {photographer.profile_name && (
-                                            <p className="text-sm text-gray-600 mb-1">{photographer.profile_name}</p>
+                                        {photographer.name && (
+                                            <p className="text-sm text-gray-600 mb-1">{photographer.name}</p>
                                         )}
                                         <p className="text-xs text-gray-900/60">
                                             הצטרף: {new Date(photographer.created_at).toLocaleDateString('he-IL')}
