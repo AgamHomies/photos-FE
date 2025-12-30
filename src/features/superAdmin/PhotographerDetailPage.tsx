@@ -108,10 +108,12 @@ const PhotographerDetailPage: React.FC = () => {
                                         <div className="font-medium text-gray-900">{photographer.name}</div>
                                     </div>
                                 )}
-                                <div>
-                                    <div className="text-sm text-gray-900/60 mb-1">טלפון</div>
-                                    <div className="font-medium text-gray-900 text-right" dir="ltr">{photographer.phone}</div>
-                                </div>
+                                {photographer.phone && (
+                                    <div>
+                                        <div className="text-sm text-gray-900/60 mb-1">טלפון</div>
+                                        <div className="font-medium text-gray-900 text-right" dir="ltr">{photographer.phone}</div>
+                                    </div>
+                                )}
                                 {photographer.address && (
                                     <div>
                                         <div className="text-sm text-gray-900/60 mb-1">כתובת</div>
