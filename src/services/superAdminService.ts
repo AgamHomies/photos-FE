@@ -114,13 +114,52 @@ class SuperAdminService {
     }
 
     /**
+     * Check if token is expired
+     */
+    private isTokenExpired(): boolean {
+        try {
+            const token = this.getToken();
+            // Decode JWT payload (middle part)
+            const payload = JSON.parse(atob(token.split('.')[1]));
+            const expirationTime = payload.exp * 1000; // Convert to milliseconds
+            return Date.now() >= expirationTime;
+        } catch (error) {
+            return true; // If we can't decode, assume expired
+        }
+    }
+
+    /**
      * Get authorization header
      */
     private getAuthHeader(): HeadersInit {
+        // Check if token is expired before making request
+        if (this.isTokenExpired()) {
+            this.logout();
+            throw new Error('Session expired. Please login again.');
+        }
+
         return {
             'Content-Type': 'application/json',
             'Authorization': `Bearer ${this.getToken()}`,
         };
+    }
+
+    /**
+     * Handle API response and check for authentication errors
+     */
+    private async handleResponse<T>(response: Response): Promise<T> {
+        if (response.status === 401) {
+            // Token is invalid or expired
+            this.logout();
+            window.location.href = '/super-admin/login';
+            throw new Error('Session expired. Please login again.');
+        }
+
+        if (!response.ok) {
+            throw new Error(`API error: ${response.status}`);
+        }
+
+        return response.json();
     }
 
     /**
@@ -131,11 +170,7 @@ class SuperAdminService {
             headers: this.getAuthHeader()
         });
 
-        if (!response.ok) {
-            throw new Error('Failed to fetch platform stats');
-        }
-
-        return response.json();
+        return this.handleResponse<PlatformStats>(response);
     }
 
     /**
@@ -150,11 +185,7 @@ class SuperAdminService {
             headers: this.getAuthHeader()
         });
 
-        if (!response.ok) {
-            throw new Error('Failed to fetch photographers');
-        }
-
-        return response.json();
+        return this.handleResponse<PhotographerStats[]>(response);
     }
 
     /**
@@ -168,11 +199,7 @@ class SuperAdminService {
             }
         );
 
-        if (!response.ok) {
-            throw new Error('Failed to fetch photographer details');
-        }
-
-        return response.json();
+        return this.handleResponse<PhotographerDetail>(response);
     }
 
     /**
@@ -186,11 +213,7 @@ class SuperAdminService {
             }
         );
 
-        if (!response.ok) {
-            throw new Error('Failed to fetch photographer events');
-        }
-
-        return response.json();
+        return this.handleResponse<EventSummary[]>(response);
     }
 }
 
