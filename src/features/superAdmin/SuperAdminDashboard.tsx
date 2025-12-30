@@ -230,6 +230,13 @@ const SuperAdminDashboard: React.FC = () => {
                                             הצטרף: {new Date(photographer.created_at).toLocaleDateString('he-IL')}
                                         </p>
                                     </div>
+                                    {photographer.logo_url && (
+                                        <img
+                                            src={photographer.logo_url}
+                                            alt="Logo"
+                                            className="w-12 h-12 rounded-full object-cover border-2 border-blue-100 flex-shrink-0"
+                                        />
+                                    )}
                                 </div>
 
                                 <div className="grid grid-cols-2 gap-2 text-sm">

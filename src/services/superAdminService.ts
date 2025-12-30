@@ -24,6 +24,7 @@ export interface PhotographerStats {
     email: string;
     name: string | null;
     created_at: string;
+    logo_url: string | null;
     total_events: number;
     total_images: number;
     total_downloads: number;
