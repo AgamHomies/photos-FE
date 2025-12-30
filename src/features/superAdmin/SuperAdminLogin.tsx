@@ -26,32 +26,32 @@ const SuperAdminLogin: React.FC = () => {
     };
 
     return (
-        <div className="min-h-screen bg-gradient-to-br from-[#FAF9F6] to-[#F0EBE3] flex items-center justify-center p-4" dir="rtl">
+        <div className="min-h-screen bg-gray-50 flex items-center justify-center p-4" dir="rtl">
             <div className="max-w-md w-full">
                 {/* Logo/Title */}
                 <div className="text-center mb-8">
-                    <div className="inline-block p-4 bg-[#C4A882] rounded-full mb-4">
+                    <div className="inline-block p-4 bg-blue-600 rounded-full mb-4">
                         <Lock className="w-12 h-12 text-white" />
                     </div>
-                    <h1 className="text-3xl font-bold text-[#8B7355] mb-2">Super Admin</h1>
-                    <p className="text-[#8B7355]/70">פאנל ניהול מערכת</p>
+                    <h1 className="text-3xl font-bold text-gray-900 mb-2">Super Admin</h1>
+                    <p className="text-gray-600">פאנל ניהול מערכת</p>
                 </div>
 
                 {/* Login Form */}
-                <div className="bg-white rounded-3xl shadow-xl p-8 border border-[#F0EBE3]">
+                <div className="bg-white rounded-3xl shadow-xl p-8 border border-blue-100">
                     <form onSubmit={handleLogin} className="space-y-6">
                         {/* Username Input */}
                         <div>
-                            <label className="block text-sm font-medium text-[#8B7355] mb-2">
+                            <label className="block text-sm font-medium text-gray-900 mb-2">
                                 שם משתמש
                             </label>
                             <div className="relative">
-                                <User className="absolute right-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-[#8B7355]/40" />
+                                <User className="absolute right-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400" />
                                 <input
                                     type="text"
                                     value={username}
                                     onChange={(e) => setUsername(e.target.value)}
-                                    className="w-full pr-12 pl-4 py-3 border border-[#F0EBE3] rounded-xl focus:outline-none focus:ring-2 focus:ring-[#C4A882] focus:border-transparent text-[#8B7355]"
+                                    className="w-full pr-12 pl-4 py-3 border border-blue-100 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-900"
                                     placeholder="zinoAdmin"
                                     required
                                     disabled={loading}
@@ -61,16 +61,16 @@ const SuperAdminLogin: React.FC = () => {
 
                         {/* Password Input */}
                         <div>
-                            <label className="block text-sm font-medium text-[#8B7355] mb-2">
+                            <label className="block text-sm font-medium text-gray-900 mb-2">
                                 סיסמה
                             </label>
                             <div className="relative">
-                                <Lock className="absolute right-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-[#8B7355]/40" />
+                                <Lock className="absolute right-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400" />
                                 <input
                                     type="password"
                                     value={password}
                                     onChange={(e) => setPassword(e.target.value)}
-                                    className="w-full pr-12 pl-4 py-3 border border-[#F0EBE3] rounded-xl focus:outline-none focus:ring-2 focus:ring-[#C4A882] focus:border-transparent text-[#8B7355]"
+                                    className="w-full pr-12 pl-4 py-3 border border-blue-100 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-900"
                                     placeholder="••••••••"
                                     required
                                     disabled={loading}
@@ -89,7 +89,7 @@ const SuperAdminLogin: React.FC = () => {
                         <button
                             type="submit"
                             disabled={loading}
-                            className="w-full bg-[#C4A882] text-white py-3 rounded-xl font-bold hover:bg-[#B39872] transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                            className="w-full bg-blue-600 text-white py-3 rounded-xl font-bold hover:bg-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                         >
                             {loading ? 'מתחבר...' : 'התחבר'}
                         </button>
@@ -97,7 +97,7 @@ const SuperAdminLogin: React.FC = () => {
                 </div>
 
                 {/* Footer */}
-                <div className="text-center mt-6 text-sm text-[#8B7355]/60">
+                <div className="text-center mt-6 text-sm text-gray-500">
                     <p>© 2024 Click2Pic - Super Admin Panel</p>
                 </div>
             </div>
