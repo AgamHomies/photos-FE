@@ -10,7 +10,6 @@ import {
     Search,
     LogOut,
     TrendingUp,
-    FileText,
     Share2,
     Camera
 } from 'lucide-react';
