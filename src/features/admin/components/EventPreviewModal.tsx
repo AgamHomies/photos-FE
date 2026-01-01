@@ -17,22 +17,66 @@ interface EventPreviewModalProps {
 const EventPreviewModal: React.FC<EventPreviewModalProps> = ({ isOpen, onClose, data }) => {
     const [viewMode, setViewMode] = React.useState<'desktop' | 'mobile'>('desktop');
 
+    // Handle ESC key to close modal
+    React.useEffect(() => {
+        const handleEscKey = (event: KeyboardEvent) => {
+            if (event.key === 'Escape') {
+                onClose();
+            }
+        };
+
+        if (isOpen) {
+            document.addEventListener('keydown', handleEscKey);
+        }
+
+        return () => {
+            document.removeEventListener('keydown', handleEscKey);
+        };
+    }, [isOpen, onClose]);
+
+    // Prevent body scroll when modal is open
+    React.useEffect(() => {
+        if (isOpen) {
+            // Save current overflow value
+            const originalOverflow = document.body.style.overflow;
+            // Prevent scrolling
+            document.body.style.overflow = 'hidden';
+
+            return () => {
+                // Restore original overflow when modal closes
+                document.body.style.overflow = originalOverflow;
+            };
+        }
+    }, [isOpen]);
+
     if (!isOpen) return null;
 
     // Default placeholder if no image
     const coverImageSrc = data.coverImage || '';
 
     return (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-fade-in" dir="rtl">
-            <div className={`relative w-full bg-[#FDFBF7] rounded-3xl shadow-2xl overflow-hidden transition-all duration-300 flex flex-col ${viewMode === 'mobile' ? 'max-w-[400px] h-[85vh]' : 'max-w-5xl max-h-[90vh]'}`}>
+        <div
+            className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-fade-in"
+            dir="rtl"
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="event-preview-title"
+            onClick={onClose}
+        >
+            <div
+                className={`relative w-full bg-[#FDFBF7] rounded-3xl shadow-2xl overflow-hidden transition-all duration-300 flex flex-col ${viewMode === 'mobile' ? 'max-w-[400px] h-[85vh]' : 'max-w-5xl max-h-[90vh]'}`}
+                onClick={(e) => e.stopPropagation()}
+            >
 
                 {/* Modal Controls (Close & View Toggle) */}
-                <div className="absolute top-4 left-4 z-50 flex items-center gap-2">
+                <div className="absolute top-4 left-4 z-50 flex items-center gap-2" role="toolbar" aria-label="תצוגת תצוגה מקדימה">
                     <div className="bg-white/80 backdrop-blur-md p-1 rounded-full border border-slate-200 shadow-sm flex items-center">
                         <button
                             onClick={() => setViewMode('desktop')}
                             className={`p-2 rounded-full transition-all ${viewMode === 'desktop' ? 'bg-white text-cyan-600 shadow-sm' : 'text-slate-400 hover:text-slate-600'}`}
                             title="תצוגת מחשב"
+                            aria-label="תצוגת מחשב"
+                            aria-pressed={viewMode === 'desktop'}
                         >
                             <Monitor className="w-5 h-5" />
                         </button>
@@ -40,6 +84,8 @@ const EventPreviewModal: React.FC<EventPreviewModalProps> = ({ isOpen, onClose, 
                             onClick={() => setViewMode('mobile')}
                             className={`p-2 rounded-full transition-all ${viewMode === 'mobile' ? 'bg-white text-cyan-600 shadow-sm' : 'text-slate-400 hover:text-slate-600'}`}
                             title="תצוגת נייד"
+                            aria-label="תצוגת נייד"
+                            aria-pressed={viewMode === 'mobile'}
                         >
                             <Smartphone className="w-5 h-5" />
                         </button>
@@ -49,6 +95,7 @@ const EventPreviewModal: React.FC<EventPreviewModalProps> = ({ isOpen, onClose, 
                 <button
                     onClick={onClose}
                     className="absolute top-4 right-4 z-50 p-2 bg-white/50 hover:bg-white rounded-full transition-colors text-slate-600"
+                    aria-label="סגור תצוגה מקדימה"
                 >
                     <X className="w-6 h-6" />
                 </button>
@@ -63,7 +110,7 @@ const EventPreviewModal: React.FC<EventPreviewModalProps> = ({ isOpen, onClose, 
 
                                 {/* Card Header (Event Details) */}
                                 <div className="text-center py-8 px-6 border-b border-[#E8DFD3]">
-                                    <h2 className={`font-bold text-[#4A3B2C] mb-4 ${viewMode === 'mobile' ? 'text-2xl' : 'text-3xl'}`}>
+                                    <h2 id="event-preview-title" className={`font-bold text-[#4A3B2C] mb-4 ${viewMode === 'mobile' ? 'text-2xl' : 'text-3xl'}`}>
                                         הגלריה שלך מהאירוע
                                     </h2>
 
@@ -103,7 +150,12 @@ const EventPreviewModal: React.FC<EventPreviewModalProps> = ({ isOpen, onClose, 
                                             העלו סלפי ברור של עצמכם — והמערכת שלנו תזהה אוטומטית ותציג לכם רק את התמונות המדהימות שבהן הופעתם באירוע.
                                         </p>
 
-                                        <div className="bg-[#C4A882] text-white px-8 py-4 rounded-full font-bold shadow-md flex items-center gap-3 w-full max-w-xs justify-center opacity-80 cursor-not-allowed">
+                                        <div
+                                            className="bg-[#C4A882] text-white px-8 py-4 rounded-full font-bold shadow-md flex items-center gap-3 w-full max-w-xs justify-center opacity-80 cursor-not-allowed"
+                                            role="button"
+                                            aria-disabled="true"
+                                            aria-label="העלה סלפי - מצב הדגמה בלבד"
+                                        >
                                             <Camera className="w-5 h-5" />
                                             <span>העלה סלפי (דמו)</span>
                                         </div>
@@ -117,7 +169,7 @@ const EventPreviewModal: React.FC<EventPreviewModalProps> = ({ isOpen, onClose, 
                                         {coverImageSrc ? (
                                             <img
                                                 src={coverImageSrc}
-                                                alt="Cover"
+                                                alt={`תמונת כיסוי לאירוע ${data.name}`}
                                                 className="w-full h-full object-cover shadow-inner"
                                             />
                                         ) : (
