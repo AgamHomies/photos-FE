@@ -683,3 +683,15 @@ export const RealGalleryAPI = {
         }));
     },
 };
+
+// ============================================
+// Payment API
+// ============================================
+export const RealPaymentAPI = {
+    mockPay: async (packageId: string): Promise<any> => {
+        return await apiRequest('/payments/mock-pay', {
+            method: 'POST',
+            body: JSON.stringify({ package_id: packageId }),
+        });
+    }
+};

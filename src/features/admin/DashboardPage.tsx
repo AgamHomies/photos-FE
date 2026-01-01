@@ -20,9 +20,11 @@ import {
     Heart,
     Share2,
     Copy,
-    X
+    X,
+    Zap
 } from 'lucide-react';
 import { Toast } from '../../components';
+import UpgradeModal from './UpgradeModal';
 
 const DashboardPage: React.FC = () => {
     const navigate = useNavigate();
@@ -46,6 +48,31 @@ const DashboardPage: React.FC = () => {
         setToastMessage(message);
         setToastType(type);
         setShowToast(true);
+    };
+
+    const [upgradeModalOpen, setUpgradeModalOpen] = useState(false);
+
+    const handleCreateEvent = () => {
+        if (!stats) return;
+
+        // Count active events (active + expired?)
+        // Backend logic in create_event counts existing events (not expired).
+        // Stats activeEvents is correct.
+
+        const used = stats.activeEvents; // Or stats.activeEvents + stats.expiredEvents if limits apply to total created ever? 
+        // Backend logic: Event.status.notin_([EventStatus.EXPIRED]). so it's active ones.
+        // Wait, if I create an event and delete it, backend counts ACTIVE only.
+
+        if (used >= stats.maxEvents) {
+            setUpgradeModalOpen(true);
+        } else {
+            navigate('/admin/create-event');
+        }
+    };
+
+    const handleUpgradeSuccess = async () => {
+        triggerToast('הרכישה בוצעה בהצלחה! מסגרת האירועים שלך גדלה.', 'success');
+        await loadData(); // Refresh stats
     };
 
     const [linkModalConfig, setLinkModalConfig] = useState<{
@@ -268,13 +295,37 @@ const DashboardPage: React.FC = () => {
                         <h1 className="text-3xl font-bold text-slate-900">דשבורד ניהול</h1>
                         <p className="text-slate-500 mt-1">ברוך הבא למערכת הניהול שלך</p>
                     </div>
-                    <button
-                        onClick={() => navigate('/admin/create-event')}
-                        className="bg-cyan-500 hover:bg-cyan-600 text-white px-6 py-3 rounded-xl flex items-center justify-center gap-2 transition-all shadow-lg hover:shadow-cyan-500/30 font-bold"
-                    >
-                        <Plus className="w-5 h-5" />
-                        <span>צור אירוע חדש</span>
-                    </button>
+                    <div className="flex flex-col items-end gap-2">
+                        <div className="flex gap-3">
+                            {stats && (
+                                <button
+                                    onClick={() => setUpgradeModalOpen(true)}
+                                    className="bg-slate-900 hover:bg-slate-800 text-white px-4 py-3 rounded-xl flex items-center justify-center gap-2 transition-all shadow-lg font-bold"
+                                >
+                                    <Zap className="w-5 h-5 text-yellow-400" />
+                                    <span>רכוש אירועים נוספים</span>
+                                </button>
+                            )}
+                            <button
+                                onClick={handleCreateEvent}
+                                className={`px-6 py-3 rounded-xl flex items-center justify-center gap-2 transition-all shadow-lg font-bold ${stats && stats.activeEvents >= stats.maxEvents
+                                    ? 'bg-slate-100 text-slate-400 cursor-not-allowed border border-slate-200 shadow-none'
+                                    : 'bg-cyan-500 hover:bg-cyan-600 text-white shadow-cyan-500/30'
+                                    }`}
+                            >
+                                <Plus className="w-5 h-5" />
+                                <span>צור אירוע חדש</span>
+                            </button>
+                        </div>
+                        {stats && (
+                            <div className="flex items-center gap-2 text-sm font-medium text-slate-600 pl-1 mt-1">
+                                <div className={`w-2 h-2 rounded-full ${stats.maxEvents - stats.activeEvents > 0 ? 'bg-green-500' : 'bg-red-500'}`}></div>
+                                <span>
+                                    נותרו ליצירה: <span className="font-bold">{Math.max(0, stats.maxEvents - stats.activeEvents)}</span> אירועים
+                                </span>
+                            </div>
+                        )}
+                    </div>
                 </div>
 
                 {/* Stats Grid */}
@@ -325,13 +376,15 @@ const DashboardPage: React.FC = () => {
                                 <div className="bg-orange-50 p-2 md:p-3 rounded-lg md:rounded-xl w-fit mb-0 md:mb-4 text-orange-500">
                                     <Calendar className="w-5 h-5 md:w-6 md:h-6" />
                                 </div>
-                                <div>
-                                    <h3 className="text-2xl md:text-3xl font-bold text-slate-900 mb-1">{stats.activeEvents}/{stats.activeEvents + stats.expiredEvents}</h3>
+                                <div className="w-full">
+                                    <h3 className="text-2xl md:text-3xl font-bold text-slate-900 mb-1">
+                                        {stats.activeEvents}<span className="text-lg text-slate-400 font-normal">/{stats.activeEvents + stats.expiredEvents}</span>
+                                    </h3>
                                     <p className="text-slate-500 text-xs md:text-sm font-medium">אירועים פעילים</p>
                                 </div>
                             </div>
                         </div>
-                    </div>
+                    </div
                 )}
 
                 {/* Events Section */}
@@ -644,6 +697,16 @@ const DashboardPage: React.FC = () => {
                 type={toastType}
                 onClose={() => setShowToast(false)}
             />
+
+            {stats && (
+                <UpgradeModal
+                    isOpen={upgradeModalOpen}
+                    onClose={() => setUpgradeModalOpen(false)}
+                    onSuccess={handleUpgradeSuccess}
+                    currentLimit={stats.maxEvents}
+                    usage={stats.activeEvents}
+                />
+            )}
         </Layout>
     );
 };

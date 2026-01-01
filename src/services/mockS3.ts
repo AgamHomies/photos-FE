@@ -275,7 +275,8 @@ export const MockS3Service = {
             phoneSaves: Math.floor(userEvents.reduce((acc, curr) => acc + curr.guestVisits, 0) * 0.4),
             activeEvents: userEvents.filter(e => e.status === 'active').length,
             expiredEvents: userEvents.filter(e => e.status === 'expired').length,
-            totalSocialTraffic: 0
+            totalSocialTraffic: 0,
+            maxEvents: 5 // Default mock limit
         };
 
         return stats;

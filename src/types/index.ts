@@ -97,6 +97,7 @@ export interface DashboardStats {
   totalPageVisits: number;
   phoneSaves: number;
   activeEvents: number;
-  expiredEvents: number;
   totalSocialTraffic: number;
+  maxEvents: number;
+  expiredEvents: number;
 }
