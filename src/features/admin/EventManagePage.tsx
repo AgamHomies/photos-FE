@@ -738,7 +738,7 @@ const EventManagePage: React.FC = () => {
                                     {/* Cover Image Upload */}
                                     <div className="md:col-span-2 mb-6">
                                         <label className="block text-sm font-medium text-slate-700 mb-2">תמונת קאבר</label>
-                                        <div className="border-2 border-dashed border-slate-200 rounded-xl p-6 text-center hover:border-cyan-500 transition-colors cursor-pointer relative group bg-slate-50 aspect-[432/500] w-full max-w-sm mx-auto flex flex-col items-center justify-center">
+                                        <div className="border-2 border-dashed border-slate-200 rounded-xl p-6 text-center hover:border-cyan-500 transition-colors cursor-pointer relative group bg-slate-50 aspect-[3/2] w-full max-w-sm mx-auto flex flex-col items-center justify-center">
                                             <input
                                                 type="file"
                                                 accept="image/*"
