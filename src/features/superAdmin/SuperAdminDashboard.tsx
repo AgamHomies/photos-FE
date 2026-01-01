@@ -107,172 +107,186 @@ const SuperAdminDashboard: React.FC = () => {
                 {/* Statistics Cards */}
                 {stats && (
                     <div className="mb-8">
-                        <div className="flex flex-wrap justify-center gap-6 mb-6">
+                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-6">
+
                             {/* Total Photographers */}
-                            <div className="bg-white rounded-2xl p-6 shadow-lg border border-blue-100 w-full md:w-[calc(50%-12px)] lg:w-[calc(25%-18px)]">
-                                <div className="flex items-center justify-between mb-4">
-                                    <div className="p-3 bg-purple-50 rounded-xl">
-                                        <Camera className="w-6 h-6 text-purple-600" />
+                            <div className="bg-white rounded-2xl p-6 shadow-lg border border-blue-100 flex flex-col justify-between h-full">
+                                <div>
+                                    <div className="flex items-center justify-between mb-4">
+                                        <div className="p-3 bg-purple-50 rounded-xl">
+                                            <Camera className="w-6 h-6 text-purple-600" />
+                                        </div>
+                                        <TrendingUp className="w-5 h-5 text-green-500" />
                                     </div>
-                                    <TrendingUp className="w-5 h-5 text-green-500" />
+                                    <h3 className="text-3xl font-bold text-gray-900 mb-1">
+                                        {stats.total_photographers}
+                                    </h3>
+                                    <p className="text-sm text-gray-600">צלמים במערכת</p>
                                 </div>
-                                <h3 className="text-3xl font-bold text-gray-900 mb-1">
-                                    {stats.total_photographers}
-                                </h3>
-                                <p className="text-sm text-gray-600">צלמים במערכת</p>
                             </div>
 
                             {/* Total Events */}
-                            <div className="bg-white rounded-2xl p-6 shadow-lg border border-blue-100 w-full md:w-[calc(50%-12px)] lg:w-[calc(25%-18px)]">
-                                <div className="flex items-center justify-between mb-4">
-                                    <div className="p-3 bg-orange-50 rounded-xl"><Calendar className="w-6 h-6 text-orange-600" />
+                            <div className="bg-white rounded-2xl p-6 shadow-lg border border-blue-100 flex flex-col justify-between h-full">
+                                <div>
+                                    <div className="flex items-center justify-between mb-4">
+                                        <div className="p-3 bg-orange-50 rounded-xl"><Calendar className="w-6 h-6 text-orange-600" />
+                                        </div>
                                     </div>
-                                </div>
-                                <div className="flex items-start gap-8">
-                                    <div>
-                                        <h3 className="text-3xl font-bold text-gray-900 mb-1">
-                                            {stats.total_events}
-                                        </h3>
-                                        <p className="text-sm text-gray-600">סה״כ נוצרו</p>
+                                    <div className="flex items-start gap-8">
+                                        <div>
+                                            <h3 className="text-3xl font-bold text-gray-900 mb-1">
+                                                {stats.total_events}
+                                            </h3>
+                                            <p className="text-sm text-gray-600">סה״כ נוצרו</p>
+                                        </div>
+                                        <div className="border-r border-gray-100 pr-6">
+                                            <h3 className="text-3xl font-bold text-green-600 mb-1">
+                                                {stats.active_events}
+                                            </h3>
+                                            <p className="text-sm text-gray-600">פעילים</p>
+                                        </div>
                                     </div>
-                                    <div className="border-r border-gray-100 pr-6">
-                                        <h3 className="text-3xl font-bold text-green-600 mb-1">
-                                            {stats.active_events}
-                                        </h3>
-                                        <p className="text-sm text-gray-600">פעילים</p>
+
+                                    <div className="border-t border-gray-100 pt-3 grid grid-cols-2 gap-4 mt-4">
+                                        <div>
+                                            <span className="text-xs text-gray-400 block">ממוצע לצלם</span>
+                                            <span className="text-sm font-semibold text-gray-700">{stats.avg_events_per_photographer}</span>
+                                        </div>
+                                        <div>
+                                            <span className="text-xs text-gray-400 block">מקסימום לצלם</span>
+                                            <span className="text-sm font-semibold text-gray-700">{stats.max_events_per_photographer}</span>
+                                        </div>
                                     </div>
                                 </div>
                             </div>
 
                             {/* Total Images */}
-                            <div className="bg-white rounded-2xl p-6 shadow-lg border border-blue-100 w-full md:w-[calc(50%-12px)] lg:w-[calc(25%-18px)]">
-                                <div className="flex items-center justify-between mb-4">
-                                    <div className="p-3 bg-cyan-50 rounded-xl"><Image className="w-6 h-6 text-cyan-600" />
+                            <div className="bg-white rounded-2xl p-6 shadow-lg border border-blue-100 flex flex-col justify-between h-full">
+                                <div>
+                                    <div className="flex items-center justify-between mb-4">
+                                        <div className="p-3 bg-cyan-50 rounded-xl"><Image className="w-6 h-6 text-cyan-600" /></div>
+                                    </div>
+                                    <h3 className="text-3xl font-bold text-gray-900 mb-1">
+                                        {stats.total_images.toLocaleString()}
+                                    </h3>
+                                    <p className="text-sm text-gray-600 mb-4">תמונות</p>
+
+                                    <div className="border-t border-gray-100 pt-3 grid grid-cols-2 gap-4">
+                                        <div>
+                                            <span className="text-xs text-gray-400 block">ממוצע לאירוע</span>
+                                            <span className="text-sm font-semibold text-gray-700">{stats.avg_images_per_event}</span>
+                                        </div>
+                                        <div>
+                                            <span className="text-xs text-gray-400 block">מקסימום לאירוע</span>
+                                            <span className="text-sm font-semibold text-gray-700">{stats.max_images_per_event.toLocaleString()}</span>
+                                        </div>
                                     </div>
                                 </div>
-                                <h3 className="text-3xl font-bold text-gray-900 mb-1">
-                                    {stats.total_images.toLocaleString()}
-                                </h3>
-                                <p className="text-sm text-gray-600">תמונות</p>
                             </div>
 
-                            {/* Event Entries (was Downloads) */}
-                            <div className="bg-white rounded-2xl p-6 shadow-lg border border-blue-100 w-full md:w-[calc(50%-12px)] lg:w-[calc(25%-18px)]">
-                                <div className="flex items-center justify-between mb-4">
-                                    <div className="p-3 bg-purple-50 rounded-xl"><Users className="w-6 h-6 text-purple-600" />
+                            {/* Event Entries (Views) */}
+                            <div className="bg-white rounded-2xl p-6 shadow-lg border border-blue-100 flex flex-col justify-between h-full">
+                                <div>
+                                    <div className="flex items-center justify-between mb-4">
+                                        <div className="p-3 bg-purple-50 rounded-xl"><Users className="w-6 h-6 text-purple-600" /></div>
+                                    </div>
+                                    <h3 className="text-3xl font-bold text-gray-900 mb-1">
+                                        {stats.total_views.toLocaleString()}
+                                    </h3>
+                                    <p className="text-sm text-gray-600 mb-4">כניסות לאירועים</p>
+
+                                    <div className="border-t border-gray-100 pt-3 grid grid-cols-2 gap-4">
+                                        <div>
+                                            <span className="text-xs text-gray-400 block">ממוצע לאירוע</span>
+                                            <span className="text-sm font-semibold text-gray-700">{stats.avg_views_per_event}</span>
+                                        </div>
+                                        <div>
+                                            <span className="text-xs text-gray-400 block">מקסימום לאירוע</span>
+                                            <span className="text-sm font-semibold text-gray-700">{stats.max_views_per_event.toLocaleString()}</span>
+                                        </div>
                                     </div>
                                 </div>
-                                <h3 className="text-3xl font-bold text-gray-900 mb-1">
-                                    {stats.total_views.toLocaleString()}
-                                </h3>
-                                <p className="text-sm text-gray-600">כניסות לאירועים</p>
                             </div>
 
                             {/* Downloads */}
-                            <div className="bg-white rounded-2xl p-6 shadow-lg border border-blue-100 w-full md:w-[calc(50%-12px)] lg:w-[calc(25%-18px)]">
-                                <div className="flex items-center justify-between mb-4">
-                                    <div className="p-3 bg-blue-50 rounded-xl">
-                                        <Download className="w-6 h-6 text-blue-600" />
+                            <div className="bg-white rounded-2xl p-6 shadow-lg border border-blue-100 flex flex-col justify-between h-full">
+                                <div>
+                                    <div className="flex items-center justify-between mb-4">
+                                        <div className="p-3 bg-blue-50 rounded-xl"><Download className="w-6 h-6 text-blue-600" /></div>
+                                        <div className="text-xs font-bold text-blue-600 bg-blue-50 px-2 py-1 rounded-lg">
+                                            {stats.download_rate_percent}% המרה
+                                        </div>
+                                    </div>
+                                    <h3 className="text-3xl font-bold text-gray-900 mb-1">
+                                        {stats.total_downloads.toLocaleString()}
+                                    </h3>
+                                    <p className="text-sm text-gray-600 mb-4">הורדות</p>
+
+                                    <div className="border-t border-gray-100 pt-3 grid grid-cols-2 gap-4">
+                                        <div>
+                                            <span className="text-xs text-gray-400 block">ממוצע לאירוע</span>
+                                            <span className="text-sm font-semibold text-gray-700">{stats.avg_downloads_per_event}</span>
+                                        </div>
+                                        <div>
+                                            <span className="text-xs text-gray-400 block">מקסימום לאירוע</span>
+                                            <span className="text-sm font-semibold text-gray-700">{stats.max_downloads_per_event.toLocaleString()}</span>
+                                        </div>
                                     </div>
                                 </div>
-                                <h3 className="text-3xl font-bold text-gray-900 mb-1">
-                                    {stats.total_downloads.toLocaleString()}
-                                </h3>
-                                <p className="text-sm text-gray-600">הורדות</p>
                             </div>
 
                             {/* Contact Saves */}
-                            <div className="bg-white rounded-2xl p-6 shadow-lg border border-blue-100 w-full md:w-[calc(50%-12px)] lg:w-[calc(25%-18px)]">
-                                <div className="flex items-center justify-between mb-4">
-                                    <div className="p-3 bg-green-50 rounded-xl"><Phone className="w-6 h-6 text-green-600" />
+                            <div className="bg-white rounded-2xl p-6 shadow-lg border border-blue-100 flex flex-col justify-between h-full">
+                                <div>
+                                    <div className="flex items-center justify-between mb-4">
+                                        <div className="p-3 bg-green-50 rounded-xl"><Phone className="w-6 h-6 text-green-600" /></div>
+                                        <div className="text-xs font-bold text-green-600 bg-green-50 px-2 py-1 rounded-lg">
+                                            {stats.contact_save_rate_percent}% המרה
+                                        </div>
+                                    </div>
+                                    <h3 className="text-3xl font-bold text-gray-900 mb-1">
+                                        {stats.total_contact_saves.toLocaleString()}
+                                    </h3>
+                                    <p className="text-sm text-gray-600 mb-4">שמירות טלפון</p>
+
+                                    <div className="border-t border-gray-100 pt-3 grid grid-cols-2 gap-4">
+                                        <div>
+                                            <span className="text-xs text-gray-400 block">ממוצע לאירוע</span>
+                                            <span className="text-sm font-semibold text-gray-700">{stats.avg_contact_saves_per_event}</span>
+                                        </div>
+                                        <div>
+                                            <span className="text-xs text-gray-400 block">מקסימום לאירוע</span>
+                                            <span className="text-sm font-semibold text-gray-700">{stats.max_contact_saves_per_event.toLocaleString()}</span>
+                                        </div>
                                     </div>
                                 </div>
-                                <h3 className="text-3xl font-bold text-gray-900 mb-1">
-                                    {stats.total_contact_saves.toLocaleString()}
-                                </h3>
-                                <p className="text-sm text-gray-600">שמירות טלפון</p>
                             </div>
 
                             {/* Profile Entries */}
-                            <div className="bg-white rounded-2xl p-6 shadow-lg border border-blue-100 w-full md:w-[calc(50%-12px)] lg:w-[calc(25%-18px)]">
-                                <div className="flex items-center justify-between mb-4">
-                                    <div className="p-3 bg-pink-50 rounded-xl"><Share2 className="w-6 h-6 text-pink-600" />
+                            <div className="bg-white rounded-2xl p-6 shadow-lg border border-blue-100 flex flex-col justify-between h-full">
+                                <div>
+                                    <div className="flex items-center justify-between mb-4">
+                                        <div className="p-3 bg-pink-50 rounded-xl"><Share2 className="w-6 h-6 text-pink-600" /></div>
+                                    </div>
+                                    <h3 className="text-3xl font-bold text-gray-900 mb-1">
+                                        {stats.total_social_traffic.toLocaleString()}
+                                    </h3>
+                                    <p className="text-sm text-gray-600 mb-1">כניסות לפרופיל</p>
+                                    <p className="text-xs text-gray-400 mb-4">פייסבוק • אינסטגרם • טיקטוק</p>
+
+                                    <div className="border-t border-gray-100 pt-3 grid grid-cols-2 gap-4">
+                                        <div>
+                                            <span className="text-xs text-gray-400 block">ממוצע לצלם</span>
+                                            <span className="text-sm font-semibold text-gray-700">{stats.avg_social_traffic_per_photographer}</span>
+                                        </div>
+                                        <div>
+                                            <span className="text-xs text-gray-400 block">מקסימום לצלם</span>
+                                            <span className="text-sm font-semibold text-gray-700">{stats.max_social_traffic_per_photographer.toLocaleString()}</span>
+                                        </div>
                                     </div>
                                 </div>
-                                <h3 className="text-3xl font-bold text-gray-900 mb-1">
-                                    {stats.total_social_traffic.toLocaleString()}
-                                </h3>
-                                <p className="text-sm text-gray-600">כניסות לפרופיל</p>
-                                <p className="text-xs text-gray-400 mt-1">פייסבוק • אינסטגרם • טיקטוק</p>
-                            </div>
-                        </div>
-                    </div>
-                )}
-
-                {/* Advanced Insights */}
-                {stats && (
-                    <div className="mb-8">
-                        <h2 className="text-xl font-bold text-gray-900 mb-4 px-1">תובנות מערכת</h2>
-                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-                            {/* Conversion Rate - Downloads */}
-                            <div className="bg-gradient-to-br from-blue-50 to-white rounded-2xl p-6 shadow-sm border border-blue-100">
-                                <div className="text-sm text-gray-600 mb-2">אחוז המרה להורדה</div>
-                                <div className="flex items-end gap-2">
-                                    <h3 className="text-3xl font-bold text-blue-600">
-                                        {stats.download_rate_percent}%
-                                    </h3>
-                                    <span className="text-xs text-blue-400 mb-1">מהצפיות</span>
-                                </div>
-                                <div className="w-full bg-blue-100 h-1.5 mt-3 rounded-full overflow-hidden">
-                                    <div
-                                        className="bg-blue-500 h-full rounded-full"
-                                        style={{ width: `${Math.min(stats.download_rate_percent, 100)}%` }}
-                                    />
-                                </div>
                             </div>
 
-                            {/* Conversion Rate - Contact Saves */}
-                            <div className="bg-gradient-to-br from-green-50 to-white rounded-2xl p-6 shadow-sm border border-green-100">
-                                <div className="text-sm text-gray-600 mb-2">אחוז המרה לשמירת קשר</div>
-                                <div className="flex items-end gap-2">
-                                    <h3 className="text-3xl font-bold text-green-600">
-                                        {stats.contact_save_rate_percent}%
-                                    </h3>
-                                    <span className="text-xs text-green-400 mb-1">מהצפיות</span>
-                                </div>
-                                <div className="w-full bg-green-100 h-1.5 mt-3 rounded-full overflow-hidden">
-                                    <div
-                                        className="bg-green-500 h-full rounded-full"
-                                        style={{ width: `${Math.min(stats.contact_save_rate_percent, 100)}%` }}
-                                    />
-                                </div>
-                            </div>
-
-                            {/* Avg Images */}
-                            <div className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100">
-                                <div className="text-sm text-gray-600 mb-2">ממוצע תמונות לאירוע</div>
-                                <div className="flex items-center gap-3">
-                                    <div className="p-2 bg-gray-50 rounded-lg">
-                                        <Image className="w-5 h-5 text-gray-400" />
-                                    </div>
-                                    <h3 className="text-2xl font-bold text-gray-900">
-                                        {stats.avg_images_per_event}
-                                    </h3>
-                                </div>
-                            </div>
-
-                            {/* Avg Views */}
-                            <div className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100">
-                                <div className="text-sm text-gray-600 mb-2">ממוצע צפיות לאירוע</div>
-                                <div className="flex items-center gap-3">
-                                    <div className="p-2 bg-gray-50 rounded-lg">
-                                        <Eye className="w-5 h-5 text-gray-400" />
-                                    </div>
-                                    <h3 className="text-2xl font-bold text-gray-900">
-                                        {stats.avg_views_per_event}
-                                    </h3>
-                                </div>
-                            </div>
                         </div>
                     </div>
                 )}

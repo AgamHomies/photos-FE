@@ -19,6 +19,18 @@ export interface PlatformStats {
     draft_events: number;
     avg_images_per_event: number;
     avg_views_per_event: number;
+    avg_downloads_per_event: number;
+    avg_contact_saves_per_event: number;
+    avg_social_traffic_per_photographer: number;
+    avg_events_per_photographer: number;
+
+    max_images_per_event: number;
+    max_views_per_event: number;
+    max_downloads_per_event: number;
+    max_contact_saves_per_event: number;
+    max_social_traffic_per_photographer: number;
+    max_events_per_photographer: number;
+
     download_rate_percent: number;
     contact_save_rate_percent: number;
 }
