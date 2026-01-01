@@ -11,8 +11,12 @@ import AuthCallbackPage from './features/auth/AuthCallbackPage';
 import ResetPasswordPage from './features/auth/ResetPasswordPage';
 import ContactPage from './features/home/ContactPage';
 import SettingsPage from './features/admin/SettingsPage';
+import SuperAdminLogin from './features/superAdmin/SuperAdminLogin';
+import SuperAdminDashboard from './features/superAdmin/SuperAdminDashboard';
+import PhotographerDetailPage from './features/superAdmin/PhotographerDetailPage';
 import { CONFIG } from './config';
 import ProtectedRoute from './components/ProtectedRoute';
+import ProtectedSuperAdminRoute from './components/ProtectedSuperAdminRoute';
 
 import { UploadProvider } from './context/UploadContext';
 
@@ -49,6 +53,16 @@ function App() {
             <Route path="admin/settings" element={<SettingsPage />} />
             <Route path="admin/create-event" element={<CreateEventPage />} />
             <Route path="admin/events/:id" element={<EventManagePage />} />
+          </Route>
+
+          {/* Super Admin Routes */}
+          <Route path="super-admin/login" element={<SuperAdminLogin />} />
+
+          {/* Protected Super Admin Routes */}
+          <Route element={<ProtectedSuperAdminRoute />}>
+            <Route path="super-admin" element={<Navigate to="/super-admin/dashboard" replace />} />
+            <Route path="super-admin/dashboard" element={<SuperAdminDashboard />} />
+            <Route path="super-admin/photographer/:id" element={<PhotographerDetailPage />} />
           </Route>
 
           <Route path="*" element={<Navigate to="/" replace />} />
