@@ -20,8 +20,10 @@ import {
     Copy,
     ExternalLink,
     X,
-    FolderUp
+    FolderUp,
+    Eye
 } from 'lucide-react';
+import EventPreviewModal from './components/EventPreviewModal';
 import { useUpload } from '../../context/UploadContext';
 
 const EventManagePage: React.FC = () => {
@@ -67,7 +69,7 @@ const EventManagePage: React.FC = () => {
 
     const [linkModal, setLinkModal] = useState<{
         isOpen: boolean;
-        type: 'guest' | 'couple';
+        type: 'guest' | 'couple' | 'preview';
         url: string;
         title: string;
     }>({ isOpen: false, type: 'guest', url: '', title: '' });
@@ -736,7 +738,7 @@ const EventManagePage: React.FC = () => {
                                     {/* Cover Image Upload */}
                                     <div className="md:col-span-2 mb-6">
                                         <label className="block text-sm font-medium text-slate-700 mb-2">תמונת קאבר</label>
-                                        <div className="border-2 border-dashed border-slate-200 rounded-xl p-6 text-center hover:border-cyan-500 transition-colors cursor-pointer relative group bg-slate-50">
+                                        <div className="border-2 border-dashed border-slate-200 rounded-xl p-6 text-center hover:border-cyan-500 transition-colors cursor-pointer relative group bg-slate-50 aspect-[432/500] w-full max-w-sm mx-auto flex flex-col items-center justify-center">
                                             <input
                                                 type="file"
                                                 accept="image/*"
@@ -751,7 +753,7 @@ const EventManagePage: React.FC = () => {
                                                 disabled={!!isClientUploading}
                                             />
                                             {event.coverImage ? (
-                                                <div className="relative h-48 w-full rounded-lg overflow-hidden">
+                                                <div className="relative w-full h-full rounded-lg overflow-hidden">
                                                     <img src={event.coverImage} alt="Cover" className="w-full h-full object-cover" />
                                                     <div className="absolute inset-0 bg-black/40 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
                                                         <div className="text-white font-medium flex items-center gap-2">
@@ -761,14 +763,24 @@ const EventManagePage: React.FC = () => {
                                                     </div>
                                                 </div>
                                             ) : (
-                                                <div className="flex flex-col items-center justify-center py-8">
-                                                    <div className="w-12 h-12 bg-white rounded-full flex items-center justify-center mb-3 text-slate-400 group-hover:text-cyan-500 transition-colors shadow-sm">
-                                                        <ImageIcon className="w-6 h-6" />
+                                                <div className="flex flex-col items-center justify-center">
+                                                    <div className="w-16 h-16 bg-white rounded-full flex items-center justify-center mb-4 text-slate-400 group-hover:text-cyan-500 transition-colors shadow-sm">
+                                                        <ImageIcon className="w-8 h-8" />
                                                     </div>
-                                                    <p className="text-slate-600 font-medium">לחץ להעלאת תמונת קאבר</p>
-                                                    <p className="text-slate-400 text-sm mt-1">או גרור תמונה לכאן</p>
+                                                    <p className="text-slate-600 font-medium text-lg">לחץ להעלאת תמונת קאבר</p>
+                                                    <p className="text-slate-400 text-sm mt-2">או גרור תמונה לכאן</p>
                                                 </div>
                                             )}
+                                        </div>
+                                        <div className="mt-6 flex justify-center">
+                                            <button
+                                                type="button"
+                                                onClick={() => setLinkModal(prev => ({ ...prev, isOpen: true, type: 'preview' }))}
+                                                className="flex items-center gap-2 text-cyan-600 font-bold bg-cyan-50 px-6 py-3 rounded-xl hover:bg-cyan-100 transition-colors w-full max-w-sm justify-center"
+                                            >
+                                                <Eye className="w-5 h-5" />
+                                                <span>תצוגה מקדימה לגלריה</span>
+                                            </button>
                                         </div>
                                     </div>
                                 </div>
@@ -853,6 +865,17 @@ const EventManagePage: React.FC = () => {
                     </div>
                 </div>
             )}
+
+            <EventPreviewModal
+                isOpen={linkModal.isOpen && linkModal.type === 'preview'}
+                onClose={() => setLinkModal(prev => ({ ...prev, isOpen: false }))}
+                data={{
+                    name: editForm.name,
+                    date: editForm.date,
+                    location: editForm.location,
+                    coverImage: event.coverImage
+                }}
+            />
 
             {/* Toast Notification */}
             {toast.show && (

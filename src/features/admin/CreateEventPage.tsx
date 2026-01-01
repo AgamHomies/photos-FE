@@ -1,9 +1,10 @@
 import React, { useState, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Upload, Image as ImageIcon, Check, Calendar, MapPin, Camera, ScanFace, Send, Star, FolderUp } from 'lucide-react';
+import { Upload, Image as ImageIcon, Check, Calendar, MapPin, Camera, ScanFace, Send, Star, FolderUp, Eye } from 'lucide-react';
 import { BackendService } from '../../services/backendService';
 import Layout from '../../components/Layout';
 import { Toast } from '../../components';
+import EventPreviewModal from './components/EventPreviewModal';
 
 const CreateEventPage: React.FC = () => {
     const navigate = useNavigate();
@@ -20,6 +21,7 @@ const CreateEventPage: React.FC = () => {
     const [uploadProgress, setUploadProgress] = useState(0);
     const [processingStage, setProcessingStage] = useState('');
     const [createdEventLink, setCreatedEventLink] = useState('');
+    const [isPreviewOpen, setIsPreviewOpen] = useState(false);
     const folderInputRef = useRef<HTMLInputElement>(null);
 
     const [showToast, setShowToast] = useState(false);
@@ -265,7 +267,7 @@ const CreateEventPage: React.FC = () => {
                                     <h2>תמונת קאבר</h2>
                                 </div>
 
-                                <div className="border-2 border-dashed border-slate-200 rounded-xl p-8 text-center hover:border-cyan-500 transition-colors cursor-pointer relative group">
+                                <div className="border-2 border-dashed border-slate-200 rounded-xl p-8 text-center hover:border-cyan-500 transition-colors cursor-pointer relative group aspect-[432/500] w-full max-w-sm mx-auto flex flex-col items-center justify-center bg-slate-50">
                                     <input
                                         type="file"
                                         accept="image/*"
@@ -273,22 +275,31 @@ const CreateEventPage: React.FC = () => {
                                         className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10"
                                     />
                                     {coverPreview ? (
-                                        <div className="relative h-48 w-full rounded-lg overflow-hidden">
+                                        <div className="relative w-full h-full rounded-lg overflow-hidden shadow-sm">
                                             <img src={coverPreview} alt="Cover Preview" className="w-full h-full object-cover" />
                                             <div className="absolute inset-0 bg-black/40 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
                                                 <span className="text-white font-medium">לחץ להחלפה</span>
                                             </div>
                                         </div>
                                     ) : (
-                                        <div className="flex flex-col items-center justify-center py-4">
-                                            <div className="w-12 h-12 bg-slate-100 rounded-full flex items-center justify-center mb-3 text-slate-400 group-hover:text-cyan-500 transition-colors">
-                                                <Upload className="w-6 h-6" />
+                                        <div className="flex flex-col items-center justify-center">
+                                            <div className="w-16 h-16 bg-white rounded-full flex items-center justify-center mb-4 text-slate-400 group-hover:text-cyan-500 transition-colors shadow-sm">
+                                                <Upload className="w-8 h-8" />
                                             </div>
-                                            <p className="text-slate-600 font-medium">לחץ להעלאת תמונת קאבר</p>
-                                            <p className="text-slate-400 text-sm mt-1">או גרור תמונה לכאן</p>
-                                            <p className="text-slate-400 text-xs mt-1">מומלץ יחס 16:9</p>
+                                            <p className="text-slate-600 font-medium text-lg">לחץ להעלאת תמונת קאבר</p>
+                                            <p className="text-slate-400 text-sm mt-2">או גרור תמונה לכאן</p>
                                         </div>
                                     )}
+                                </div>
+                                <div className="mt-6 flex justify-center">
+                                    <button
+                                        type="button"
+                                        onClick={() => setIsPreviewOpen(true)}
+                                        className="flex items-center gap-2 text-cyan-600 font-bold bg-cyan-50 px-6 py-3 rounded-xl hover:bg-cyan-100 transition-colors w-full max-w-sm justify-center"
+                                    >
+                                        <Eye className="w-5 h-5" />
+                                        <span>תצוגה מקדימה לגלריה</span>
+                                    </button>
                                 </div>
                             </div>
 
@@ -474,9 +485,18 @@ const CreateEventPage: React.FC = () => {
                             </div>
                         </div>
                     </div>
-
                 </div>
             </div>
+            <EventPreviewModal
+                isOpen={isPreviewOpen}
+                onClose={() => setIsPreviewOpen(false)}
+                data={{
+                    name: formData.name,
+                    date: formData.date,
+                    location: formData.location,
+                    coverImage: coverPreview
+                }}
+            />
             <Toast
                 show={showToast}
                 message={toastMessage}
