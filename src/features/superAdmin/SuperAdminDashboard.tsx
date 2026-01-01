@@ -59,6 +59,14 @@ const SuperAdminDashboard: React.FC = () => {
         );
     });
 
+    const handleExportCsv = async () => {
+        try {
+            await SuperAdminService.exportPhotographersCsv();
+        } catch (err: any) {
+            alert('Failed to export CSV: ' + err.message);
+        }
+    };
+
     if (loading) {
         return (
             <div className="min-h-screen bg-gray-50 flex items-center justify-center">
@@ -119,14 +127,21 @@ const SuperAdminDashboard: React.FC = () => {
                                 <div className="flex items-center justify-between mb-4">
                                     <div className="p-3 bg-orange-50 rounded-xl"><Calendar className="w-6 h-6 text-orange-600" />
                                     </div>
-                                    <div className="text-xs text-gray-900/60">
-                                        {stats.active_events} פעילים
+                                </div>
+                                <div className="flex items-start gap-8">
+                                    <div>
+                                        <h3 className="text-3xl font-bold text-gray-900 mb-1">
+                                            {stats.total_events}
+                                        </h3>
+                                        <p className="text-sm text-gray-600">סה״כ נוצרו</p>
+                                    </div>
+                                    <div className="border-r border-gray-100 pr-6">
+                                        <h3 className="text-3xl font-bold text-green-600 mb-1">
+                                            {stats.active_events}
+                                        </h3>
+                                        <p className="text-sm text-gray-600">פעילים</p>
                                     </div>
                                 </div>
-                                <h3 className="text-3xl font-bold text-gray-900 mb-1">
-                                    {stats.total_events}
-                                </h3>
-                                <p className="text-sm text-gray-600">אירועים</p>
                             </div>
 
                             {/* Total Images */}
@@ -194,10 +209,87 @@ const SuperAdminDashboard: React.FC = () => {
                     </div>
                 )}
 
+                {/* Advanced Insights */}
+                {stats && (
+                    <div className="mb-8">
+                        <h2 className="text-xl font-bold text-gray-900 mb-4 px-1">תובנות מערכת</h2>
+                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+                            {/* Conversion Rate - Downloads */}
+                            <div className="bg-gradient-to-br from-blue-50 to-white rounded-2xl p-6 shadow-sm border border-blue-100">
+                                <div className="text-sm text-gray-600 mb-2">אחוז המרה להורדה</div>
+                                <div className="flex items-end gap-2">
+                                    <h3 className="text-3xl font-bold text-blue-600">
+                                        {stats.download_rate_percent}%
+                                    </h3>
+                                    <span className="text-xs text-blue-400 mb-1">מהצפיות</span>
+                                </div>
+                                <div className="w-full bg-blue-100 h-1.5 mt-3 rounded-full overflow-hidden">
+                                    <div
+                                        className="bg-blue-500 h-full rounded-full"
+                                        style={{ width: `${Math.min(stats.download_rate_percent, 100)}%` }}
+                                    />
+                                </div>
+                            </div>
+
+                            {/* Conversion Rate - Contact Saves */}
+                            <div className="bg-gradient-to-br from-green-50 to-white rounded-2xl p-6 shadow-sm border border-green-100">
+                                <div className="text-sm text-gray-600 mb-2">אחוז המרה לשמירת קשר</div>
+                                <div className="flex items-end gap-2">
+                                    <h3 className="text-3xl font-bold text-green-600">
+                                        {stats.contact_save_rate_percent}%
+                                    </h3>
+                                    <span className="text-xs text-green-400 mb-1">מהצפיות</span>
+                                </div>
+                                <div className="w-full bg-green-100 h-1.5 mt-3 rounded-full overflow-hidden">
+                                    <div
+                                        className="bg-green-500 h-full rounded-full"
+                                        style={{ width: `${Math.min(stats.contact_save_rate_percent, 100)}%` }}
+                                    />
+                                </div>
+                            </div>
+
+                            {/* Avg Images */}
+                            <div className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100">
+                                <div className="text-sm text-gray-600 mb-2">ממוצע תמונות לאירוע</div>
+                                <div className="flex items-center gap-3">
+                                    <div className="p-2 bg-gray-50 rounded-lg">
+                                        <Image className="w-5 h-5 text-gray-400" />
+                                    </div>
+                                    <h3 className="text-2xl font-bold text-gray-900">
+                                        {stats.avg_images_per_event}
+                                    </h3>
+                                </div>
+                            </div>
+
+                            {/* Avg Views */}
+                            <div className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100">
+                                <div className="text-sm text-gray-600 mb-2">ממוצע צפיות לאירוע</div>
+                                <div className="flex items-center gap-3">
+                                    <div className="p-2 bg-gray-50 rounded-lg">
+                                        <Eye className="w-5 h-5 text-gray-400" />
+                                    </div>
+                                    <h3 className="text-2xl font-bold text-gray-900">
+                                        {stats.avg_views_per_event}
+                                    </h3>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                )}
+
                 {/* Photographers Section */}
                 <div className="bg-white rounded-3xl shadow-xl p-6 border border-blue-100">
                     <div className="flex items-center justify-between mb-6">
-                        <h2 className="text-2xl font-bold text-gray-900">צלמים</h2>
+                        <div className="flex items-center gap-4">
+                            <h2 className="text-2xl font-bold text-gray-900">צלמים</h2>
+                            <button
+                                onClick={handleExportCsv}
+                                className="flex items-center gap-2 px-3 py-1.5 bg-green-50 text-green-700 rounded-lg hover:bg-green-100 transition-colors text-sm font-medium border border-green-200"
+                            >
+                                <Download className="w-4 h-4" />
+                                <span>ייצוא ל-CSV</span>
+                            </button>
+                        </div>
                         <div className="flex items-center gap-2">
                             <div className="relative">
                                 <Search className="absolute right-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-900/40" />
@@ -268,7 +360,7 @@ const SuperAdminDashboard: React.FC = () => {
                     )}
                 </div>
             </div>
-        </div>
+        </div >
     );
 };
 

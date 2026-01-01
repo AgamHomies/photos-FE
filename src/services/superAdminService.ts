@@ -17,6 +17,10 @@ export interface PlatformStats {
     total_social_traffic: number;
     active_events: number;
     draft_events: number;
+    avg_images_per_event: number;
+    avg_views_per_event: number;
+    download_rate_percent: number;
+    contact_save_rate_percent: number;
 }
 
 export interface PhotographerStats {
@@ -215,6 +219,29 @@ class SuperAdminService {
         );
 
         return this.handleResponse<EventSummary[]>(response);
+    }
+    /**
+     * Export all photographers to CSV
+     */
+    async exportPhotographersCsv(): Promise<void> {
+        const response = await fetch(`${API_BASE_URL}/super-admin/export/photographers/csv`, {
+            headers: this.getAuthHeader()
+        });
+
+        if (!response.ok) {
+            throw new Error(`API error: ${response.status}`);
+        }
+
+        // Trigger file download
+        const blob = await response.blob();
+        const url = window.URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `photographers_export_${new Date().toISOString().slice(0, 10)}.csv`;
+        document.body.appendChild(a);
+        a.click();
+        window.URL.revokeObjectURL(url);
+        document.body.removeChild(a);
     }
 }
 
