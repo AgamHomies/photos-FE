@@ -1,6 +1,6 @@
 import React, { useState, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Upload, Image as ImageIcon, Check, Calendar, MapPin, Camera, ScanFace, Send, Star, FolderUp, Eye } from 'lucide-react';
+import { Upload, Image as ImageIcon, Check, Calendar, MapPin, Camera, ScanFace, Send, Star, FolderUp, Eye, Trash2 } from 'lucide-react';
 import { BackendService } from '../../services/backendService';
 import Layout from '../../components/Layout';
 import { Toast } from '../../components';
@@ -208,9 +208,19 @@ const CreateEventPage: React.FC = () => {
 
                             {/* Unified Card: Event Details & Cover Image */}
                             <div className="bg-white rounded-2xl shadow-sm border border-slate-100 p-4 md:p-8">
-                                <div className="flex items-center gap-2 mb-6 text-slate-800 font-bold text-lg">
-                                    <Calendar className="w-5 h-5 text-cyan-500" />
-                                    <h2>פרטי האירוע</h2>
+                                <div className="flex items-center justify-between mb-6">
+                                    <div className="flex items-center gap-2 text-slate-800 font-bold text-lg">
+                                        <Calendar className="w-5 h-5 text-cyan-500" />
+                                        <h2>פרטי האירוע</h2>
+                                    </div>
+                                    <button
+                                        type="button"
+                                        onClick={() => setIsPreviewOpen(true)}
+                                        className="bg-cyan-50 text-cyan-600 px-6 py-2 rounded-xl font-bold hover:bg-cyan-100 transition-colors flex items-center gap-2 shadow-sm text-sm border border-cyan-100"
+                                    >
+                                        <Eye className="w-4 h-4" />
+                                        <span>תצוגה מקדימה</span>
+                                    </button>
                                 </div>
 
                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-8 md:gap-12 mb-4">
@@ -262,9 +272,9 @@ const CreateEventPage: React.FC = () => {
                                     </div>
 
                                     {/* Left Column: Cover Image Upload */}
-                                    <div className="flex flex-col">
+                                    <div className="flex flex-col h-full">
                                         <label className="block text-sm font-medium text-slate-700 mb-2 text-right">תמונת קאבר</label>
-                                        <div className="border-2 border-dashed border-slate-200 rounded-xl p-4 text-center hover:border-cyan-500 transition-colors cursor-pointer relative group aspect-[3/2] w-full max-w-sm mx-auto flex flex-col items-center justify-center bg-slate-50">
+                                        <div className="border-2 border-dashed border-slate-200 rounded-xl p-4 text-center hover:border-cyan-500 transition-colors cursor-pointer relative group flex-1 w-full mx-auto flex flex-col items-center justify-center bg-slate-50">
                                             <input
                                                 type="file"
                                                 accept="image/*"
@@ -272,7 +282,7 @@ const CreateEventPage: React.FC = () => {
                                                 className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10"
                                             />
                                             {coverPreview ? (
-                                                <div className="relative w-full h-full rounded-lg overflow-hidden shadow-sm">
+                                                <div className="absolute inset-2 rounded-lg overflow-hidden shadow-sm">
                                                     <img src={coverPreview} alt="Cover Preview" className="w-full h-full object-cover" />
                                                     <div className="absolute inset-0 bg-black/40 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
                                                         <span className="text-white font-medium">לחץ להחלפה</span>
@@ -291,16 +301,7 @@ const CreateEventPage: React.FC = () => {
                                     </div>
                                 </div>
 
-                                <div className="mt-4 pt-4 border-t border-slate-100">
-                                    <button
-                                        type="button"
-                                        onClick={() => setIsPreviewOpen(true)}
-                                        className="flex items-center justify-center gap-2 text-cyan-600 font-bold bg-cyan-50 px-6 py-4 rounded-xl hover:bg-cyan-100 transition-colors w-full"
-                                    >
-                                        <Eye className="w-5 h-5" />
-                                        <span>תצוגה מקדימה לגלריה</span>
-                                    </button>
-                                </div>
+
                             </div>
 
                             {/* Card 3: Gallery Images */}
@@ -364,9 +365,32 @@ const CreateEventPage: React.FC = () => {
                                     </div>
 
                                     {galleryFiles.length > 0 && (
-                                        <div className="mt-4 inline-flex items-center gap-2 bg-green-50 text-green-700 px-4 py-2 rounded-full text-sm font-bold relative z-20">
-                                            <Check className="w-4 h-4" />
-                                            נבחרו {galleryFiles.length} תמונות
+                                        <div className="mt-6 mx-auto max-w-xs bg-white border border-slate-200 rounded-2xl p-3 shadow-sm flex items-center justify-between relative z-20">
+                                            <div className="flex items-center gap-3">
+                                                <div className="w-10 h-10 bg-green-50 text-green-500 rounded-full flex items-center justify-center flex-shrink-0">
+                                                    <Check className="w-5 h-5" />
+                                                </div>
+                                                <div className="text-right">
+                                                    <div className="font-bold text-slate-800 text-base">
+                                                        נבחרו {galleryFiles.length} תמונות
+                                                    </div>
+                                                    <div className="text-[10px] text-slate-500">
+                                                        מוכנות להעלאה
+                                                    </div>
+                                                </div>
+                                            </div>
+
+                                            <button
+                                                type="button"
+                                                onClick={(e) => {
+                                                    e.preventDefault();
+                                                    setGalleryFiles([]);
+                                                }}
+                                                className="p-1.5 text-slate-400 hover:text-red-500 hover:bg-red-50 rounded-lg transition-all"
+                                                title="נקה בחירה"
+                                            >
+                                                <Trash2 className="w-4 h-4" />
+                                            </button>
                                         </div>
                                     )}
                                 </div>

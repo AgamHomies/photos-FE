@@ -384,7 +384,7 @@ const DashboardPage: React.FC = () => {
                                 </div>
                             </div>
                         </div>
-                    </div
+                    </div>
                 )}
 
                 {/* Events Section */}
