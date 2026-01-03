@@ -20,8 +20,10 @@ import {
     Copy,
     ExternalLink,
     X,
-    FolderUp
+    FolderUp,
+    Eye
 } from 'lucide-react';
+import EventPreviewModal from './components/EventPreviewModal';
 import { useUpload } from '../../context/UploadContext';
 
 const EventManagePage: React.FC = () => {
@@ -67,7 +69,7 @@ const EventManagePage: React.FC = () => {
 
     const [linkModal, setLinkModal] = useState<{
         isOpen: boolean;
-        type: 'guest' | 'couple';
+        type: 'guest' | 'couple' | 'preview';
         url: string;
         title: string;
     }>({ isOpen: false, type: 'guest', url: '', title: '' });
@@ -649,13 +651,7 @@ const EventManagePage: React.FC = () => {
 
                                         {/* Overlay Actions */}
                                         <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-2 backdrop-blur-sm">
-                                            <button
-                                                onClick={() => handleSetCover(photo.url)}
-                                                className="p-3 bg-white/90 rounded-xl hover:bg-white text-amber-500 transition-colors shadow-lg transform hover:scale-105"
-                                                title="קבע כתמונת קאבר"
-                                            >
-                                                <Star className="w-5 h-5 fill-current" />
-                                            </button>
+
                                             <button
                                                 onClick={() => handleDeletePhoto(photo.id)}
                                                 className="p-3 bg-white/90 rounded-xl hover:bg-white text-red-500 transition-colors shadow-lg transform hover:scale-105"
@@ -692,98 +688,117 @@ const EventManagePage: React.FC = () => {
                 )}
 
                 {activeTab === 'details' && (
-                    <div className="max-w-3xl mx-auto">
-                        <div className="bg-white rounded-3xl shadow-sm border border-slate-100 overflow-hidden">
-                            <div className="p-8 border-b border-slate-100">
-                                <h2 className="text-xl font-bold text-slate-900 flex items-center gap-2">
-                                    <div className="bg-cyan-100 p-2 rounded-lg text-cyan-600">
-                                        <FileText className="w-5 h-5" />
-                                    </div>
-                                    עריכת פרטי אירוע
-                                </h2>
-                            </div>
-                            <form onSubmit={handleUpdateDetails} className="p-8 space-y-6">
-                                <div>
-                                    <label className="block text-sm font-medium text-slate-700 mb-2">שם האירוע</label>
-                                    <input
-                                        type="text"
-                                        value={editForm.name}
-                                        onChange={e => setEditForm({ ...editForm, name: e.target.value })}
-                                        className="block w-full border border-slate-200 rounded-xl p-3 focus:ring-2 focus:ring-cyan-500 focus:border-cyan-500 transition-colors"
-                                    />
-                                </div>
-
-                                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                                    <div>
-                                        <label className="block text-sm font-medium text-slate-700 mb-2">תאריך</label>
-                                        <input
-                                            type="date"
-                                            value={editForm.date}
-                                            onChange={e => setEditForm({ ...editForm, date: e.target.value })}
-                                            className="block w-full border border-slate-200 rounded-xl p-3 focus:ring-2 focus:ring-cyan-500 focus:border-cyan-500 transition-colors"
-                                        />
-                                    </div>
-                                    <div>
-                                        <label className="block text-sm font-medium text-slate-700 mb-2">מיקום</label>
-                                        <input
-                                            type="text"
-                                            value={editForm.location}
-                                            onChange={e => setEditForm({ ...editForm, location: e.target.value })}
-                                            className="block w-full border border-slate-200 rounded-xl p-3 focus:ring-2 focus:ring-cyan-500 focus:border-cyan-500 transition-colors"
-                                        />
-                                    </div>
-
-                                    {/* Cover Image Upload */}
-                                    <div className="md:col-span-2 mb-6">
-                                        <label className="block text-sm font-medium text-slate-700 mb-2">תמונת קאבר</label>
-                                        <div className="border-2 border-dashed border-slate-200 rounded-xl p-6 text-center hover:border-cyan-500 transition-colors cursor-pointer relative group bg-slate-50">
-                                            <input
-                                                type="file"
-                                                accept="image/*"
-                                                onChange={async (e) => {
-                                                    if (e.target.files && e.target.files[0] && id) {
-                                                        const file = e.target.files[0];
-                                                        // Simple single cover upload
-                                                        if (id) startUpload(id, [], file);
-                                                    }
-                                                }}
-                                                className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10"
-                                                disabled={!!isClientUploading}
-                                            />
-                                            {event.coverImage ? (
-                                                <div className="relative h-48 w-full rounded-lg overflow-hidden">
-                                                    <img src={event.coverImage} alt="Cover" className="w-full h-full object-cover" />
-                                                    <div className="absolute inset-0 bg-black/40 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
-                                                        <div className="text-white font-medium flex items-center gap-2">
-                                                            <Upload className="w-5 h-5" />
-                                                            <span>לחץ להחלפה</span>
-                                                        </div>
-                                                    </div>
-                                                </div>
-                                            ) : (
-                                                <div className="flex flex-col items-center justify-center py-8">
-                                                    <div className="w-12 h-12 bg-white rounded-full flex items-center justify-center mb-3 text-slate-400 group-hover:text-cyan-500 transition-colors shadow-sm">
-                                                        <ImageIcon className="w-6 h-6" />
-                                                    </div>
-                                                    <p className="text-slate-600 font-medium">לחץ להעלאת תמונת קאבר</p>
-                                                    <p className="text-slate-400 text-sm mt-1">או גרור תמונה לכאן</p>
-                                                </div>
-                                            )}
+                    <div className="max-w-5xl mx-auto">
+                        <form onSubmit={handleUpdateDetails}>
+                            <div className="bg-white rounded-3xl shadow-sm border border-slate-100 overflow-hidden">
+                                <div className="p-8 border-b border-slate-100 flex items-center justify-between">
+                                    <h2 className="text-xl font-bold text-slate-900 flex items-center gap-2">
+                                        <div className="bg-cyan-100 p-2 rounded-lg text-cyan-600">
+                                            <FileText className="w-5 h-5" />
                                         </div>
-                                    </div>
-                                </div>
-
-                                <div className="pt-6 flex justify-end border-t border-slate-100">
+                                        עריכת פרטי אירוע
+                                    </h2>
                                     <button
                                         type="submit"
-                                        className="bg-slate-900 text-white px-8 py-3 rounded-xl font-bold hover:bg-slate-800 transition-colors flex items-center gap-2 shadow-lg"
+                                        className="bg-slate-900 text-white px-6 py-2 rounded-xl font-bold hover:bg-slate-800 transition-colors flex items-center gap-2 shadow-sm text-sm"
                                     >
                                         <Save className="w-4 h-4" />
                                         <span>שמור שינויים</span>
                                     </button>
                                 </div>
-                            </form>
-                        </div>
+
+                                <div className="p-8">
+                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-8 md:gap-12 mb-4">
+                                        {/* Right Column: Details Inputs */}
+                                        <div className="space-y-6">
+                                            <div>
+                                                <label className="block text-sm font-medium text-slate-700 mb-2">שם האירוע</label>
+                                                <input
+                                                    type="text"
+                                                    value={editForm.name}
+                                                    onChange={e => setEditForm({ ...editForm, name: e.target.value })}
+                                                    className="block w-full border border-slate-200 rounded-xl p-3 focus:ring-2 focus:ring-cyan-500 focus:border-cyan-500 transition-colors"
+                                                />
+                                            </div>
+
+                                            <div className="grid grid-cols-1 gap-6">
+                                                <div>
+                                                    <label className="block text-sm font-medium text-slate-700 mb-2">תאריך</label>
+                                                    <input
+                                                        type="date"
+                                                        value={editForm.date}
+                                                        onChange={e => setEditForm({ ...editForm, date: e.target.value })}
+                                                        className="block w-full border border-slate-200 rounded-xl p-3 focus:ring-2 focus:ring-cyan-500 focus:border-cyan-500 transition-colors"
+                                                    />
+                                                </div>
+                                                <div>
+                                                    <label className="block text-sm font-medium text-slate-700 mb-2">מיקום</label>
+                                                    <input
+                                                        type="text"
+                                                        value={editForm.location}
+                                                        onChange={e => setEditForm({ ...editForm, location: e.target.value })}
+                                                        className="block w-full border border-slate-200 rounded-xl p-3 focus:ring-2 focus:ring-cyan-500 focus:border-cyan-500 transition-colors"
+                                                    />
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                        {/* Left Column: Cover Image Upload */}
+                                        <div className="flex flex-col">
+                                            <label className="block text-sm font-medium text-slate-700 mb-2">תמונת קאבר</label>
+                                            <div className="border-2 border-dashed border-slate-200 rounded-xl p-6 text-center hover:border-cyan-500 transition-colors cursor-pointer relative group bg-slate-50 aspect-[3/2] w-full flex flex-col items-center justify-center">
+                                                <input
+                                                    type="file"
+                                                    accept="image/*"
+                                                    onChange={async (e) => {
+                                                        if (e.target.files && e.target.files[0] && id) {
+                                                            const file = e.target.files[0];
+                                                            // Simple single cover upload
+                                                            if (id) startUpload(id, [], file);
+                                                        }
+                                                    }}
+                                                    className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10"
+                                                    disabled={!!isClientUploading}
+                                                />
+                                                {event.coverImage ? (
+                                                    <div className="relative w-full h-full rounded-lg overflow-hidden">
+                                                        <img src={event.coverImage} alt="Cover" className="w-full h-full object-cover" />
+                                                        <div className="absolute inset-0 bg-black/40 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+                                                            <div className="text-white font-medium flex items-center gap-2">
+                                                                <Upload className="w-5 h-5" />
+                                                                <span>לחץ להחלפה</span>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                ) : (
+                                                    <div className="flex flex-col items-center justify-center">
+                                                        <div className="w-16 h-16 bg-white rounded-full flex items-center justify-center mb-4 text-slate-400 group-hover:text-cyan-500 transition-colors shadow-sm">
+                                                            <ImageIcon className="w-8 h-8" />
+                                                        </div>
+                                                        <p className="text-slate-600 font-medium text-lg">לחץ להעלאת תמונת קאבר</p>
+                                                        <p className="text-slate-400 text-sm mt-2">או גרור תמונה לכאן</p>
+                                                    </div>
+                                                )}
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    {/* Preview Button (Full Width Bottom) */}
+                                    <div className="mt-4 pt-4 border-t border-slate-100">
+                                        <button
+                                            type="button"
+                                            onClick={() => setLinkModal(prev => ({ ...prev, isOpen: true, type: 'preview' }))}
+                                            className="flex items-center justify-center gap-2 text-cyan-600 font-bold bg-cyan-50 px-6 py-4 rounded-xl hover:bg-cyan-100 transition-colors w-full"
+                                        >
+                                            <Eye className="w-5 h-5" />
+                                            <span>תצוגה מקדימה לגלריה</span>
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+
+
+                        </form>
 
                         <div id="delete-section" className="mt-8 bg-red-50 rounded-3xl border border-red-100 p-8">
                             <div className="flex items-start gap-4">
@@ -853,6 +868,17 @@ const EventManagePage: React.FC = () => {
                     </div>
                 </div>
             )}
+
+            <EventPreviewModal
+                isOpen={linkModal.isOpen && linkModal.type === 'preview'}
+                onClose={() => setLinkModal(prev => ({ ...prev, isOpen: false }))}
+                data={{
+                    name: editForm.name,
+                    date: editForm.date,
+                    location: editForm.location,
+                    coverImage: event.coverImage
+                }}
+            />
 
             {/* Toast Notification */}
             {toast.show && (

@@ -1,9 +1,10 @@
 import React, { useState, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Upload, Image as ImageIcon, Check, Calendar, MapPin, Camera, ScanFace, Send, Star, FolderUp } from 'lucide-react';
+import { Upload, Image as ImageIcon, Check, Calendar, MapPin, Camera, ScanFace, Send, Star, FolderUp, Eye } from 'lucide-react';
 import { BackendService } from '../../services/backendService';
 import Layout from '../../components/Layout';
 import { Toast } from '../../components';
+import EventPreviewModal from './components/EventPreviewModal';
 
 const CreateEventPage: React.FC = () => {
     const navigate = useNavigate();
@@ -20,6 +21,7 @@ const CreateEventPage: React.FC = () => {
     const [uploadProgress, setUploadProgress] = useState(0);
     const [processingStage, setProcessingStage] = useState('');
     const [createdEventLink, setCreatedEventLink] = useState('');
+    const [isPreviewOpen, setIsPreviewOpen] = useState(false);
     const folderInputRef = useRef<HTMLInputElement>(null);
 
     const [showToast, setShowToast] = useState(false);
@@ -204,91 +206,100 @@ const CreateEventPage: React.FC = () => {
                     {step === 'details' && (
                         <form onSubmit={handleSubmit} className="space-y-6">
 
-                            {/* Card 1: Event Details */}
+                            {/* Unified Card: Event Details & Cover Image */}
                             <div className="bg-white rounded-2xl shadow-sm border border-slate-100 p-4 md:p-8">
                                 <div className="flex items-center gap-2 mb-6 text-slate-800 font-bold text-lg">
                                     <Calendar className="w-5 h-5 text-cyan-500" />
                                     <h2>פרטי האירוע</h2>
                                 </div>
 
-                                <div className="space-y-6">
-                                    <div>
-                                        <label className="block text-sm font-medium text-slate-700 mb-2 text-right">שם האירוע</label>
-                                        <input
-                                            required
-                                            type="text"
-                                            name="name"
-                                            value={formData.name}
-                                            onChange={handleInputChange}
-                                            placeholder='חתונה - שירה ודוד / יום הולדת 30 / כנס חברה...'
-                                            className="block w-full border border-slate-200 rounded-xl p-3 focus:ring-2 focus:ring-cyan-500 focus:border-cyan-500 transition-colors text-right"
-                                        />
-                                    </div>
-
-                                    <div>
-                                        <label className="block text-sm font-medium text-slate-700 mb-2 text-right">תאריך האירוע</label>
-                                        <div className="relative">
-                                            <input
-                                                required
-                                                type="date"
-                                                name="date"
-                                                value={formData.date}
-                                                onChange={handleInputChange}
-                                                className="block w-full border border-slate-200 rounded-xl p-3 pl-10 focus:ring-2 focus:ring-cyan-500 focus:border-cyan-500 transition-colors text-right"
-                                            />
-                                            <Calendar className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400 pointer-events-none" />
-                                        </div>
-                                    </div>
-
-                                    <div>
-                                        <label className="block text-sm font-medium text-slate-700 mb-2 text-right">מיקום האירוע</label>
-                                        <div className="relative">
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-8 md:gap-12 mb-4">
+                                    {/* Right Column: Details Inputs */}
+                                    <div className="space-y-6">
+                                        <div>
+                                            <label className="block text-sm font-medium text-slate-700 mb-2 text-right">שם האירוע</label>
                                             <input
                                                 required
                                                 type="text"
-                                                name="location"
-                                                value={formData.location}
+                                                name="name"
+                                                value={formData.name}
                                                 onChange={handleInputChange}
-                                                placeholder="אולמי XYZ, תל אביב"
-                                                className="block w-full border border-slate-200 rounded-xl p-3 pl-10 focus:ring-2 focus:ring-cyan-500 focus:border-cyan-500 transition-colors text-right"
+                                                placeholder='חתונה - שירה ודוד / יום הולדת 30 / כנס חברה...'
+                                                className="block w-full border border-slate-200 rounded-xl p-3 focus:ring-2 focus:ring-cyan-500 focus:border-cyan-500 transition-colors text-right"
                                             />
-                                            <MapPin className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400 pointer-events-none" />
+                                        </div>
+
+                                        <div>
+                                            <label className="block text-sm font-medium text-slate-700 mb-2 text-right">תאריך האירוע</label>
+                                            <div className="relative">
+                                                <input
+                                                    required
+                                                    type="date"
+                                                    name="date"
+                                                    value={formData.date}
+                                                    onChange={handleInputChange}
+                                                    className="block w-full border border-slate-200 rounded-xl p-3 pl-10 focus:ring-2 focus:ring-cyan-500 focus:border-cyan-500 transition-colors text-right"
+                                                />
+                                                <Calendar className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400 pointer-events-none" />
+                                            </div>
+                                        </div>
+
+                                        <div>
+                                            <label className="block text-sm font-medium text-slate-700 mb-2 text-right">מיקום האירוע</label>
+                                            <div className="relative">
+                                                <input
+                                                    required
+                                                    type="text"
+                                                    name="location"
+                                                    value={formData.location}
+                                                    onChange={handleInputChange}
+                                                    placeholder="אולמי XYZ, תל אביב"
+                                                    className="block w-full border border-slate-200 rounded-xl p-3 pl-10 focus:ring-2 focus:ring-cyan-500 focus:border-cyan-500 transition-colors text-right"
+                                                />
+                                                <MapPin className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400 pointer-events-none" />
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    {/* Left Column: Cover Image Upload */}
+                                    <div className="flex flex-col">
+                                        <label className="block text-sm font-medium text-slate-700 mb-2 text-right">תמונת קאבר</label>
+                                        <div className="border-2 border-dashed border-slate-200 rounded-xl p-4 text-center hover:border-cyan-500 transition-colors cursor-pointer relative group aspect-[3/2] w-full max-w-sm mx-auto flex flex-col items-center justify-center bg-slate-50">
+                                            <input
+                                                type="file"
+                                                accept="image/*"
+                                                onChange={handleCoverImageChange}
+                                                className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10"
+                                            />
+                                            {coverPreview ? (
+                                                <div className="relative w-full h-full rounded-lg overflow-hidden shadow-sm">
+                                                    <img src={coverPreview} alt="Cover Preview" className="w-full h-full object-cover" />
+                                                    <div className="absolute inset-0 bg-black/40 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+                                                        <span className="text-white font-medium">לחץ להחלפה</span>
+                                                    </div>
+                                                </div>
+                                            ) : (
+                                                <div className="flex flex-col items-center justify-center">
+                                                    <div className="w-16 h-16 bg-white rounded-full flex items-center justify-center mb-4 text-slate-400 group-hover:text-cyan-500 transition-colors shadow-sm">
+                                                        <Upload className="w-8 h-8" />
+                                                    </div>
+                                                    <p className="text-slate-600 font-medium text-lg">לחץ להעלאת תמונת קאבר</p>
+                                                    <p className="text-slate-400 text-sm mt-2">או גרור תמונה לכאן</p>
+                                                </div>
+                                            )}
                                         </div>
                                     </div>
                                 </div>
-                            </div>
 
-                            {/* Card 2: Cover Image */}
-                            <div className="bg-white rounded-2xl shadow-sm border border-slate-100 p-4 md:p-8">
-                                <div className="flex items-center gap-2 mb-6 text-slate-800 font-bold text-lg">
-                                    <ImageIcon className="w-5 h-5 text-cyan-500" />
-                                    <h2>תמונת קאבר</h2>
-                                </div>
-
-                                <div className="border-2 border-dashed border-slate-200 rounded-xl p-8 text-center hover:border-cyan-500 transition-colors cursor-pointer relative group">
-                                    <input
-                                        type="file"
-                                        accept="image/*"
-                                        onChange={handleCoverImageChange}
-                                        className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10"
-                                    />
-                                    {coverPreview ? (
-                                        <div className="relative h-48 w-full rounded-lg overflow-hidden">
-                                            <img src={coverPreview} alt="Cover Preview" className="w-full h-full object-cover" />
-                                            <div className="absolute inset-0 bg-black/40 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
-                                                <span className="text-white font-medium">לחץ להחלפה</span>
-                                            </div>
-                                        </div>
-                                    ) : (
-                                        <div className="flex flex-col items-center justify-center py-4">
-                                            <div className="w-12 h-12 bg-slate-100 rounded-full flex items-center justify-center mb-3 text-slate-400 group-hover:text-cyan-500 transition-colors">
-                                                <Upload className="w-6 h-6" />
-                                            </div>
-                                            <p className="text-slate-600 font-medium">לחץ להעלאת תמונת קאבר</p>
-                                            <p className="text-slate-400 text-sm mt-1">או גרור תמונה לכאן</p>
-                                            <p className="text-slate-400 text-xs mt-1">מומלץ יחס 16:9</p>
-                                        </div>
-                                    )}
+                                <div className="mt-4 pt-4 border-t border-slate-100">
+                                    <button
+                                        type="button"
+                                        onClick={() => setIsPreviewOpen(true)}
+                                        className="flex items-center justify-center gap-2 text-cyan-600 font-bold bg-cyan-50 px-6 py-4 rounded-xl hover:bg-cyan-100 transition-colors w-full"
+                                    >
+                                        <Eye className="w-5 h-5" />
+                                        <span>תצוגה מקדימה לגלריה</span>
+                                    </button>
                                 </div>
                             </div>
 
@@ -474,9 +485,18 @@ const CreateEventPage: React.FC = () => {
                             </div>
                         </div>
                     </div>
-
                 </div>
             </div>
+            <EventPreviewModal
+                isOpen={isPreviewOpen}
+                onClose={() => setIsPreviewOpen(false)}
+                data={{
+                    name: formData.name,
+                    date: formData.date,
+                    location: formData.location,
+                    coverImage: coverPreview
+                }}
+            />
             <Toast
                 show={showToast}
                 message={toastMessage}
