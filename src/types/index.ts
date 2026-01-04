@@ -98,7 +98,20 @@ export interface DashboardStats {
   totalPageVisits: number;
   phoneSaves: number;
   activeEvents: number;
-  totalSocialTraffic: number;
-  maxEvents: number;
   expiredEvents: number;
+  maxEvents: number; // From HEAD
+  totalEvents: number;
+  totalImages: number;
+  totalSocialTraffic: number;
+  trafficFacebook: number;
+  trafficInstagram: number;
+  trafficTiktok: number;
+  avgDownloadsPerEvent: number;
+  avgPageVisitsPerEvent: number;
+  avgPhoneSavesPerEvent: number;
+  avgImagesPerEvent: number;
+  maxDownloadsPerEvent: number;
+  maxPageVisitsPerEvent: number;
+  maxPhoneSavesPerEvent: number;
+  maxImagesPerEvent: number;
 }

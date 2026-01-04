@@ -319,63 +319,177 @@ const DashboardPage: React.FC = () => {
                     </div>
                 </div>
 
-                {/* Stats Grid */}
-                {/* Stats Grid */}
+                {/* Stats Grid - TEMPORARY: 1 Row, 6 Columns (was: 2 Rows, 3 Columns) */}
                 {stats && (
-                    <div className="grid grid-cols-2 lg:grid-cols-5 gap-3 md:gap-6 mb-8 md:mb-10">
-                        {/* 1. סה"כ הורדות */}
-                        <div className="bg-white p-4 md:p-6 rounded-xl md:rounded-2xl shadow-sm border border-slate-100 hover:shadow-md transition-shadow">
-                            <div className="p-2 md:p-3 bg-blue-50 text-blue-500 rounded-lg md:rounded-xl w-fit mb-3 md:mb-4">
-                                <Download className="w-5 h-5 md:w-6 md:h-6" />
-                            </div>
-                            <h3 className="text-2xl md:text-3xl font-bold text-slate-900 mb-1">{stats.totalDownloads.toLocaleString()}</h3>
-                            <p className="text-slate-500 text-xs md:text-sm font-medium">סה"כ הורדות</p>
-                        </div>
-
-                        {/* 2. כניסות לדפי אירועים */}
-                        <div className="bg-white p-4 md:p-6 rounded-xl md:rounded-2xl shadow-sm border border-slate-100 hover:shadow-md transition-shadow">
-                            <div className="p-2 md:p-3 bg-purple-50 text-purple-500 rounded-lg md:rounded-xl w-fit mb-3 md:mb-4">
-                                <Users className="w-5 h-5 md:w-6 md:h-6" />
-                            </div>
-                            <h3 className="text-2xl md:text-3xl font-bold text-slate-900 mb-1">{stats.totalPageVisits.toLocaleString()}</h3>
-                            <p className="text-slate-500 text-xs md:text-sm font-medium">כניסות אורחים</p>
-                        </div>
-
-                        {/* 3. כניסה לפרופיל שלך */}
-                        <div className="bg-white p-4 md:p-6 rounded-xl md:rounded-2xl shadow-sm border border-slate-100 hover:shadow-md transition-shadow">
-                            <div className="bg-pink-50 p-2 md:p-3 rounded-lg md:rounded-xl w-fit mb-3 md:mb-4 text-pink-500">
-                                <Share2 className="w-5 h-5 md:w-6 md:h-6" />
-                            </div>
-                            <h3 className="text-2xl md:text-3xl font-bold text-slate-900 mb-1">{stats.totalSocialTraffic.toLocaleString()}</h3>
-                            <p className="text-slate-500 text-xs md:text-sm font-medium leading-tight">כניסות לפרופיל</p>
-                            {/* Hidden detail on mobile to save space */}
-                            <p className="hidden md:block text-slate-400 text-xs mt-1">פייסבוק • אינסטגרם • טיקטוק</p>
-                        </div>
-
-                        {/* 4. שמרו את המספר שלך */}
-                        <div className="bg-white p-4 md:p-6 rounded-xl md:rounded-2xl shadow-sm border border-slate-100 hover:shadow-md transition-shadow">
-                            <div className="bg-green-50 p-2 md:p-3 rounded-lg md:rounded-xl w-fit mb-3 md:mb-4 text-green-500">
-                                <Smartphone className="w-5 h-5 md:w-6 md:h-6" />
-                            </div>
-                            <h3 className="text-2xl md:text-3xl font-bold text-slate-900 mb-1">{stats.phoneSaves.toLocaleString()}</h3>
-                            <p className="text-slate-500 text-xs md:text-sm font-medium">שמרו מספר</p>
-                        </div>
-
-                        {/* 5. אירועים פעילים */}
-                        <div className="bg-white p-4 md:p-6 rounded-xl md:rounded-2xl shadow-sm border border-slate-100 hover:shadow-md transition-shadow col-span-2 md:col-span-1 lg:col-span-1">
-                            <div className="flex flex-row md:flex-col items-center md:items-start justify-between md:justify-start gap-4 md:gap-0">
-                                <div className="bg-orange-50 p-2 md:p-3 rounded-lg md:rounded-xl w-fit mb-0 md:mb-4 text-orange-500">
-                                    <Calendar className="w-5 h-5 md:w-6 md:h-6" />
+                    <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-6 gap-5 mb-8">
+                        {/* 1. אירועים */}
+                        <div className="bg-white p-5 rounded-2xl shadow-sm border border-slate-100 hover:shadow-md transition-all relative">
+                            <div className="absolute top-5 right-5">
+                                <div className="p-2.5 bg-orange-50 text-orange-500 rounded-xl">
+                                    <Calendar className="w-5 h-5" />
                                 </div>
-                                <div className="w-full">
-                                    <h3 className="text-2xl md:text-3xl font-bold text-slate-900 mb-1">
-                                        {stats.activeEvents}<span className="text-lg text-slate-400 font-normal">/{stats.activeEvents + stats.expiredEvents}</span>
-                                    </h3>
-                                    <p className="text-slate-500 text-xs md:text-sm font-medium">אירועים פעילים</p>
+                            </div>
+                            <div className="flex flex-col items-center text-center mb-3 pt-2 min-h-[80px]">
+                                <h3 className="text-3xl font-black text-slate-900 leading-none">{stats.totalEvents}</h3>
+                                <p className="text-slate-500 font-semibold mt-1 text-sm">אירועים</p>
+                            </div>
+                            <div className="pt-3 border-t border-slate-100 flex justify-between text-right">
+                                <div>
+                                    <p className="text-slate-400 text-xs font-semibold">פעילים</p>
+                                    <p className="text-green-600 font-bold text-base">{stats.activeEvents}</p>
+                                </div>
+                                <div>
+                                    <p className="text-slate-400 text-xs font-semibold">פג תוקף</p>
+                                    <p className="text-slate-600 font-bold text-base">{stats.expiredEvents}</p>
                                 </div>
                             </div>
                         </div>
-                    </div>
+
+                        {/* 2. תמונות */}
+                        <div className="bg-white p-5 rounded-2xl shadow-sm border border-slate-100 hover:shadow-md transition-all relative">
+                            <div className="absolute top-5 right-5">
+                                <div className="p-2.5 bg-cyan-50 text-cyan-500 rounded-xl">
+                                    <ImageIcon className="w-5 h-5" />
+                                </div>
+                            </div>
+                            <div className="flex flex-col items-center text-center mb-3 pt-2 min-h-[80px]">
+                                <h3 className="text-3xl font-black text-slate-900 leading-none">{(stats.totalImages || 0).toLocaleString()}</h3>
+                                <p className="text-slate-500 font-semibold mt-1 text-sm">תמונות</p>
+                            </div>
+                            <div className="pt-3 border-t border-slate-100 flex justify-between text-right">
+                                <div>
+                                    <p className="text-slate-400 text-xs font-semibold">מקסימום</p>
+                                    <p className="text-slate-900 font-bold text-base">{stats.maxImagesPerEvent || 0}</p>
+                                </div>
+                                <div>
+                                    <p className="text-slate-400 text-xs font-semibold">ממוצע</p>
+                                    <p className="text-slate-900 font-bold text-base">{stats.avgImagesPerEvent || 0}</p>
+                                </div>
+                            </div>
+                        </div>
+
+                        {/* 3. צפיות */}
+                        <div className="bg-white p-5 rounded-2xl shadow-sm border border-slate-100 hover:shadow-md transition-all relative">
+                            <div className="absolute top-5 right-5">
+                                <div className="p-2.5 bg-purple-50 text-purple-500 rounded-xl">
+                                    <Eye className="w-5 h-5" />
+                                </div>
+                            </div>
+                            <div className="flex flex-col items-center text-center mb-3 pt-2 min-h-[80px]">
+                                <h3 className="text-3xl font-black text-slate-900 leading-none">{(stats.totalPageVisits || 0).toLocaleString()}</h3>
+                                <p className="text-slate-500 font-semibold mt-1 text-sm">צפיות</p>
+                            </div>
+                            <div className="pt-3 border-t border-slate-100 flex justify-between text-right">
+                                <div>
+                                    <p className="text-slate-400 text-xs font-semibold">מקסימום</p>
+                                    <p className="text-slate-900 font-bold text-base">{stats.maxPageVisitsPerEvent || 0}</p>
+                                </div>
+                                <div>
+                                    <p className="text-slate-400 text-xs font-semibold">ממוצע</p>
+                                    <p className="text-slate-900 font-bold text-base">{stats.avgPageVisitsPerEvent || 0}</p>
+                                </div>
+                            </div>
+                        </div>
+
+                        {/* 4. הורדות */}
+                        <div className="bg-white p-5 rounded-2xl shadow-sm border border-slate-100 hover:shadow-md transition-all relative">
+                            <div className="absolute top-5 right-5">
+                                <div className="p-2.5 bg-blue-50 text-blue-500 rounded-xl">
+                                    <Download className="w-5 h-5" />
+                                </div>
+                            </div>
+                            <div className="absolute top-5 left-5">
+                                <div className="text-left group">
+                                    <span className="bg-blue-100 text-blue-600 px-2 py-0.5 rounded-full text-[10px] font-bold cursor-help">
+                                        {stats.totalPageVisits > 0 ? Math.round((stats.totalDownloads / stats.totalPageVisits) * 100) : 0}%
+                                    </span>
+                                    <p className="text-slate-600 text-[10px] font-semibold mt-0.5 opacity-0 group-hover:opacity-100 transition-opacity leading-tight">
+                                        אחוז<br />המרה<br />מצפיות
+                                    </p>
+                                </div>
+                            </div>
+                            <div className="flex flex-col items-center text-center mb-3 pt-2 min-h-[80px]">
+                                <h3 className="text-3xl font-black text-slate-900 leading-none">{(stats.totalDownloads || 0).toLocaleString()}</h3>
+                                <p className="text-slate-500 font-semibold mt-1 text-sm">הורדות</p>
+                            </div>
+                            <div className="pt-3 border-t border-slate-100 flex justify-between text-right">
+                                <div>
+                                    <p className="text-slate-400 text-xs font-semibold">מקסימום</p>
+                                    <p className="text-slate-900 font-bold text-base">{stats.maxDownloadsPerEvent || 0}</p>
+                                </div>
+                                <div>
+                                    <p className="text-slate-400 text-xs font-semibold">ממוצע</p>
+                                    <p className="text-slate-900 font-bold text-base">{stats.avgDownloadsPerEvent || 0}</p>
+                                </div>
+                            </div>
+                        </div>
+
+                        {/* 5. שמירות */}
+                        <div className="bg-white p-5 rounded-2xl shadow-sm border border-slate-100 hover:shadow-md transition-all relative">
+                            <div className="absolute top-5 right-5">
+                                <div className="p-2.5 bg-green-50 text-green-500 rounded-xl">
+                                    <Smartphone className="w-5 h-5" />
+                                </div>
+                            </div>
+                            <div className="absolute top-5 left-5">
+                                <div className="text-left group">
+                                    <span className="bg-green-100 text-green-600 px-2 py-0.5 rounded-full text-[10px] font-bold cursor-help">
+                                        {stats.totalPageVisits > 0 ? Math.round((stats.phoneSaves / stats.totalPageVisits) * 100) : 0}%
+                                    </span>
+                                    <p className="text-slate-600 text-[10px] font-semibold mt-0.5 opacity-0 group-hover:opacity-100 transition-opacity leading-tight">
+                                        אחוז<br />המרה<br />מצפיות
+                                    </p>
+                                </div>
+                            </div>
+                            <div className="flex flex-col items-center text-center mb-3 pt-2 min-h-[80px]">
+                                <h3 className="text-3xl font-black text-slate-900 leading-none">{(stats.phoneSaves || 0).toLocaleString()}</h3>
+                                <p className="text-slate-500 font-semibold mt-1 text-sm">שמירות</p>
+                            </div>
+                            <div className="pt-3 border-t border-slate-100 flex justify-between text-right">
+                                <div>
+                                    <p className="text-slate-400 text-xs font-semibold">מקסימום</p>
+                                    <p className="text-slate-900 font-bold text-base">{stats.maxPhoneSavesPerEvent || 0}</p>
+                                </div>
+                                <div>
+                                    <p className="text-slate-400 text-xs font-semibold">ממוצע</p>
+                                    <p className="text-slate-900 font-bold text-base">{stats.avgPhoneSavesPerEvent || 0}</p>
+                                </div>
+                            </div>
+                        </div>
+
+                        {/* 6. כניסות לפרופיל */}
+                        <div className="bg-white p-5 rounded-2xl shadow-sm border border-slate-100 hover:shadow-md transition-all relative">
+                            <div className="absolute top-5 right-5">
+                                <div className="p-2.5 bg-pink-50 text-pink-500 rounded-xl">
+                                    <Share2 className="w-5 h-5" />
+                                </div>
+                            </div>
+                            <div className="absolute top-5 left-5">
+                                <div className="text-left group">
+                                    <span className="bg-pink-100 text-pink-600 px-2 py-0.5 rounded-full text-[10px] font-bold cursor-help">
+                                        {stats.totalPageVisits > 0 ? Math.round((stats.totalSocialTraffic / stats.totalPageVisits) * 100) : 0}%
+                                    </span>
+                                    <p className="text-slate-600 text-[10px] font-semibold mt-0.5 opacity-0 group-hover:opacity-100 transition-opacity leading-tight">
+                                        אחוז<br />המרה<br />מצפיות
+                                    </p>
+                                </div>
+                            </div>
+                            <div className="flex flex-col items-center text-center mb-3 pt-2 min-h-[80px]">
+                                <h3 className="text-3xl font-black text-slate-900 leading-none">{(stats.totalSocialTraffic || 0).toLocaleString()}</h3>
+                                <p className="text-slate-500 font-semibold mt-1 text-sm">כניסות לפרופיל</p>
+                                <p className="text-slate-400 text-[10px] mt-0.5">פייסבוק • אינסטגרם • טיקטוק</p>
+                            </div>
+                            <div className="pt-3 border-t border-slate-100 flex justify-between text-right">
+                                <div>
+                                    <p className="text-slate-400 text-xs font-semibold">מקסימום</p>
+                                    <p className="text-slate-900 font-bold text-base">{stats.totalEvents > 0 ? Math.max(stats.trafficFacebook, stats.trafficInstagram, stats.trafficTiktok) : 0}</p>
+                                </div>
+                                <div>
+                                    <p className="text-slate-400 text-xs font-semibold">ממוצע</p>
+                                    <p className="text-slate-900 font-bold text-base">{stats.totalEvents > 0 ? (stats.totalSocialTraffic / stats.totalEvents).toFixed(1) : 0}</p>
+                                </div>
+                            </div>
+                        </div>                   </div>
                 )}
 
                 {/* Events Section */}

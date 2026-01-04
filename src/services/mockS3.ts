@@ -269,14 +269,33 @@ export const MockS3Service = {
         const s3Data = loadData();
         const userEvents = s3Data.events[email] || [];
 
+        const totalDownloads = userEvents.reduce((acc, curr) => acc + curr.downloads, 0);
+        const totalPageVisits = userEvents.reduce((acc, curr) => acc + curr.guestVisits, 0);
+        const phoneSaves = Math.floor(totalPageVisits * 0.4);
+        const totalEvents = userEvents.length;
+        const totalImages = userEvents.reduce((acc, curr) => acc + (curr.photoCount || 0), 0);
+
         const stats: DashboardStats = {
-            totalDownloads: userEvents.reduce((acc, curr) => acc + curr.downloads, 0),
-            totalPageVisits: userEvents.reduce((acc, curr) => acc + curr.guestVisits, 0),
-            phoneSaves: Math.floor(userEvents.reduce((acc, curr) => acc + curr.guestVisits, 0) * 0.4),
+            totalDownloads,
+            totalPageVisits,
+            phoneSaves,
             activeEvents: userEvents.filter(e => e.status === 'active').length,
             expiredEvents: userEvents.filter(e => e.status === 'expired').length,
+            maxEvents: 5, // Default mock limit from HEAD
+            totalEvents,
+            totalImages,
             totalSocialTraffic: 0,
-            maxEvents: 5 // Default mock limit
+            trafficFacebook: 0,
+            trafficInstagram: 0,
+            trafficTiktok: 0,
+            avgDownloadsPerEvent: totalEvents > 0 ? Number((totalDownloads / totalEvents).toFixed(1)) : 0,
+            avgPageVisitsPerEvent: totalEvents > 0 ? Number((totalPageVisits / totalEvents).toFixed(1)) : 0,
+            avgPhoneSavesPerEvent: totalEvents > 0 ? Number((phoneSaves / totalEvents).toFixed(1)) : 0,
+            avgImagesPerEvent: totalEvents > 0 ? Number((totalImages / totalEvents).toFixed(1)) : 0,
+            maxDownloadsPerEvent: userEvents.length > 0 ? Math.max(...userEvents.map(e => e.downloads)) : 0,
+            maxPageVisitsPerEvent: userEvents.length > 0 ? Math.max(...userEvents.map(e => e.guestVisits)) : 0,
+            maxPhoneSavesPerEvent: userEvents.length > 0 ? Math.max(...userEvents.map(e => Math.floor(e.guestVisits * 0.4))) : 0,
+            maxImagesPerEvent: userEvents.length > 0 ? Math.max(...userEvents.map(e => e.photoCount || 0)) : 0
         };
 
         return stats;
