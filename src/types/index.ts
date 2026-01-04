@@ -98,5 +98,10 @@ export interface DashboardStats {
   phoneSaves: number;
   activeEvents: number;
   expiredEvents: number;
+  totalEvents: number;
+  totalImages: number;
   totalSocialTraffic: number;
+  trafficFacebook: number;
+  trafficInstagram: number;
+  trafficTiktok: number;
 }
