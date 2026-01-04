@@ -5,12 +5,14 @@ import {
   Users,
   Zap,
   ScanFace,
-  Images,
+  Image,
   Aperture,
   ChevronDown,
+  Download,
   ChevronUp,
   ArrowRight,
   Play,
+  Pause,
   CheckCircle2,
   CloudUpload,
   Share2,
@@ -19,11 +21,24 @@ import {
   Target,
   MessageCircle,
   Clock,
-  ShieldCheck
+  ShieldCheck,
+  Heart,
+  MapPin,
+  Calendar,
+  Globe,
+  Phone,
+  Instagram,
+  Facebook,
+  Check,
+  Search,
+  Lock,
+  Menu,
+  X
 } from 'lucide-react';
 
 import Layout from '../../components/Layout';
 import { useAuth } from '../../hooks/useAuth';
+import { PhoneMockupDemo } from './PhoneMockupDemo';
 
 const HomePage: React.FC = () => {
   const [openFaq, setOpenFaq] = useState<number | null>(null);
@@ -42,6 +57,10 @@ const HomePage: React.FC = () => {
     }
   }, [isAuthenticated, isLoading, navigate]);
 
+  // ... (rest of imports)
+
+
+
 
   const steps = [
     {
@@ -55,7 +74,7 @@ const HomePage: React.FC = () => {
       description: "האורחים מעלים סלפי דרך הלינק הייחודי שלהם"
     },
     {
-      icon: <Images className="w-8 h-8 text-white" />,
+      icon: <Image className="w-8 h-8 text-white" />,
       title: "3. יצירת גלריה אישית",
       description: "המערכת מוצאת ומציגה רק את התמונות שבהם הם מופיעים, בתוך עמוד ממותג של הצלם"
     }
@@ -84,7 +103,7 @@ const HomePage: React.FC = () => {
       icon: <CheckCircle2 className="w-6 h-6 text-white" />,
       bg: "bg-amber-500",
       title: "תמחור פשוט ונגיש",
-      description: "אירוע ראשון עלינו! אחר כך — רק 250 ₪ לאירוע. בלי התחייבויות ובלי אותיות קטנות."
+      description: "אירוע ראשון עלינו! ולאחר מכן משלמים לפי התמחור שמופיע למטה, פר אירוע בלבד. בלי מנוי חודשי, בלי התחייבות!"
     }
   ];
 
@@ -169,31 +188,40 @@ const HomePage: React.FC = () => {
             </div>
 
             {/* Hero Image / Mockup */}
-            <div className="lg:w-1/2 relative">
-              <div className="relative z-10 bg-white p-3 lg:p-6 rounded-[2.5rem] shadow-2xl transform rotate-[-1deg] lg:rotate-[-2deg] hover:rotate-0 transition-transform duration-500 border border-slate-100">
-                <div className="relative rounded-2xl overflow-hidden bg-slate-100 aspect-[4/3]">
-                  {/* Placeholder for the phone mockup image from the user's screenshot */}
-                  <div className="absolute inset-0 flex items-center justify-center bg-slate-50">
-                    <div className="text-center">
-                      <div className="flex justify-center gap-4 mb-4">
-                        <div className="w-16 h-32 bg-slate-800 rounded-2xl border-4 border-slate-900 shadow-xl"></div>
-                        <div className="w-20 h-40 bg-slate-800 rounded-2xl border-4 border-slate-900 shadow-2xl transform -translate-y-4 z-10"></div>
-                        <div className="w-16 h-32 bg-slate-800 rounded-2xl border-4 border-slate-900 shadow-xl"></div>
-                      </div>
-                      <p className="text-slate-400 font-medium">תצוגה מקדימה של האפליקציה</p>
-                    </div>
+            <div className="lg:w-1/2 relative flex flex-col items-center justify-center">
+
+              {/* Emphasis Badge */}
+              <div className="mb-8 relative z-20 hover:scale-105 transition-transform duration-300">
+                <div className="bg-white shadow-[0_10px_40px_-10px_rgba(0,0,0,0.15)] border border-slate-100 px-6 py-3 rounded-2xl flex items-center gap-3 relative overflow-hidden">
+                  <div className="absolute inset-0 bg-gradient-to-r from-cyan-50/50 to-purple-50/50 opacity-50"></div>
+                  <span className="relative flex h-3 w-3">
+                    <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-cyan-400 opacity-75"></span>
+                    <span className="relative inline-flex rounded-full h-3 w-3 bg-cyan-500"></span>
+                  </span>
+                  <div className="relative">
+                    <p className="font-bold text-slate-800 text-sm leading-none mb-1">הדמייה של הגלריה לאורחים</p>
+                    <p className="text-[10px] text-slate-500 font-medium">מיד לאחר שהעלתם את התמונות למערכת</p>
                   </div>
-                  {/* If we had the real image, we would put it here */}
-                  {/* <img src="/path/to/hero-image.png" alt="App Preview" className="w-full h-full object-cover" /> */}
                 </div>
-
-                {/* Floating Badge */}
-
+                {/* Arrow pointing down */}
+                <div className="absolute left-1/2 -ml-2 -bottom-2 w-4 h-4 bg-white transform rotate-45 border-b border-r border-slate-100"></div>
               </div>
 
-              {/* Decorative blobs */}
-              <div className="hidden absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[120%] h-[120%] bg-gradient-to-tr from-cyan-200/40 to-blue-200/40 rounded-full filter blur-3xl -z-10 opacity-70"></div>
+              <div className="relative z-10 bg-white p-2 rounded-[3rem] shadow-2xl transform rotate-[-1deg] hover:rotate-0 transition-transform duration-500 border-4 border-slate-900 w-full max-w-[320px]">
+                <div className="relative rounded-[2.5rem] overflow-hidden bg-slate-900 aspect-[9/19] ring-8 ring-slate-900">
+                  {/* Animated App Demo - High Fidelity Replica */}
+                  <PhoneMockupDemo />
+                </div>
+                {/* If we had the real image, we would put it here */}
+                {/* <img src="/path/to/hero-image.png" alt="App Preview" className="w-full h-full object-cover" /> */}
+              </div>
+
+              {/* Floating Badge */}
+
             </div>
+
+            {/* Decorative blobs */}
+            <div className="hidden absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[120%] h-[120%] bg-gradient-to-tr from-cyan-200/40 to-blue-200/40 rounded-full filter blur-3xl -z-10 opacity-70"></div>
           </div>
         </div>
       </section>
@@ -271,8 +299,126 @@ const HomePage: React.FC = () => {
         </div>
       </section>
 
+      {/* Pricing Section */}
+      <section id="pricing-section" className="py-12 lg:py-24 bg-white relative overflow-hidden">
+        <div className="container mx-auto px-4">
+          <div className="text-center mb-16">
+            <h2 className="text-3xl lg:text-5xl font-bold text-slate-900 mb-6">תמחור גמיש ופשוט</h2>
+            <p className="text-lg text-slate-600 max-w-2xl mx-auto">תשלום פר אירוע, ללא דמי מנוי חודשיים וללא התחייבות.</p>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-8 max-w-6xl mx-auto items-stretch">
+            {/* Package 1 */}
+            <div className="bg-white rounded-3xl p-8 border border-slate-100 shadow-sm hover:shadow-xl transition-all duration-300 relative group">
+              <div className="mb-6">
+                <h3 className="text-xl font-bold text-slate-900 mb-2">חבילת בסיס</h3>
+                <div className="flex items-baseline gap-1">
+                  <span className="text-4xl font-bold text-slate-900">₪229</span>
+                  <span className="text-slate-500 font-medium bg-slate-100 px-2 py-0.5 rounded-md">לאירוע</span>
+                </div>
+                <p className="text-slate-500 mt-2">מתאים לאירועים קטנים ואינטימיים</p>
+              </div>
+              <ul className="space-y-4 mb-8">
+                <li className="flex items-center gap-3 text-slate-600">
+                  <CheckCircle2 className="w-5 h-5 text-cyan-500 flex-shrink-0" />
+                  <span>עד <strong>1,200</strong> תמונות</span>
+                </li>
+                <li className="flex items-center gap-3 text-slate-600">
+                  <CheckCircle2 className="w-5 h-5 text-cyan-500 flex-shrink-0" />
+                  <span>גלריה אישית לכל אורח</span>
+                </li>
+                <li className="flex items-center gap-3 text-slate-600">
+                  <CheckCircle2 className="w-5 h-5 text-cyan-500 flex-shrink-0" />
+                  <span>אחסון מאובטח בענן</span>
+                </li>
+              </ul>
+            </div>
+
+            {/* Package 2 - Recommended */}
+            <div className="bg-white rounded-3xl p-8 border-2 border-cyan-500 shadow-2xl relative transform scale-105 z-10 flex flex-col">
+              <div className="absolute top-0 left-1/2 -translate-x-1/2 -translate-y-1/2 bg-cyan-500 text-white px-6 py-2 rounded-full font-bold text-sm shadow-lg whitespace-nowrap">
+                הכי מומלצת 🔥
+              </div>
+              <div className="mb-6">
+                <h3 className="text-xl font-bold text-slate-900 mb-2">חבילת פרימיום</h3>
+                <div className="flex items-baseline gap-1">
+                  <span className="text-5xl font-bold text-cyan-500">₪279</span>
+                  <span className="text-slate-500 font-medium bg-slate-100 px-2 py-0.5 rounded-md">לאירוע</span>
+                </div>
+                <p className="text-slate-500 mt-2">הבחירה המושלמת לרוב האירועים</p>
+              </div>
+              <ul className="space-y-4 mb-8 flex-1">
+                <li className="flex items-center gap-3 text-slate-700 font-medium">
+                  <div className="bg-cyan-100 p-1 rounded-full">
+                    <CheckCircle2 className="w-4 h-4 text-cyan-600 flex-shrink-0" />
+                  </div>
+                  <span>עד <strong>9,000</strong> תמונות</span>
+                </li>
+                <li className="flex items-center gap-3 text-slate-700 font-medium">
+                  <div className="bg-cyan-100 p-1 rounded-full">
+                    <CheckCircle2 className="w-4 h-4 text-cyan-600 flex-shrink-0" />
+                  </div>
+                  <span>סינון AI מהיר במיוחד</span>
+                </li>
+                <li className="flex items-center gap-3 text-slate-700 font-medium">
+                  <div className="bg-cyan-100 p-1 rounded-full">
+                    <CheckCircle2 className="w-4 h-4 text-cyan-600 flex-shrink-0" />
+                  </div>
+                  <span>תמיכה טכנית מלאה</span>
+                </li>
+                <li className="flex items-center gap-3 text-slate-700 font-medium">
+                  <div className="bg-cyan-100 p-1 rounded-full">
+                    <CheckCircle2 className="w-4 h-4 text-cyan-600 flex-shrink-0" />
+                  </div>
+                  <span>ללא סימן מים</span>
+                </li>
+              </ul>
+            </div>
+
+            {/* Package 3 */}
+            <div className="bg-white rounded-3xl p-8 border border-slate-100 shadow-sm hover:shadow-xl transition-all duration-300 relative group">
+              <div className="mb-6">
+                <h3 className="text-xl font-bold text-slate-900 mb-2">חבילת זהב</h3>
+                <div className="flex items-baseline gap-1">
+                  <span className="text-4xl font-bold text-slate-900">₪429</span>
+                  <span className="text-slate-500 font-medium bg-slate-100 px-2 py-0.5 rounded-md">לאירוע</span>
+                </div>
+                <p className="text-slate-500 mt-2">לאירועי ענק וצלמים מובילים</p>
+              </div>
+              <ul className="space-y-4 mb-8">
+                <li className="flex items-center gap-3 text-slate-600">
+                  <CheckCircle2 className="w-5 h-5 text-cyan-500 flex-shrink-0" />
+                  <span>עד <strong>20,000</strong> תמונות</span>
+                </li>
+                <li className="flex items-center gap-3 text-slate-600">
+                  <CheckCircle2 className="w-5 h-5 text-cyan-500 flex-shrink-0" />
+                  <span>עדיפות בעיבוד תמונות</span>
+                </li>
+                <li className="flex items-center gap-3 text-slate-600">
+                  <CheckCircle2 className="w-5 h-5 text-cyan-500 flex-shrink-0" />
+                  <span>סטטיסטיקות מתקדמות</span>
+                </li>
+              </ul>
+            </div>
+          </div>
+
+          <div className="mt-16 text-center">
+            <button
+              onClick={() => navigate('/auth', { state: { mode: 'register' } })}
+              className="bg-slate-900 text-white text-xl font-bold py-5 px-12 rounded-2xl shadow-xl hover:shadow-2xl hover:bg-slate-800 hover:-translate-y-1 transition-all group"
+            >
+              <span className="flex items-center gap-3">
+                התחל עכשיו וקבל אירוע ראשון בחינם!!
+                <ArrowRight className="w-6 h-6 group-hover:translate-x-1 transition-transform" />
+              </span>
+            </button>
+            <p className="mt-4 text-slate-500">ללא התחייבות • ללא דמי מנוי • שלם רק כשאתה צריך</p>
+          </div>
+        </div>
+      </section>
+
       {/* FAQ Section */}
-      <section id="faq-section" className="py-12 lg:py-24 bg-white">
+      <section id="faq-section" className="py-12 lg:py-24 bg-slate-50">
         <div className="container mx-auto px-4 max-w-3xl">
           <div className="text-center mb-16">
             <h2 className="text-3xl font-bold text-slate-900 mb-4">שאלות נפוצות</h2>
@@ -349,7 +495,7 @@ const HomePage: React.FC = () => {
           </div>
         </div>
       </section>
-    </Layout>
+    </Layout >
   );
 };
 
