@@ -542,7 +542,8 @@ export const RealPhotoAPI = {
 // ============================================
 export const RealDashboardAPI = {
     getDashboardStats: async (): Promise<DashboardStats> => {
-        return await apiRequest('/events/stats');
+        const response = await apiRequest('/dashboard/stats');
+        return response.data;
     },
 };
 
