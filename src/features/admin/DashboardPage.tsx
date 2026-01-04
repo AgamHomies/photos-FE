@@ -277,10 +277,9 @@ const DashboardPage: React.FC = () => {
                     </button>
                 </div>
 
-                {/* Stats Grid */}
-                {/* Stats Grid */}
+                {/* Stats Grid - Premium Cubes */}
                 {stats && (
-                    <div className="grid grid-cols-2 gap-4 md:gap-6 mb-8 md:mb-10">
+                    <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4 md:gap-6 mb-8 md:mb-10">
                         {/* 1. אירועים */}
                         <div className="bg-white p-4 md:p-6 rounded-2xl shadow-sm border border-slate-100 hover:shadow-md transition-shadow relative overflow-hidden group">
                             <div className="flex justify-between items-start mb-4">
@@ -290,8 +289,8 @@ const DashboardPage: React.FC = () => {
                                 <span className="text-sm font-bold text-slate-400">אירועים</span>
                             </div>
                             <div className="mt-2 text-right">
-                                <h3 className="text-3xl md:text-4xl font-black text-slate-900 leading-none">{stats.totalEvents}</h3>
-                                <p className="text-slate-400 text-xs md:text-sm font-medium mt-2">{stats.activeEvents} פעילים</p>
+                                <h3 className="text-3xl md:text-3xl font-black text-slate-900 leading-none">{stats.totalEvents}</h3>
+                                <p className="text-slate-400 text-xs font-medium mt-2">{stats.activeEvents} פעילים</p>
                             </div>
                         </div>
 
@@ -304,7 +303,7 @@ const DashboardPage: React.FC = () => {
                                 <span className="text-sm font-bold text-slate-400">תמונות</span>
                             </div>
                             <div className="mt-2 text-right">
-                                <h3 className="text-3xl md:text-4xl font-black text-slate-900 leading-none">{stats.totalImages.toLocaleString()}</h3>
+                                <h3 className="text-3xl md:text-3xl font-black text-slate-900 leading-none">{(stats.totalImages || 0).toLocaleString()}</h3>
                             </div>
                         </div>
 
@@ -317,7 +316,7 @@ const DashboardPage: React.FC = () => {
                                 <span className="text-sm font-bold text-slate-400">הורדות</span>
                             </div>
                             <div className="mt-2 text-right">
-                                <h3 className="text-3xl md:text-4xl font-black text-slate-900 leading-none">{stats.totalDownloads.toLocaleString()}</h3>
+                                <h3 className="text-3xl md:text-3xl font-black text-slate-900 leading-none">{(stats.totalDownloads || 0).toLocaleString()}</h3>
                             </div>
                         </div>
 
@@ -330,7 +329,7 @@ const DashboardPage: React.FC = () => {
                                 <span className="text-sm font-bold text-slate-400">שמירות</span>
                             </div>
                             <div className="mt-2 text-right">
-                                <h3 className="text-3xl md:text-4xl font-black text-slate-900 leading-none">{stats.phoneSaves.toLocaleString()}</h3>
+                                <h3 className="text-3xl md:text-3xl font-black text-slate-900 leading-none">{(stats.phoneSaves || 0).toLocaleString()}</h3>
                             </div>
                         </div>
 
@@ -343,7 +342,7 @@ const DashboardPage: React.FC = () => {
                                 <span className="text-sm font-bold text-slate-400">צפיות</span>
                             </div>
                             <div className="mt-2 text-right">
-                                <h3 className="text-3xl md:text-4xl font-black text-slate-900 leading-none">{stats.totalPageVisits.toLocaleString()}</h3>
+                                <h3 className="text-3xl md:text-3xl font-black text-slate-900 leading-none">{(stats.totalPageVisits || 0).toLocaleString()}</h3>
                             </div>
                         </div>
 
@@ -356,8 +355,8 @@ const DashboardPage: React.FC = () => {
                                 <span className="text-sm font-bold text-slate-400 leading-tight">כניסות לפרופיל</span>
                             </div>
                             <div className="mt-2 text-right">
-                                <h3 className="text-3xl md:text-4xl font-black text-slate-900 leading-none">{stats.totalSocialTraffic.toLocaleString()}</h3>
-                                <p className="text-slate-400 text-xs md:text-sm font-medium mt-2">פייסבוק • אינסטגרם • טיקטוק</p>
+                                <h3 className="text-3xl md:text-3xl font-black text-slate-900 leading-none">{(stats.totalSocialTraffic || 0).toLocaleString()}</h3>
+                                <p className="text-slate-400 text-[10px] md:text-xs font-medium mt-2">פייסבוק • אינסטגרם • טיקטוק</p>
                             </div>
                         </div>
                     </div>
