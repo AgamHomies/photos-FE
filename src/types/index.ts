@@ -104,4 +104,12 @@ export interface DashboardStats {
   trafficFacebook: number;
   trafficInstagram: number;
   trafficTiktok: number;
+  avgDownloadsPerEvent: number;
+  avgPageVisitsPerEvent: number;
+  avgPhoneSavesPerEvent: number;
+  avgImagesPerEvent: number;
+  maxDownloadsPerEvent: number;
+  maxPageVisitsPerEvent: number;
+  maxPhoneSavesPerEvent: number;
+  maxImagesPerEvent: number;
 }
