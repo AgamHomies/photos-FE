@@ -26,7 +26,7 @@ import {
    Sparkles,
    ChevronsLeft,
    ChevronsRight,
-   Upload
+   RefreshCw
 } from 'lucide-react';
 import { Toast } from '../../components';
 
@@ -975,7 +975,7 @@ END:VCARD`;
                               className="text-sm font-bold flex items-center gap-2 mr-4 border-r border-[#F0EBE3] pr-4 transition-all duration-300 text-[#8B7355] hover:text-[#4A3B2C]"
                            >
                               <div className="flex items-center gap-2 px-3 py-1.5 rounded-full transition-all bg-[#F0EBE3] hover:bg-[#E8DFD3]">
-                                 <Upload className="w-4 h-4" />
+                                 <RefreshCw className="w-4 h-4" />
                                  <span>סלפי חדש</span>
                               </div>
                            </button>
