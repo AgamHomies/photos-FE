@@ -24,7 +24,7 @@ import {
     Zap
 } from 'lucide-react';
 import { Toast } from '../../components';
-import UpgradeModal from './UpgradeModal';
+import PackageSelectionModal from './components/PackageSelectionModal';
 
 const DashboardPage: React.FC = () => {
     const navigate = useNavigate();
@@ -50,24 +50,11 @@ const DashboardPage: React.FC = () => {
         setShowToast(true);
     };
 
-    const [upgradeModalOpen, setUpgradeModalOpen] = useState(false);
+    const [packageModalOpen, setPackageModalOpen] = useState(false);
 
     const handleCreateEvent = () => {
-        if (!stats) return;
-
-        // Count active events (active + expired?)
-        // Backend logic in create_event counts existing events (not expired).
-        // Stats activeEvents is correct.
-
-        const used = stats.activeEvents; // Or stats.activeEvents + stats.expiredEvents if limits apply to total created ever? 
-        // Backend logic: Event.status.notin_([EventStatus.EXPIRED]). so it's active ones.
-        // Wait, if I create an event and delete it, backend counts ACTIVE only.
-
-        if (used >= stats.maxEvents) {
-            setUpgradeModalOpen(true);
-        } else {
-            navigate('/admin/create-event');
-        }
+        // Always open package selection modal
+        setPackageModalOpen(true);
     };
 
     const handleUpgradeSuccess = async () => {
@@ -126,6 +113,30 @@ const DashboardPage: React.FC = () => {
             }
         } else {
             unsecuredCopyToClipboard(linkModalConfig.url);
+        }
+    };
+
+    const getPackageBadge = (type?: string) => {
+        switch (type) {
+            case 'premium':
+                return (
+                    <span className="bg-blue-100 text-blue-700 text-[10px] px-1.5 py-0.5 rounded-md font-bold border border-blue-200 shadow-sm">
+                        PREMIUM
+                    </span>
+                );
+            case 'gold':
+                return (
+                    <span className="bg-yellow-100 text-yellow-700 text-[10px] px-1.5 py-0.5 rounded-md font-bold border border-yellow-200 shadow-sm">
+                        GOLD
+                    </span>
+                );
+            case 'basic':
+            default:
+                return (
+                    <span className="bg-gray-100 text-gray-600 text-[10px] px-1.5 py-0.5 rounded-md font-bold border border-gray-200">
+                        BASIC
+                    </span>
+                );
         }
     };
 
@@ -297,34 +308,14 @@ const DashboardPage: React.FC = () => {
                     </div>
                     <div className="flex flex-col items-end gap-2">
                         <div className="flex gap-3">
-                            {stats && (
-                                <button
-                                    onClick={() => setUpgradeModalOpen(true)}
-                                    className="bg-slate-900 hover:bg-slate-800 text-white px-4 py-3 rounded-xl flex items-center justify-center gap-2 transition-all shadow-lg font-bold"
-                                >
-                                    <Zap className="w-5 h-5 text-yellow-400" />
-                                    <span>רכוש אירועים נוספים</span>
-                                </button>
-                            )}
                             <button
                                 onClick={handleCreateEvent}
-                                className={`px-6 py-3 rounded-xl flex items-center justify-center gap-2 transition-all shadow-lg font-bold ${stats && stats.activeEvents >= stats.maxEvents
-                                    ? 'bg-slate-100 text-slate-400 cursor-not-allowed border border-slate-200 shadow-none'
-                                    : 'bg-cyan-500 hover:bg-cyan-600 text-white shadow-cyan-500/30'
-                                    }`}
+                                className="px-6 py-3 rounded-xl flex items-center justify-center gap-2 transition-all shadow-lg font-bold bg-cyan-500 hover:bg-cyan-600 text-white shadow-cyan-500/30"
                             >
                                 <Plus className="w-5 h-5" />
                                 <span>צור אירוע חדש</span>
                             </button>
                         </div>
-                        {stats && (
-                            <div className="flex items-center gap-2 text-sm font-medium text-slate-600 pl-1 mt-1">
-                                <div className={`w-2 h-2 rounded-full ${stats.maxEvents - stats.activeEvents > 0 ? 'bg-green-500' : 'bg-red-500'}`}></div>
-                                <span>
-                                    נותרו ליצירה: <span className="font-bold">{Math.max(0, stats.maxEvents - stats.activeEvents)}</span> אירועים
-                                </span>
-                            </div>
-                        )}
                     </div>
                 </div>
 
@@ -347,7 +338,7 @@ const DashboardPage: React.FC = () => {
                                 <Users className="w-5 h-5 md:w-6 md:h-6" />
                             </div>
                             <h3 className="text-2xl md:text-3xl font-bold text-slate-900 mb-1">{stats.totalPageVisits.toLocaleString()}</h3>
-                            <p className="text-slate-500 text-xs md:text-sm font-medium">כניסות לאירועים</p>
+                            <p className="text-slate-500 text-xs md:text-sm font-medium">כניסות אורחים</p>
                         </div>
 
                         {/* 3. כניסה לפרופיל שלך */}
@@ -420,6 +411,7 @@ const DashboardPage: React.FC = () => {
                         <table className="w-full text-right">
                             <thead className="bg-slate-50 text-slate-500 text-xs uppercase font-medium">
                                 <tr>
+                                    <th className="px-4 py-4 w-20">חבילה</th>
                                     <th className="px-6 py-4 rounded-tr-2xl cursor-pointer hover:bg-slate-100" onClick={() => handleSort('name')}>
                                         <div className="flex items-center gap-1">
                                             שם אירוע
@@ -432,6 +424,7 @@ const DashboardPage: React.FC = () => {
                                             {sortField === 'date' && (sortDirection === 'asc' ? '↑' : '↓')}
                                         </div>
                                     </th>
+
                                     <th className="px-6 py-4 cursor-pointer hover:bg-slate-100" onClick={() => handleSort('createdAt')}>
                                         <div className="flex items-center gap-1">
                                             תאריך העלאה
@@ -468,6 +461,9 @@ const DashboardPage: React.FC = () => {
                                         onClick={() => navigate(`/admin/events/${event.id}?tab=details`)}
                                         className="hover:bg-slate-50/80 transition-colors cursor-pointer group"
                                     >
+                                        <td className="px-4 py-4 w-20">
+                                            {getPackageBadge(event.packageType)}
+                                        </td>
                                         <td className="px-6 py-4">
                                             <div className="flex items-center gap-3">
                                                 {event.coverImage && !event.coverImage.includes('placeholder') ? (
@@ -490,6 +486,7 @@ const DashboardPage: React.FC = () => {
                                             </div>
                                         </td>
                                         <td className="px-6 py-4 text-slate-600 text-sm font-medium">{new Date(event.date).toLocaleDateString('he-IL')}</td>
+
                                         <td className="px-6 py-4 text-slate-600 text-sm font-medium">
                                             {event.createdAt ? new Date(event.createdAt).toLocaleDateString('he-IL') : '-'}
                                         </td>
@@ -555,7 +552,7 @@ const DashboardPage: React.FC = () => {
                                 ))}
                                 {sortedEvents.length === 0 && (
                                     <tr>
-                                        <td colSpan={9} className="px-6 py-16 text-center text-slate-500">
+                                        <td colSpan={10} className="px-6 py-16 text-center text-slate-500">
                                             <div className="flex flex-col items-center gap-4">
                                                 <div className="w-16 h-16 bg-slate-50 rounded-full flex items-center justify-center">
                                                     <Calendar className="w-8 h-8 text-slate-300" />
@@ -698,16 +695,11 @@ const DashboardPage: React.FC = () => {
                 onClose={() => setShowToast(false)}
             />
 
-            {stats && (
-                <UpgradeModal
-                    isOpen={upgradeModalOpen}
-                    onClose={() => setUpgradeModalOpen(false)}
-                    onSuccess={handleUpgradeSuccess}
-                    currentLimit={stats.maxEvents}
-                    usage={stats.activeEvents}
-                />
-            )}
-        </Layout>
+            <PackageSelectionModal
+                isOpen={packageModalOpen}
+                onClose={() => setPackageModalOpen(false)}
+            />
+        </Layout >
     );
 };
 

@@ -17,6 +17,12 @@ export interface PlatformStats {
     total_social_traffic: number;
     active_events: number;
     draft_events: number;
+
+    // Package Stats
+    stats_basic: PackageTypeStats;
+    stats_premium: PackageTypeStats;
+    stats_gold: PackageTypeStats;
+
     avg_images_per_event: number;
     avg_views_per_event: number;
     avg_downloads_per_event: number;
@@ -35,6 +41,18 @@ export interface PlatformStats {
     contact_save_rate_percent: number;
 }
 
+export interface PackageTypeStats {
+    total: number;
+    active: number;
+    avg_per_photographer: number;
+    max_per_photographer: number;
+}
+
+export interface PhotographerPackageStats {
+    total: number;
+    active: number;
+}
+
 export interface PhotographerStats {
     id: number;
     email: string;
@@ -46,7 +64,13 @@ export interface PhotographerStats {
     total_downloads: number;
     total_contact_saves: number;
     total_views: number;
+    total_social_traffic: number;
     active_events: number;
+
+    // Package Stats
+    stats_basic?: PhotographerPackageStats;
+    stats_premium?: PhotographerPackageStats;
+    stats_gold?: PhotographerPackageStats;
 }
 
 export interface PhotographerDetail {
@@ -59,6 +83,10 @@ export interface PhotographerDetail {
     phone: string | null;
     address: string | null;
     logo_url: string | null;
+    website_url: string | null;
+    instagram_url: string | null;
+    tiktok_url: string | null;
+    facebook_url: string | null;
     stats: {
         total_events: number;
         total_images: number;
@@ -68,6 +96,10 @@ export interface PhotographerDetail {
         active_events: number;
         draft_events: number;
         total_social_traffic: number;
+        // Package Stats
+        stats_basic?: PhotographerPackageStats;
+        stats_premium?: PhotographerPackageStats;
+        stats_gold?: PhotographerPackageStats;
     };
 }
 
@@ -81,6 +113,7 @@ export interface EventSummary {
     downloads: number;
     contact_saves: number;
     views: number;
+    package_type?: string;
 }
 
 class SuperAdminService {

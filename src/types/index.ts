@@ -58,6 +58,7 @@ export interface Event {
   phoneSaves?: number;
   slug?: string;
   coupleSlug?: string;
+  packageType?: 'basic' | 'premium' | 'gold';
 
   mode?: 'guest' | 'full';
 

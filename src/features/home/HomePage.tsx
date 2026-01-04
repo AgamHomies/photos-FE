@@ -33,7 +33,11 @@ import {
   Search,
   Lock,
   Menu,
-  X
+  X,
+  Star,
+  Award,
+  Crown,
+  Sparkles
 } from 'lucide-react';
 
 import Layout from '../../components/Layout';
@@ -142,8 +146,8 @@ const HomePage: React.FC = () => {
           <div className="flex flex-col lg:flex-row items-center gap-12 lg:gap-20">
 
             {/* Text Content */}
-            <div className="lg:w-1/2 text-center lg:text-right">
-              <h1 className="text-3xl md:text-4xl lg:text-6xl font-bold text-slate-900 mb-6 leading-tight">
+            <div className="lg:w-1/2 text-center lg:text-right lg:-mt-24">
+              <h1 className="text-5xl md:text-6xl lg:text-7xl font-bold text-slate-900 mb-6 leading-tight">
                 באירוע הבא, כולם ידעו <br />
                 <span className="text-cyan-500">מי צילם אותם!</span>
               </h1>
@@ -207,8 +211,8 @@ const HomePage: React.FC = () => {
                 <div className="absolute left-1/2 -ml-2 -bottom-2 w-4 h-4 bg-white transform rotate-45 border-b border-r border-slate-100"></div>
               </div>
 
-              <div className="relative z-10 bg-white p-2 rounded-[3rem] shadow-2xl transform rotate-[-1deg] hover:rotate-0 transition-transform duration-500 border-4 border-slate-900 w-full max-w-[320px]">
-                <div className="relative rounded-[2.5rem] overflow-hidden bg-slate-900 aspect-[9/19] ring-8 ring-slate-900">
+              <div className="relative z-10 bg-white p-2 rounded-[3rem] shadow-2xl transform lg:rotate-[-1deg] hover:rotate-0 transition-transform duration-500 border-4 border-slate-900 w-[280px] sm:w-[320px]">
+                <div className="relative rounded-[2.5rem] overflow-hidden bg-slate-900 ring-8 ring-slate-900" style={{ aspectRatio: '9/19' }}>
                   {/* Animated App Demo - High Fidelity Replica */}
                   <PhoneMockupDemo />
                 </div>
@@ -307,98 +311,108 @@ const HomePage: React.FC = () => {
             <p className="text-lg text-slate-600 max-w-2xl mx-auto">תשלום פר אירוע, ללא דמי מנוי חודשיים וללא התחייבות.</p>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-8 max-w-6xl mx-auto items-stretch">
-            {/* Package 1 */}
-            <div className="bg-white rounded-3xl p-8 border border-slate-100 shadow-sm hover:shadow-xl transition-all duration-300 relative group">
-              <div className="mb-6">
-                <h3 className="text-xl font-bold text-slate-900 mb-2">חבילת בסיס</h3>
-                <div className="flex items-baseline gap-1">
-                  <span className="text-4xl font-bold text-slate-900">₪229</span>
-                  <span className="text-slate-500 font-medium bg-slate-100 px-2 py-0.5 rounded-md">לאירוע</span>
-                </div>
-                <p className="text-slate-500 mt-2">מתאים לאירועים קטנים ואינטימיים</p>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-8 items-center max-w-6xl mx-auto">
+            {/* Basic Package */}
+            <div className="group relative h-full bg-white border border-slate-200 rounded-[2rem] p-8 transition-all hover:border-slate-300 hover:shadow-xl hover:shadow-slate-900/5 flex flex-col items-center text-center">
+              <div className="mb-6 p-4 bg-slate-50 rounded-2xl group-hover:bg-slate-100 transition-colors">
+                <Star className="w-8 h-8 text-slate-400 group-hover:text-slate-600 transition-colors" />
               </div>
-              <ul className="space-y-4 mb-8">
-                <li className="flex items-center gap-3 text-slate-600">
-                  <CheckCircle2 className="w-5 h-5 text-cyan-500 flex-shrink-0" />
-                  <span>עד <strong>1,200</strong> תמונות</span>
-                </li>
-                <li className="flex items-center gap-3 text-slate-600">
-                  <CheckCircle2 className="w-5 h-5 text-cyan-500 flex-shrink-0" />
-                  <span>גלריה אישית לכל אורח</span>
-                </li>
-                <li className="flex items-center gap-3 text-slate-600">
-                  <CheckCircle2 className="w-5 h-5 text-cyan-500 flex-shrink-0" />
-                  <span>אחסון מאובטח בענן</span>
-                </li>
-              </ul>
+
+              <h3 className="text-xl font-bold text-slate-900 mb-2">חבילת בסיס</h3>
+              <div className="flex items-baseline justify-center gap-1 mb-2">
+                <span className="text-4xl font-black text-slate-900">₪199</span>
+                <span className="text-slate-500 font-medium text-lg">/ אירוע</span>
+              </div>
+              <p className="text-slate-500 text-sm font-medium mb-8">אירועים קטנים וימי הולדת</p>
+
+              <div className="w-full space-y-4 text-sm text-slate-600 mb-8 flex-1 text-right px-4">
+                <div className="flex items-center gap-3 w-full">
+                  <div className="p-1 rounded-full bg-slate-100 text-slate-500 shrink-0"><Check className="w-3.5 h-3.5" /></div>
+                  <span>עד <span className="font-bold text-slate-900">1,200</span> תמונות</span>
+                </div>
+                <div className="flex items-center gap-3 w-full">
+                  <div className="p-1 rounded-full bg-slate-100 text-slate-500 shrink-0"><Check className="w-3.5 h-3.5" /></div>
+                  <span>קישור פעיל לחודש</span>
+                </div>
+                <div className="flex items-center gap-3 w-full">
+                  <div className="p-1 rounded-full bg-slate-100 text-slate-500 shrink-0"><Check className="w-3.5 h-3.5" /></div>
+                  <span>זיהוי פנים חכם</span>
+                </div>
+              </div>
+
+
             </div>
 
-            {/* Package 2 - Recommended */}
-            <div className="bg-white rounded-3xl p-8 border-2 border-cyan-500 shadow-2xl relative transform scale-105 z-10 flex flex-col">
-              <div className="absolute top-0 left-1/2 -translate-x-1/2 -translate-y-1/2 bg-cyan-500 text-white px-6 py-2 rounded-full font-bold text-sm shadow-lg whitespace-nowrap">
-                הכי מומלצת 🔥
+            {/* Premium Package - Recommended */}
+            <div className="group relative h-full bg-white border-2 border-cyan-500 rounded-[2rem] p-8 shadow-2xl shadow-cyan-900/10 transform md:-translate-y-4 transition-all hover:shadow-cyan-900/20 flex flex-col items-center text-center z-10 w-full">
+              {/* Elegant Badge */}
+              <div className="absolute -top-3 left-1/2 -translate-x-1/2 bg-cyan-50 text-cyan-700 border border-cyan-200 px-4 py-1 rounded-full text-sm font-bold shadow-sm flex items-center gap-1.5 whitespace-nowrap">
+                <Sparkles className="w-3.5 h-3.5" />
+                <span>מומלץ ביותר</span>
               </div>
-              <div className="mb-6">
-                <h3 className="text-xl font-bold text-slate-900 mb-2">חבילת פרימיום</h3>
-                <div className="flex items-baseline gap-1">
-                  <span className="text-5xl font-bold text-cyan-500">₪279</span>
-                  <span className="text-slate-500 font-medium bg-slate-100 px-2 py-0.5 rounded-md">לאירוע</span>
+
+              <div className="mb-6 p-5 bg-gradient-to-br from-cyan-500 to-cyan-600 rounded-2xl shadow-lg shadow-cyan-500/20 group-hover:scale-110 transition-transform duration-300">
+                <Award className="w-10 h-10 text-white" />
+              </div>
+
+              <h3 className="text-2xl font-bold text-slate-900 mb-2">חבילת פרימיום</h3>
+              <div className="flex items-baseline justify-center gap-1 mb-2">
+                <span className="text-5xl font-black text-slate-900">₪279</span>
+                <span className="text-slate-500 font-medium text-xl">/ אירוע</span>
+              </div>
+              <p className="text-cyan-600 text-sm font-medium mb-8 bg-cyan-50 px-3 py-1 rounded-full inline-block">הבחירה המשתלמת ביותר</p>
+
+              <div className="w-full space-y-4 text-sm text-slate-700 mb-8 flex-1 text-right px-4">
+                <div className="flex items-center gap-3 w-full">
+                  <div className="p-1 rounded-full bg-cyan-100 text-cyan-600 shrink-0"><Check className="w-3.5 h-3.5" /></div>
+                  <span className="text-base">הכל בחבילת בסיס +</span>
                 </div>
-                <p className="text-slate-500 mt-2">הבחירה המושלמת לרוב האירועים</p>
+                <div className="flex items-center gap-3 w-full">
+                  <div className="p-1 rounded-full bg-cyan-100 text-cyan-600 shrink-0"><Check className="w-3.5 h-3.5" /></div>
+                  <span className="text-base font-medium">עד <span className="font-bold text-slate-900">10,000</span> תמונות</span>
+                </div>
+                <div className="flex items-center gap-3 w-full">
+                  <div className="p-1 rounded-full bg-cyan-100 text-cyan-600 shrink-0"><Check className="w-3.5 h-3.5" /></div>
+                  <span className="text-base">קישור פעיל לחודשיים</span>
+                </div>
+                <div className="flex items-center gap-3 w-full bg-cyan-50/50 p-2 rounded-lg -mr-2">
+                  <div className="p-1 rounded-full bg-cyan-100 text-cyan-600 shrink-0"><Check className="w-3.5 h-3.5" /></div>
+                  <span className="text-base font-bold text-cyan-800">מתאים במיוחד לחתונות 💍</span>
+                </div>
               </div>
-              <ul className="space-y-4 mb-8 flex-1">
-                <li className="flex items-center gap-3 text-slate-700 font-medium">
-                  <div className="bg-cyan-100 p-1 rounded-full">
-                    <CheckCircle2 className="w-4 h-4 text-cyan-600 flex-shrink-0" />
-                  </div>
-                  <span>עד <strong>9,000</strong> תמונות</span>
-                </li>
-                <li className="flex items-center gap-3 text-slate-700 font-medium">
-                  <div className="bg-cyan-100 p-1 rounded-full">
-                    <CheckCircle2 className="w-4 h-4 text-cyan-600 flex-shrink-0" />
-                  </div>
-                  <span>סינון AI מהיר במיוחד</span>
-                </li>
-                <li className="flex items-center gap-3 text-slate-700 font-medium">
-                  <div className="bg-cyan-100 p-1 rounded-full">
-                    <CheckCircle2 className="w-4 h-4 text-cyan-600 flex-shrink-0" />
-                  </div>
-                  <span>תמיכה טכנית מלאה</span>
-                </li>
-                <li className="flex items-center gap-3 text-slate-700 font-medium">
-                  <div className="bg-cyan-100 p-1 rounded-full">
-                    <CheckCircle2 className="w-4 h-4 text-cyan-600 flex-shrink-0" />
-                  </div>
-                  <span>ללא סימן מים</span>
-                </li>
-              </ul>
+
+
             </div>
 
-            {/* Package 3 */}
-            <div className="bg-white rounded-3xl p-8 border border-slate-100 shadow-sm hover:shadow-xl transition-all duration-300 relative group">
-              <div className="mb-6">
-                <h3 className="text-xl font-bold text-slate-900 mb-2">חבילת זהב</h3>
-                <div className="flex items-baseline gap-1">
-                  <span className="text-4xl font-bold text-slate-900">₪429</span>
-                  <span className="text-slate-500 font-medium bg-slate-100 px-2 py-0.5 rounded-md">לאירוע</span>
-                </div>
-                <p className="text-slate-500 mt-2">לאירועי ענק וצלמים מובילים</p>
+            {/* Gold Package */}
+            <div className="group relative h-full bg-white border border-slate-200 rounded-[2rem] p-8 transition-all hover:border-amber-200 hover:shadow-xl hover:shadow-amber-900/5 flex flex-col items-center text-center">
+              <div className="mb-6 p-4 bg-slate-50 rounded-2xl group-hover:bg-amber-50 transition-colors">
+                <Crown className="w-8 h-8 text-slate-400 group-hover:text-amber-500 transition-colors" />
               </div>
-              <ul className="space-y-4 mb-8">
-                <li className="flex items-center gap-3 text-slate-600">
-                  <CheckCircle2 className="w-5 h-5 text-cyan-500 flex-shrink-0" />
-                  <span>עד <strong>20,000</strong> תמונות</span>
-                </li>
-                <li className="flex items-center gap-3 text-slate-600">
-                  <CheckCircle2 className="w-5 h-5 text-cyan-500 flex-shrink-0" />
-                  <span>עדיפות בעיבוד תמונות</span>
-                </li>
-                <li className="flex items-center gap-3 text-slate-600">
-                  <CheckCircle2 className="w-5 h-5 text-cyan-500 flex-shrink-0" />
-                  <span>סטטיסטיקות מתקדמות</span>
-                </li>
-              </ul>
+
+              <h3 className="text-xl font-bold text-slate-900 mb-2">חבילת זהב</h3>
+              <div className="flex items-baseline justify-center gap-1 mb-2">
+                <span className="text-4xl font-black text-slate-900">₪499</span>
+                <span className="text-slate-500 font-medium text-lg">/ אירוע</span>
+              </div>
+              <p className="text-slate-500 text-sm font-medium mb-8">אירועי ענק ופסטיבלים</p>
+
+              <div className="w-full space-y-4 text-sm text-slate-600 mb-8 flex-1 text-right px-4">
+                <div className="flex items-center gap-3 w-full">
+                  <div className="p-1 rounded-full bg-slate-100 text-slate-500 shrink-0"><Check className="w-3.5 h-3.5" /></div>
+                  <span>עד <span className="font-bold text-slate-900">20,000</span> תמונות</span>
+                </div>
+                <div className="flex items-center gap-3 w-full">
+                  <div className="p-1 rounded-full bg-slate-100 text-slate-500 shrink-0"><Check className="w-3.5 h-3.5" /></div>
+                  <span>קישור פעיל לחודשיים</span>
+                </div>
+                <div className="flex items-center gap-3 w-full">
+                  <div className="p-1 rounded-full bg-slate-100 text-slate-500 shrink-0"><Check className="w-3.5 h-3.5" /></div>
+                  <span>זיהוי פנים חכם</span>
+                </div>
+              </div>
+
+
             </div>
           </div>
 

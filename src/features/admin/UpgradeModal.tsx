@@ -68,49 +68,101 @@ const UpgradeModal: React.FC<UpgradeModalProps> = ({ isOpen, onClose, onSuccess,
                     )}
 
                     <div className="grid gap-4">
-                        {/* Package 1 */}
+                        {/* Package 1 - Basic */}
                         <button
-                            onClick={() => handlePurchase('1_event')}
+                            onClick={() => handlePurchase('basic')}
                             disabled={!!loading}
-                            className="group relative border border-slate-200 hover:border-cyan-500 rounded-2xl p-4 transition-all hover:shadow-lg hover:shadow-cyan-500/10 text-right w-full"
+                            className="group relative border border-slate-200 hover:border-cyan-500 rounded-2xl p-5 transition-all hover:shadow-lg hover:shadow-cyan-500/10 text-right w-full"
                         >
-                            <div className="flex justify-between items-center">
-                                <span className="text-sm font-bold bg-slate-100 text-slate-600 px-3 py-1 rounded-full group-hover:bg-cyan-50 group-hover:text-cyan-600 transition-colors">
-                                    ₪10
+                            <div className="flex justify-between items-start mb-3">
+                                <span className="text-2xl font-bold bg-slate-100 text-slate-700 px-4 py-1.5 rounded-full group-hover:bg-cyan-50 group-hover:text-cyan-600 transition-colors">
+                                    ₪199
                                 </span>
                                 <div className="text-right">
-                                    <h3 className="font-bold text-slate-900 text-lg group-hover:text-cyan-600 transition-colors">אירוע אחד נוסף</h3>
-                                    <p className="text-slate-500 text-sm">הוספת אירוע בודד לחבילה שלך</p>
+                                    <h3 className="font-bold text-slate-900 text-xl group-hover:text-cyan-600 transition-colors">חבילת בסיס</h3>
+                                    <p className="text-slate-500 text-sm mt-1">מתאים לאירועים קטנים</p>
                                 </div>
                             </div>
-                            {loading === '1_event' && (
+                            <div className="space-y-2 text-sm text-slate-600">
+                                <div className="flex items-center gap-2">
+                                    <Check className="w-4 h-4 text-cyan-500" />
+                                    <span>עד 1,200 תמונות</span>
+                                </div>
+                                <div className="flex items-center gap-2">
+                                    <Check className="w-4 h-4 text-cyan-500" />
+                                    <span>קישור פעיל לחודש אחד</span>
+                                </div>
+                            </div>
+                            {loading === 'basic' && (
                                 <div className="absolute inset-0 bg-white/50 flex items-center justify-center rounded-2xl">
                                     <div className="w-6 h-6 border-2 border-cyan-500 border-t-transparent rounded-full animate-spin"></div>
                                 </div>
                             )}
                         </button>
 
-                        {/* Package 2 - Recommended */}
+                        {/* Package 2 - Premium (Recommended) */}
                         <button
-                            onClick={() => handlePurchase('5_events')}
+                            onClick={() => handlePurchase('premium')}
                             disabled={!!loading}
-                            className="group relative border-2 border-cyan-500 rounded-2xl p-4 transition-all shadow-lg shadow-cyan-500/10 text-right w-full bg-cyan-50/10"
+                            className="group relative border-2 border-cyan-500 rounded-2xl p-5 transition-all shadow-lg shadow-cyan-500/10 text-right w-full bg-cyan-50/10"
                         >
                             <div className="absolute -top-3 right-4 bg-cyan-500 text-white text-xs font-bold px-3 py-1 rounded-full flex items-center gap-1 shadow-sm">
                                 <Star className="w-3 h-3 fill-current" />
-                                מומלץ
+                                הבחירה המובילה
                             </div>
 
-                            <div className="flex justify-between items-center mt-1">
-                                <span className="text-sm font-bold bg-cyan-100 text-cyan-700 px-3 py-1 rounded-full">
-                                    ₪40
+                            <div className="flex justify-between items-start mb-3 mt-1">
+                                <span className="text-2xl font-bold bg-cyan-100 text-cyan-700 px-4 py-1.5 rounded-full">
+                                    ₪279
                                 </span>
                                 <div className="text-right">
-                                    <h3 className="font-bold text-slate-900 text-lg group-hover:text-cyan-600 transition-colors">חבילת 5 אירועים</h3>
-                                    <p className="text-slate-500 text-sm">הוספת 5 אירועים (חסוך 20%)</p>
+                                    <h3 className="font-bold text-slate-900 text-xl group-hover:text-cyan-600 transition-colors">חבילת פרימיום</h3>
+                                    <p className="text-slate-500 text-sm mt-1">לרוב האירועים</p>
                                 </div>
                             </div>
-                            {loading === '5_events' && (
+                            <div className="space-y-2 text-sm text-slate-700 font-medium">
+                                <div className="flex items-center gap-2">
+                                    <Check className="w-4 h-4 text-cyan-500" />
+                                    <span>עד 10,000 תמונות</span>
+                                </div>
+                                <div className="flex items-center gap-2">
+                                    <Check className="w-4 h-4 text-cyan-500" />
+                                    <span>קישור פעיל לחודשיים</span>
+                                </div>
+                            </div>
+                            {loading === 'premium' && (
+                                <div className="absolute inset-0 bg-white/50 flex items-center justify-center rounded-2xl">
+                                    <div className="w-6 h-6 border-2 border-cyan-500 border-t-transparent rounded-full animate-spin"></div>
+                                </div>
+                            )}
+                        </button>
+
+                        {/* Package 3 - Gold */}
+                        <button
+                            onClick={() => handlePurchase('gold')}
+                            disabled={!!loading}
+                            className="group relative border border-slate-200 hover:border-cyan-500 rounded-2xl p-5 transition-all hover:shadow-lg hover:shadow-cyan-500/10 text-right w-full"
+                        >
+                            <div className="flex justify-between items-start mb-3">
+                                <span className="text-2xl font-bold bg-slate-100 text-slate-700 px-4 py-1.5 rounded-full group-hover:bg-cyan-50 group-hover:text-cyan-600 transition-colors">
+                                    ₪499
+                                </span>
+                                <div className="text-right">
+                                    <h3 className="font-bold text-slate-900 text-xl group-hover:text-cyan-600 transition-colors">חבילת זהב</h3>
+                                    <p className="text-slate-500 text-sm mt-1">לאירועי ענק</p>
+                                </div>
+                            </div>
+                            <div className="space-y-2 text-sm text-slate-600">
+                                <div className="flex items-center gap-2">
+                                    <Check className="w-4 h-4 text-cyan-500" />
+                                    <span>עד 20,000 תמונות</span>
+                                </div>
+                                <div className="flex items-center gap-2">
+                                    <Check className="w-4 h-4 text-cyan-500" />
+                                    <span>קישור פעיל לחודשיים</span>
+                                </div>
+                            </div>
+                            {loading === 'gold' && (
                                 <div className="absolute inset-0 bg-white/50 flex items-center justify-center rounded-2xl">
                                     <div className="w-6 h-6 border-2 border-cyan-500 border-t-transparent rounded-full animate-spin"></div>
                                 </div>
