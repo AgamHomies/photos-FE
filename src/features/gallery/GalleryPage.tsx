@@ -25,7 +25,8 @@ import {
    ArrowUpDown,
    Sparkles,
    ChevronsLeft,
-   ChevronsRight
+   ChevronsRight,
+   Upload
 } from 'lucide-react';
 import { Toast } from '../../components';
 
@@ -960,7 +961,7 @@ END:VCARD`;
                   </div>
 
                   {/* Actions Bar */}
-                  <div className="flex flex-wrap items-center justify-between mb-6 gap-4 bg-white p-4 rounded-2xl shadow-sm border border-[#F0EBE3]">
+                  <div className="flex flex-col md:flex-row md:items-center md:justify-between mb-6 gap-4 bg-white p-4 rounded-2xl shadow-sm border border-[#F0EBE3]">
                      <div className="flex items-center gap-2">
                         <h3 className="font-bold text-[#4A3B2C] flex items-center gap-2">
                            {mode === 'full' ? 'כל התמונות' : 'התמונות שנמצאו'}
@@ -969,6 +970,18 @@ END:VCARD`;
                            </span>
                         </h3>
                         {mode !== 'full' && (
+                           <button
+                              onClick={clearSearch}
+                              className="text-sm font-bold flex items-center gap-2 mr-4 border-r border-[#F0EBE3] pr-4 transition-all duration-300 text-[#8B7355] hover:text-[#4A3B2C]"
+                           >
+                              <div className="flex items-center gap-2 px-3 py-1.5 rounded-full transition-all bg-[#F0EBE3] hover:bg-[#E8DFD3]">
+                                 <Upload className="w-4 h-4" />
+                                 <span>סלפי חדש</span>
+                              </div>
+                           </button>
+                        )}
+                        {/* AI Focus button - Hidden for now */}
+                        {false && mode !== 'full' && (
                            <button
                               onClick={() => setSortBy(prev => prev === 'time' ? 'matchScore' : 'time')}
                               className={`text-sm font-bold flex items-center gap-2 mr-4 border-r border-[#F0EBE3] pr-4 transition-all duration-300 ${sortBy === 'matchScore' ? 'text-[#C4A882]' : 'text-[#A89680] hover:text-[#C4A882]'}`}
@@ -985,8 +998,8 @@ END:VCARD`;
                         )}
                      </div>
 
-                     <div className="flex items-center gap-3">
-
+                     {/* Action Buttons - Left on Desktop */}
+                     <div className="flex flex-wrap items-center gap-3">
                         <button
                            onClick={selectedPhotos.size === photos.length ? deselectAllPhotos : selectAllPhotos}
                            className="text-sm font-medium text-[#8B7355] hover:text-[#C4A882]"
