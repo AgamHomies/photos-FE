@@ -626,7 +626,8 @@ const DashboardPage: React.FC = () => {
                                         </div>
                                     </th>
                                     <th className="px-6 py-4 w-64 text-center">לינק ייחודי</th>
-                                    <th className="px-6 py-4 rounded-tl-2xl">סטטוס</th>
+                                    <th className="px-6 py-4">סטטוס</th>
+                                    <th className="px-6 py-4 rounded-tl-2xl">פעולות</th>
                                 </tr>
                             </thead>
                             <tbody className="divide-y divide-slate-100">
@@ -711,11 +712,22 @@ const DashboardPage: React.FC = () => {
                                                 {event.status === 'active' ? 'פעיל' : 'פג תוקף'}
                                             </span>
                                         </td>
+                                        <td className="px-6 py-4">
+                                            <div className="flex items-center justify-center" onClick={(e) => e.stopPropagation()}>
+                                                <button
+                                                    onClick={(e) => openDeleteModal(event, e)}
+                                                    className="p-2 hover:bg-red-50 rounded-lg text-slate-400 hover:text-red-500 transition-colors"
+                                                    title="מחיקה"
+                                                >
+                                                    <Trash2 className="w-4 h-4" />
+                                                </button>
+                                            </div>
+                                        </td>
                                     </tr>
                                 ))}
                                 {sortedEvents.length === 0 && (
                                     <tr>
-                                        <td colSpan={9} className="px-6 py-16 text-center text-slate-500">
+                                        <td colSpan={10} className="px-6 py-16 text-center text-slate-500">
                                             <div className="flex flex-col items-center gap-4">
                                                 <div className="w-16 h-16 bg-slate-50 rounded-full flex items-center justify-center">
                                                     <Calendar className="w-8 h-8 text-slate-300" />
