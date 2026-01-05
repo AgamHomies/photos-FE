@@ -588,7 +588,6 @@ const DashboardPage: React.FC = () => {
                         <table className="w-full text-right">
                             <thead className="bg-slate-50 text-slate-500 text-xs uppercase font-medium">
                                 <tr>
-                                    <th className="px-4 py-4 w-20">חבילה</th>
                                     <th className="px-6 py-4 rounded-tr-2xl cursor-pointer hover:bg-slate-100" onClick={() => handleSort('name')}>
                                         <div className="flex items-center gap-1">
                                             שם אירוע
@@ -627,8 +626,7 @@ const DashboardPage: React.FC = () => {
                                         </div>
                                     </th>
                                     <th className="px-6 py-4 w-64 text-center">לינק ייחודי</th>
-                                    <th className="px-6 py-4">סטטוס</th>
-                                    <th className="px-6 py-4 rounded-tl-2xl">פעולות</th>
+                                    <th className="px-6 py-4 rounded-tl-2xl">סטטוס</th>
                                 </tr>
                             </thead>
                             <tbody className="divide-y divide-slate-100">
@@ -638,9 +636,6 @@ const DashboardPage: React.FC = () => {
                                         onClick={() => navigate(`/admin/events/${event.id}?tab=details`)}
                                         className="hover:bg-slate-50/80 transition-colors cursor-pointer group"
                                     >
-                                        <td className="px-4 py-4 w-20">
-                                            {getPackageBadge(event.packageType)}
-                                        </td>
                                         <td className="px-6 py-4">
                                             <div className="flex items-center gap-3">
                                                 {event.coverImage && !event.coverImage.includes('placeholder') ? (
@@ -654,9 +649,12 @@ const DashboardPage: React.FC = () => {
                                                         <ImageIcon className="w-5 h-5" />
                                                     </div>
                                                 )}
-                                                <div>
-                                                    <div className="font-bold text-slate-900 group-hover:text-cyan-600 transition-colors">
-                                                        {event.name}
+                                                <div className="flex-1">
+                                                    <div className="flex items-center gap-2">
+                                                        <div className="font-bold text-slate-900 group-hover:text-cyan-600 transition-colors">
+                                                            {event.name}
+                                                        </div>
+                                                        {getPackageBadge(event.packageType)}
                                                     </div>
                                                     <div className="text-xs text-slate-400">{event.location || 'ללא מיקום'}</div>
                                                 </div>
@@ -713,32 +711,11 @@ const DashboardPage: React.FC = () => {
                                                 {event.status === 'active' ? 'פעיל' : 'פג תוקף'}
                                             </span>
                                         </td>
-                                        <td className="px-6 py-4">
-                                            <div className="flex items-center gap-2" onClick={(e) => e.stopPropagation()}>
-                                                <button
-                                                    onClick={(e) => {
-                                                        e.stopPropagation();
-                                                        navigate(`/admin/events/${event.id}?tab=details`);
-                                                    }}
-                                                    className="p-2 hover:bg-blue-50 rounded-lg text-slate-400 hover:text-blue-600 transition-colors"
-                                                    title="עריכה"
-                                                >
-                                                    <Edit className="w-4 h-4" />
-                                                </button>
-                                                <button
-                                                    onClick={(e) => openDeleteModal(event, e)}
-                                                    className="p-2 hover:bg-red-50 rounded-lg text-slate-400 hover:text-red-500 transition-colors"
-                                                    title="מחיקה"
-                                                >
-                                                    <Trash2 className="w-4 h-4" />
-                                                </button>
-                                            </div>
-                                        </td>
                                     </tr>
                                 ))}
                                 {sortedEvents.length === 0 && (
                                     <tr>
-                                        <td colSpan={10} className="px-6 py-16 text-center text-slate-500">
+                                        <td colSpan={9} className="px-6 py-16 text-center text-slate-500">
                                             <div className="flex flex-col items-center gap-4">
                                                 <div className="w-16 h-16 bg-slate-50 rounded-full flex items-center justify-center">
                                                     <Calendar className="w-8 h-8 text-slate-300" />
