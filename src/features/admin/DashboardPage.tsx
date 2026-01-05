@@ -319,7 +319,7 @@ const DashboardPage: React.FC = () => {
                     </div>
                 </div>
 
-                {/* Stats Grid - TEMPORARY: 1 Row, 6 Columns (was: 2 Rows, 3 Columns) */}
+                {/* Stats Grid - 6 Columns on Desktop */}
                 {stats && (
 
                     <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4 mb-8">

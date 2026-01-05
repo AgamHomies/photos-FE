@@ -281,7 +281,6 @@ export const MockS3Service = {
             phoneSaves,
             activeEvents: userEvents.filter(e => e.status === 'active').length,
             expiredEvents: userEvents.filter(e => e.status === 'expired').length,
-            maxEvents: 5, // Default mock limit from HEAD
             totalEvents,
             totalImages,
             totalSocialTraffic: 0,

@@ -99,7 +99,7 @@ export interface DashboardStats {
   phoneSaves: number;
   activeEvents: number;
   expiredEvents: number;
-  maxEvents: number; // From HEAD
+  // maxEvents removed - not used in UI
   totalEvents: number;
   totalImages: number;
   totalSocialTraffic: number;
