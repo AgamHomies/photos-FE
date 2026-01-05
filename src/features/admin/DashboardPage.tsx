@@ -321,180 +321,218 @@ const DashboardPage: React.FC = () => {
 
                 {/* Stats Grid - TEMPORARY: 1 Row, 6 Columns (was: 2 Rows, 3 Columns) */}
                 {stats && (
-                    <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-6 gap-5 mb-8">
+
+                    <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4 mb-8">
                         {/* 1. אירועים */}
-                        <div className="bg-white p-5 rounded-2xl shadow-sm border border-slate-100 hover:shadow-md transition-all relative">
-                            <div className="absolute top-5 right-5">
-                                <div className="p-2.5 bg-orange-50 text-orange-500 rounded-xl">
-                                    <Calendar className="w-5 h-5" />
-                                </div>
+                        <div className="col-span-2 md:col-span-1 bg-white p-5 rounded-2xl shadow-sm border border-slate-100 hover:shadow-md transition-all flex flex-col">
+                            {/* Header - Icon */}
+                            <div className="p-2.5 bg-orange-50 text-orange-500 rounded-xl mb-3 w-fit">
+                                <Calendar className="w-5 h-5" />
                             </div>
-                            <div className="flex flex-col items-center text-center mb-3 pt-2 min-h-[80px]">
-                                <h3 className="text-3xl font-black text-slate-900 leading-none">{stats.totalEvents}</h3>
-                                <p className="text-slate-500 font-semibold mt-1 text-sm">אירועים</p>
+                            <div className="relative" title={`${stats.activeEvents ?? 0}/${stats.totalEvents ?? 0}`}>
+                                <h3 className="text-3xl font-black text-slate-900 leading-none mb-1 truncate max-w-[200px]">
+                                    {`${stats.activeEvents ?? 0}/${stats.totalEvents ?? 0}`}
+                                </h3>
+                                <p className="text-slate-500 font-semibold text-xs">אירועים פעילים</p>
                             </div>
-                            <div className="pt-3 border-t border-slate-100 flex justify-between text-right">
-                                <div>
-                                    <p className="text-slate-400 text-xs font-semibold">פעילים</p>
-                                    <p className="text-green-600 font-bold text-base">{stats.activeEvents}</p>
-                                </div>
-                                <div>
-                                    <p className="text-slate-400 text-xs font-semibold">פג תוקף</p>
-                                    <p className="text-slate-600 font-bold text-base">{stats.expiredEvents}</p>
+
+                            {/* Body - Package Table (flex-1) */}
+                            <div className="w-full pt-3 mt-4 border-t border-slate-100">
+                                <div className="flex-1">
+                                    <div className="grid grid-cols-3 gap-2 text-[10px] text-slate-400 font-semibold mb-2">
+                                        <div className="text-right">חבילה</div>
+                                        <div className="text-center">סה״כ</div>
+                                        <div className="text-center">פעילים</div>
+                                    </div>
+                                    <div className="space-y-2">
+                                        <div className="grid grid-cols-3 gap-2 items-center text-xs">
+                                            <div className="text-right">{getPackageBadge('basic')}</div>
+                                            <div className="text-center font-bold text-slate-900">{stats.statsBasic?.total || 0}</div>
+                                            <div className="text-center">
+                                                <span className="bg-green-50 text-green-600 rounded-md py-0.5 px-2 font-bold text-[10px] inline-block min-w-[25px]">
+                                                    {stats.statsBasic?.active || 0}
+                                                </span>
+                                            </div>
+                                        </div>
+                                        <div className="grid grid-cols-3 gap-2 items-center text-xs">
+                                            <div className="text-right">{getPackageBadge('premium')}</div>
+                                            <div className="text-center font-bold text-slate-900">{stats.statsPremium?.total || 0}</div>
+                                            <div className="text-center">
+                                                <span className="bg-green-50 text-green-600 rounded-md py-0.5 px-2 font-bold text-[10px] inline-block min-w-[25px]">
+                                                    {stats.statsPremium?.active || 0}
+                                                </span>
+                                            </div>
+                                        </div>
+                                        <div className="grid grid-cols-3 gap-2 items-center text-xs">
+                                            <div className="text-right">{getPackageBadge('gold')}</div>
+                                            <div className="text-center font-bold text-slate-900">{stats.statsGold?.total || 0}</div>
+                                            <div className="text-center">
+                                                <span className="bg-green-50 text-green-600 rounded-md py-0.5 px-2 font-bold text-[10px] inline-block min-w-[25px]">
+                                                    {stats.statsGold?.active || 0}
+                                                </span>
+                                            </div>
+                                        </div>
+                                    </div>
                                 </div>
                             </div>
                         </div>
 
                         {/* 2. תמונות */}
-                        <div className="bg-white p-5 rounded-2xl shadow-sm border border-slate-100 hover:shadow-md transition-all relative">
-                            <div className="absolute top-5 right-5">
-                                <div className="p-2.5 bg-cyan-50 text-cyan-500 rounded-xl">
-                                    <ImageIcon className="w-5 h-5" />
-                                </div>
-                            </div>
-                            <div className="flex flex-col items-center text-center mb-3 pt-2 min-h-[80px]">
-                                <h3 className="text-3xl font-black text-slate-900 leading-none">{(stats.totalImages || 0).toLocaleString()}</h3>
-                                <p className="text-slate-500 font-semibold mt-1 text-sm">תמונות</p>
-                            </div>
-                            <div className="pt-3 border-t border-slate-100 flex justify-between text-right">
+                        <div className="col-span-2 md:col-span-1 bg-white p-5 rounded-2xl shadow-sm border border-slate-100 hover:shadow-md transition-all relative group">
+                            <div className="flex flex-col items-start text-right h-full justify-between">
                                 <div>
-                                    <p className="text-slate-400 text-xs font-semibold">מקסימום</p>
-                                    <p className="text-slate-900 font-bold text-base">{stats.maxImagesPerEvent || 0}</p>
+                                    <div className="p-2.5 bg-cyan-50 text-cyan-500 rounded-xl mb-3 w-fit">
+                                        <ImageIcon className="w-5 h-5" />
+                                    </div>
+                                    <div className="relative" title={(stats.totalImages || 0).toLocaleString()}>
+                                        <h3 className="text-3xl font-black text-slate-900 leading-none mb-1 truncate max-w-[200px]">
+                                            {(stats.totalImages || 0).toLocaleString()}
+                                        </h3>
+                                        <p className="text-slate-500 font-semibold text-xs">תמונות</p>
+                                    </div>
                                 </div>
-                                <div>
-                                    <p className="text-slate-400 text-xs font-semibold">ממוצע</p>
-                                    <p className="text-slate-900 font-bold text-base">{stats.avgImagesPerEvent || 0}</p>
+                                <div className="w-full pt-3 border-t border-slate-100 flex justify-between text-right mt-3">
+                                    <div>
+                                        <p className="text-slate-400 text-[10px] font-semibold">מקסימום</p>
+                                        <p className="text-slate-900 font-bold text-sm">{stats.maxImagesPerEvent || 0}</p>
+                                    </div>
+                                    <div>
+                                        <p className="text-slate-400 text-[10px] font-semibold">ממוצע</p>
+                                        <p className="text-slate-900 font-bold text-sm">{stats.avgImagesPerEvent || 0}</p>
+                                    </div>
                                 </div>
                             </div>
                         </div>
 
                         {/* 3. צפיות */}
                         <div className="bg-white p-5 rounded-2xl shadow-sm border border-slate-100 hover:shadow-md transition-all relative">
-                            <div className="absolute top-5 right-5">
-                                <div className="p-2.5 bg-purple-50 text-purple-500 rounded-xl">
-                                    <Eye className="w-5 h-5" />
-                                </div>
-                            </div>
-                            <div className="flex flex-col items-center text-center mb-3 pt-2 min-h-[80px]">
-                                <h3 className="text-3xl font-black text-slate-900 leading-none">{(stats.totalPageVisits || 0).toLocaleString()}</h3>
-                                <p className="text-slate-500 font-semibold mt-1 text-sm">צפיות</p>
-                            </div>
-                            <div className="pt-3 border-t border-slate-100 flex justify-between text-right">
+                            <div className="flex flex-col items-start text-right h-full justify-between">
                                 <div>
-                                    <p className="text-slate-400 text-xs font-semibold">מקסימום</p>
-                                    <p className="text-slate-900 font-bold text-base">{stats.maxPageVisitsPerEvent || 0}</p>
+                                    <div className="p-2.5 bg-purple-50 text-purple-500 rounded-xl mb-3 w-fit">
+                                        <Eye className="w-5 h-5" />
+                                    </div>
+                                    <h3 className="text-3xl font-black text-slate-900 leading-none mb-1">{(stats.totalPageVisits || 0).toLocaleString()}</h3>
+                                    <p className="text-slate-500 font-semibold text-xs">צפיות</p>
                                 </div>
-                                <div>
-                                    <p className="text-slate-400 text-xs font-semibold">ממוצע</p>
-                                    <p className="text-slate-900 font-bold text-base">{stats.avgPageVisitsPerEvent || 0}</p>
+                                <div className="w-full pt-3 border-t border-slate-100 flex justify-between text-right mt-3">
+                                    <div>
+                                        <p className="text-slate-400 text-[10px] font-semibold">מקסימום</p>
+                                        <p className="text-slate-900 font-bold text-sm">{stats.maxPageVisitsPerEvent || 0}</p>
+                                    </div>
+                                    <div>
+                                        <p className="text-slate-400 text-[10px] font-semibold">ממוצע</p>
+                                        <p className="text-slate-900 font-bold text-sm">{stats.avgPageVisitsPerEvent || 0}</p>
+                                    </div>
                                 </div>
                             </div>
                         </div>
 
                         {/* 4. הורדות */}
                         <div className="bg-white p-5 rounded-2xl shadow-sm border border-slate-100 hover:shadow-md transition-all relative">
-                            <div className="absolute top-5 right-5">
-                                <div className="p-2.5 bg-blue-50 text-blue-500 rounded-xl">
-                                    <Download className="w-5 h-5" />
-                                </div>
-                            </div>
                             <div className="absolute top-5 left-5">
                                 <div className="text-left group">
                                     <span className="bg-blue-100 text-blue-600 px-2 py-0.5 rounded-full text-[10px] font-bold cursor-help">
                                         {stats.totalPageVisits > 0 ? Math.round((stats.totalDownloads / stats.totalPageVisits) * 100) : 0}%
                                     </span>
-                                    <p className="text-slate-600 text-[10px] font-semibold mt-0.5 opacity-0 group-hover:opacity-100 transition-opacity leading-tight">
-                                        אחוז<br />המרה<br />מצפיות
+                                    <p className="text-slate-600 text-[10px] font-semibold mt-1 opacity-0 group-hover:opacity-100 transition-opacity leading-tight absolute left-0 w-20">
+                                        אחוז המרה מהצפיות
                                     </p>
                                 </div>
                             </div>
-                            <div className="flex flex-col items-center text-center mb-3 pt-2 min-h-[80px]">
-                                <h3 className="text-3xl font-black text-slate-900 leading-none">{(stats.totalDownloads || 0).toLocaleString()}</h3>
-                                <p className="text-slate-500 font-semibold mt-1 text-sm">הורדות</p>
-                            </div>
-                            <div className="pt-3 border-t border-slate-100 flex justify-between text-right">
+                            <div className="flex flex-col items-start text-right h-full justify-between">
                                 <div>
-                                    <p className="text-slate-400 text-xs font-semibold">מקסימום</p>
-                                    <p className="text-slate-900 font-bold text-base">{stats.maxDownloadsPerEvent || 0}</p>
+                                    <div className="p-2.5 bg-blue-50 text-blue-500 rounded-xl mb-3 w-fit">
+                                        <Download className="w-5 h-5" />
+                                    </div>
+                                    <h3 className="text-3xl font-black text-slate-900 leading-none mb-1">{(stats.totalDownloads || 0).toLocaleString()}</h3>
+                                    <p className="text-slate-500 font-semibold text-xs">הורדות</p>
                                 </div>
-                                <div>
-                                    <p className="text-slate-400 text-xs font-semibold">ממוצע</p>
-                                    <p className="text-slate-900 font-bold text-base">{stats.avgDownloadsPerEvent || 0}</p>
+                                <div className="w-full pt-3 border-t border-slate-100 flex justify-between text-right mt-3">
+                                    <div>
+                                        <p className="text-slate-400 text-[10px] font-semibold">מקסימום</p>
+                                        <p className="text-slate-900 font-bold text-sm">{stats.maxDownloadsPerEvent || 0}</p>
+                                    </div>
+                                    <div>
+                                        <p className="text-slate-400 text-[10px] font-semibold">ממוצע</p>
+                                        <p className="text-slate-900 font-bold text-sm">{stats.avgDownloadsPerEvent || 0}</p>
+                                    </div>
                                 </div>
                             </div>
                         </div>
 
                         {/* 5. שמירות */}
                         <div className="bg-white p-5 rounded-2xl shadow-sm border border-slate-100 hover:shadow-md transition-all relative">
-                            <div className="absolute top-5 right-5">
-                                <div className="p-2.5 bg-green-50 text-green-500 rounded-xl">
-                                    <Smartphone className="w-5 h-5" />
-                                </div>
-                            </div>
                             <div className="absolute top-5 left-5">
                                 <div className="text-left group">
                                     <span className="bg-green-100 text-green-600 px-2 py-0.5 rounded-full text-[10px] font-bold cursor-help">
                                         {stats.totalPageVisits > 0 ? Math.round((stats.phoneSaves / stats.totalPageVisits) * 100) : 0}%
                                     </span>
-                                    <p className="text-slate-600 text-[10px] font-semibold mt-0.5 opacity-0 group-hover:opacity-100 transition-opacity leading-tight">
-                                        אחוז<br />המרה<br />מצפיות
+                                    <p className="text-slate-600 text-[10px] font-semibold mt-1 opacity-0 group-hover:opacity-100 transition-opacity leading-tight absolute left-0 w-20">
+                                        אחוז המרה מהצפיות
                                     </p>
                                 </div>
                             </div>
-                            <div className="flex flex-col items-center text-center mb-3 pt-2 min-h-[80px]">
-                                <h3 className="text-3xl font-black text-slate-900 leading-none">{(stats.phoneSaves || 0).toLocaleString()}</h3>
-                                <p className="text-slate-500 font-semibold mt-1 text-sm">שמירות</p>
-                            </div>
-                            <div className="pt-3 border-t border-slate-100 flex justify-between text-right">
+                            <div className="flex flex-col items-start text-right h-full justify-between">
                                 <div>
-                                    <p className="text-slate-400 text-xs font-semibold">מקסימום</p>
-                                    <p className="text-slate-900 font-bold text-base">{stats.maxPhoneSavesPerEvent || 0}</p>
+                                    <div className="p-2.5 bg-green-50 text-green-500 rounded-xl mb-3 w-fit">
+                                        <Smartphone className="w-5 h-5" />
+                                    </div>
+                                    <h3 className="text-3xl font-black text-slate-900 leading-none mb-1">{(stats.phoneSaves || 0).toLocaleString()}</h3>
+                                    <p className="text-slate-500 font-semibold text-xs">שמירות</p>
                                 </div>
-                                <div>
-                                    <p className="text-slate-400 text-xs font-semibold">ממוצע</p>
-                                    <p className="text-slate-900 font-bold text-base">{stats.avgPhoneSavesPerEvent || 0}</p>
+                                <div className="w-full pt-3 border-t border-slate-100 flex justify-between text-right mt-3">
+                                    <div>
+                                        <p className="text-slate-400 text-[10px] font-semibold">מקסימום</p>
+                                        <p className="text-slate-900 font-bold text-sm">{stats.maxPhoneSavesPerEvent || 0}</p>
+                                    </div>
+                                    <div>
+                                        <p className="text-slate-400 text-[10px] font-semibold">ממוצע</p>
+                                        <p className="text-slate-900 font-bold text-sm">{stats.avgPhoneSavesPerEvent || 0}</p>
+                                    </div>
                                 </div>
                             </div>
                         </div>
 
                         {/* 6. כניסות לפרופיל */}
-                        <div className="bg-white p-5 rounded-2xl shadow-sm border border-slate-100 hover:shadow-md transition-all relative">
-                            <div className="absolute top-5 right-5">
-                                <div className="p-2.5 bg-pink-50 text-pink-500 rounded-xl">
-                                    <Share2 className="w-5 h-5" />
-                                </div>
-                            </div>
+                        <div className="bg-white p-5 rounded-2xl shadow-sm border border-slate-100 hover:shadow-md transition-all relative flex flex-col">
                             <div className="absolute top-5 left-5">
                                 <div className="text-left group">
                                     <span className="bg-pink-100 text-pink-600 px-2 py-0.5 rounded-full text-[10px] font-bold cursor-help">
                                         {stats.totalPageVisits > 0 ? Math.round((stats.totalSocialTraffic / stats.totalPageVisits) * 100) : 0}%
                                     </span>
-                                    <p className="text-slate-600 text-[10px] font-semibold mt-0.5 opacity-0 group-hover:opacity-100 transition-opacity leading-tight">
-                                        אחוז<br />המרה<br />מצפיות
+                                    <p className="text-slate-600 text-[10px] font-semibold mt-1 opacity-0 group-hover:opacity-100 transition-opacity leading-tight absolute left-0 w-20">
+                                        אחוז המרה מהצפיות
                                     </p>
                                 </div>
                             </div>
-                            <div className="flex flex-col items-center text-center mb-3 pt-2 min-h-[80px]">
-                                <h3 className="text-3xl font-black text-slate-900 leading-none">{(stats.totalSocialTraffic || 0).toLocaleString()}</h3>
-                                <p className="text-slate-500 font-semibold mt-1 text-sm">כניסות לפרופיל</p>
-                                <p className="text-slate-400 text-[10px] mt-0.5">פייסבוק • אינסטגרם • טיקטוק</p>
-                            </div>
-                            <div className="pt-3 border-t border-slate-100 flex justify-between text-right">
+                            <div className="flex flex-col items-start text-right h-full justify-between">
                                 <div>
-                                    <p className="text-slate-400 text-xs font-semibold">מקסימום</p>
-                                    <p className="text-slate-900 font-bold text-base">{stats.totalEvents > 0 ? Math.max(stats.trafficFacebook, stats.trafficInstagram, stats.trafficTiktok) : 0}</p>
+                                    <div className="p-2.5 bg-pink-50 text-pink-500 rounded-xl mb-3 w-fit">
+                                        <Share2 className="w-5 h-5" />
+                                    </div>
+                                    <h3 className="text-3xl font-black text-slate-900 leading-none mb-1">{(stats.totalSocialTraffic || 0).toLocaleString()}</h3>
+                                    <p className="text-slate-500 font-semibold text-xs">כניסות לפרופיל</p>
+                                    <p className="text-slate-400 text-[10px] mt-1">פייסבוק • אינסטגרם • טיקטוק</p>
                                 </div>
-                                <div>
-                                    <p className="text-slate-400 text-xs font-semibold">ממוצע</p>
-                                    <p className="text-slate-900 font-bold text-base">{stats.totalEvents > 0 ? (stats.totalSocialTraffic / stats.totalEvents).toFixed(1) : 0}</p>
+                                <div className="w-full pt-3 border-t border-slate-100 flex justify-between text-right mt-3">
+                                    <div>
+                                        <p className="text-slate-400 text-[10px] font-semibold">מקסימום</p>
+                                        <p className="text-slate-900 font-bold text-sm">{stats.totalEvents > 0 ? Math.max(stats.trafficFacebook, stats.trafficInstagram, stats.trafficTiktok) : 0}</p>
+                                    </div>
+                                    <div>
+                                        <p className="text-slate-400 text-[10px] font-semibold">ממוצע</p>
+                                        <p className="text-slate-900 font-bold text-sm">{stats.totalEvents > 0 ? (stats.totalSocialTraffic / stats.totalEvents).toFixed(1) : 0}</p>
+                                    </div>
                                 </div>
                             </div>
-                        </div>                   </div>
-                )}
+                        </div>
+                    </div>
+                )
+                }
 
                 {/* Events Section */}
                 <div className="bg-white rounded-3xl shadow-sm border border-slate-100 overflow-hidden">
-                    <div className="p-6 border-b border-slate-100 flex flex-col md:flex-row md:items-center justify-between gap-4">
+                    <div className="p-5 border-b border-slate-100 flex flex-col md:flex-row md:items-center justify-between gap-4">
                         <h2 className="text-xl font-bold text-slate-900">האירועים שלך</h2>
 
                         <div className="flex gap-3">
@@ -715,92 +753,96 @@ const DashboardPage: React.FC = () => {
                 </div>
 
                 {/* Delete Confirmation Modal */}
-                {deleteModalOpen && eventToDelete && (
-                    <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-                        <div className="bg-white rounded-3xl shadow-2xl max-w-md w-full p-8 animate-fade-in">
-                            <div className="flex flex-col items-center text-center">
-                                <div className="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mb-4">
-                                    <Trash2 className="w-8 h-8 text-red-600" />
-                                </div>
-                                <h3 className="text-2xl font-bold text-slate-900 mb-2">מחיקת אירוע</h3>
-                                <p className="text-slate-600 mb-6">
-                                    האם אתה בטוח שברצונך למחוק את האירוע <span className="font-bold text-slate-900">"{eventToDelete.name}"</span>?
-                                </p>
-                                <div className="bg-red-50 border border-red-100 rounded-xl p-4 mb-6 w-full">
-                                    <p className="text-sm text-red-800 font-medium">
-                                        ⚠️ פעולה זו תמחק לצמיתות את כל התמונות והנתונים ולא ניתן יהיה לשחזר אותם.
+                {
+                    deleteModalOpen && eventToDelete && (
+                        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+                            <div className="bg-white rounded-3xl shadow-2xl max-w-md w-full p-8 animate-fade-in">
+                                <div className="flex flex-col items-center text-center">
+                                    <div className="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mb-4">
+                                        <Trash2 className="w-8 h-8 text-red-600" />
+                                    </div>
+                                    <h3 className="text-2xl font-bold text-slate-900 mb-2">מחיקת אירוע</h3>
+                                    <p className="text-slate-600 mb-6">
+                                        האם אתה בטוח שברצונך למחוק את האירוע <span className="font-bold text-slate-900">"{eventToDelete.name}"</span>?
                                     </p>
-                                </div>
-                                <div className="flex gap-3 w-full">
-                                    <button
-                                        onClick={() => {
-                                            setDeleteModalOpen(false);
-                                            setEventToDelete(null);
-                                        }}
-                                        className="flex-1 px-6 py-3 border border-slate-200 text-slate-700 hover:bg-slate-50 rounded-xl font-bold transition-all"
-                                    >
-                                        ביטול
-                                    </button>
-                                    <button
-                                        onClick={handleConfirmDelete}
-                                        className="flex-1 px-6 py-3 bg-red-500 hover:bg-red-600 text-white rounded-xl font-bold transition-all shadow-lg hover:shadow-red-500/30"
-                                    >
-                                        מחק לצמיתות
-                                    </button>
+                                    <div className="bg-red-50 border border-red-100 rounded-xl p-4 mb-6 w-full">
+                                        <p className="text-sm text-red-800 font-medium">
+                                            ⚠️ פעולה זו תמחק לצמיתות את כל התמונות והנתונים ולא ניתן יהיה לשחזר אותם.
+                                        </p>
+                                    </div>
+                                    <div className="flex gap-3 w-full">
+                                        <button
+                                            onClick={() => {
+                                                setDeleteModalOpen(false);
+                                                setEventToDelete(null);
+                                            }}
+                                            className="flex-1 px-6 py-3 border border-slate-200 text-slate-700 hover:bg-slate-50 rounded-xl font-bold transition-all"
+                                        >
+                                            ביטול
+                                        </button>
+                                        <button
+                                            onClick={handleConfirmDelete}
+                                            className="flex-1 px-6 py-3 bg-red-500 hover:bg-red-600 text-white rounded-xl font-bold transition-all shadow-lg hover:shadow-red-500/30"
+                                        >
+                                            מחק לצמיתות
+                                        </button>
+                                    </div>
                                 </div>
                             </div>
                         </div>
-                    </div>
-                )}
+                    )
+                }
                 {/* Link Action Modal */}
-                {linkModalConfig.isOpen && (
-                    <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4 animate-fade-in">
-                        <div className="bg-white rounded-3xl shadow-2xl max-w-sm w-full p-6 relative">
-                            {/* Close Button */}
-                            <button
-                                onClick={() => setLinkModalConfig(prev => ({ ...prev, isOpen: false }))}
-                                className="absolute top-4 right-4 p-2 text-slate-400 hover:text-slate-600 transition-colors"
-                            >
-                                <X className="w-5 h-5" />
-                            </button>
+                {
+                    linkModalConfig.isOpen && (
+                        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4 animate-fade-in">
+                            <div className="bg-white rounded-3xl shadow-2xl max-w-sm w-full p-6 relative">
+                                {/* Close Button */}
+                                <button
+                                    onClick={() => setLinkModalConfig(prev => ({ ...prev, isOpen: false }))}
+                                    className="absolute top-4 right-4 p-2 text-slate-400 hover:text-slate-600 transition-colors"
+                                >
+                                    <X className="w-5 h-5" />
+                                </button>
 
-                            <div className="flex flex-col items-center text-center mt-2">
-                                {/* Icon */}
-                                <div className={`w-14 h-14 rounded-full flex items-center justify-center mb-4 ${linkModalConfig.type === 'guest' ? 'bg-slate-50 text-slate-600' : 'bg-pink-50 text-pink-500'}`}>
-                                    {linkModalConfig.type === 'guest' ? (
-                                        <Users className="w-7 h-7" />
-                                    ) : (
-                                        <Heart className="w-7 h-7" />
-                                    )}
-                                </div>
+                                <div className="flex flex-col items-center text-center mt-2">
+                                    {/* Icon */}
+                                    <div className={`w-14 h-14 rounded-full flex items-center justify-center mb-4 ${linkModalConfig.type === 'guest' ? 'bg-slate-50 text-slate-600' : 'bg-pink-50 text-pink-500'}`}>
+                                        {linkModalConfig.type === 'guest' ? (
+                                            <Users className="w-7 h-7" />
+                                        ) : (
+                                            <Heart className="w-7 h-7" />
+                                        )}
+                                    </div>
 
-                                {/* Title */}
-                                <h3 className="text-xl font-bold text-slate-900 mb-1">{linkModalConfig.title}</h3>
-                                <p className="text-slate-500 text-sm mb-6">בחר פעולה עבור הקישור</p>
+                                    {/* Title */}
+                                    <h3 className="text-xl font-bold text-slate-900 mb-1">{linkModalConfig.title}</h3>
+                                    <p className="text-slate-500 text-sm mb-6">בחר פעולה עבור הקישור</p>
 
-                                {/* Buttons */}
-                                <div className="w-full flex flex-col gap-3">
-                                    <button
-                                        onClick={() => window.open(linkModalConfig.url, '_blank')}
-                                        className="w-full py-3 px-4 rounded-xl border border-cyan-100 bg-cyan-50 text-cyan-700 font-bold hover:bg-cyan-100 transition-colors flex items-center justify-center gap-2"
-                                    >
-                                        <span>פתח בחלון חדש</span>
-                                        <ExternalLink className="w-4 h-4" />
-                                    </button>
+                                    {/* Buttons */}
+                                    <div className="w-full flex flex-col gap-3">
+                                        <button
+                                            onClick={() => window.open(linkModalConfig.url, '_blank')}
+                                            className="w-full py-3 px-4 rounded-xl border border-cyan-100 bg-cyan-50 text-cyan-700 font-bold hover:bg-cyan-100 transition-colors flex items-center justify-center gap-2"
+                                        >
+                                            <span>פתח בחלון חדש</span>
+                                            <ExternalLink className="w-4 h-4" />
+                                        </button>
 
-                                    <button
-                                        onClick={handleCopyLink}
-                                        className="w-full py-3 px-4 rounded-xl bg-slate-900 text-white font-bold hover:bg-slate-800 transition-colors flex items-center justify-center gap-2 shadow-lg shadow-slate-200"
-                                    >
-                                        <span>העתק קישור</span>
-                                        <Copy className="w-4 h-4" />
-                                    </button>
+                                        <button
+                                            onClick={handleCopyLink}
+                                            className="w-full py-3 px-4 rounded-xl bg-slate-900 text-white font-bold hover:bg-slate-800 transition-colors flex items-center justify-center gap-2 shadow-lg shadow-slate-200"
+                                        >
+                                            <span>העתק קישור</span>
+                                            <Copy className="w-4 h-4" />
+                                        </button>
+                                    </div>
                                 </div>
                             </div>
                         </div>
-                    </div>
-                )}
-            </div>
+                    )
+                }
+            </div >
 
             <Toast
                 show={showToast}

@@ -114,4 +114,17 @@ export interface DashboardStats {
   maxPageVisitsPerEvent: number;
   maxPhoneSavesPerEvent: number;
   maxImagesPerEvent: number;
+
+  statsBasic?: {
+    total: number;
+    active: number;
+  };
+  statsPremium?: {
+    total: number;
+    active: number;
+  };
+  statsGold?: {
+    total: number;
+    active: number;
+  };
 }
