@@ -21,10 +21,13 @@ import {
     ExternalLink,
     X,
     FolderUp,
-    Eye
+    Eye,
+    Share2
 } from 'lucide-react';
 import EventPreviewModal from './components/EventPreviewModal';
 import { useUpload } from '../../context/UploadContext';
+import EventShareModal from './components/EventShareModal';
+import { unsecuredCopyToClipboard } from '../../utils/clipboard';
 
 const EventManagePage: React.FC = () => {
     const { id } = useParams<{ id: string }>();
@@ -74,6 +77,8 @@ const EventManagePage: React.FC = () => {
         title: string;
     }>({ isOpen: false, type: 'guest', url: '', title: '' });
 
+    const [shareModalOpen, setShareModalOpen] = useState(false);
+
     const handleLinkClick = (type: 'guest' | 'couple') => {
         if (!event) return;
         const path = type === 'guest' ? event.slug || event.id : event.coupleSlug || event.id;
@@ -83,25 +88,8 @@ const EventManagePage: React.FC = () => {
             isOpen: true,
             type,
             url,
-            title: type === 'guest' ? 'קישור לאורחים' : 'קישור לזוג'
+            title: type === 'guest' ? 'קישור לאורחים' : 'קישור לבעלי האירוע'
         });
-    };
-
-    const unsecuredCopyToClipboard = (text: string) => {
-        const textArea = document.createElement("textarea");
-        textArea.value = text;
-        document.body.appendChild(textArea);
-        textArea.focus();
-        textArea.select();
-        try {
-            document.execCommand('copy');
-            showNotification('הקישור הועתק בהצלחה');
-            setLinkModal(prev => ({ ...prev, isOpen: false }));
-        } catch (err) {
-            console.error('Unable to copy to clipboard', err);
-            showNotification('שגיאה בהעתקת הקישור', 'error');
-        }
-        document.body.removeChild(textArea);
     };
 
     const copyLink = async () => {
@@ -113,9 +101,13 @@ const EventManagePage: React.FC = () => {
             } catch (err) {
                 console.warn('Clipboard API failed, trying fallback', err);
                 unsecuredCopyToClipboard(linkModal.url);
+                showNotification('הקישור הועתק בהצלחה');
+                setLinkModal(prev => ({ ...prev, isOpen: false }));
             }
         } else {
             unsecuredCopyToClipboard(linkModal.url);
+            showNotification('הקישור הועתק בהצלחה');
+            setLinkModal(prev => ({ ...prev, isOpen: false }));
         }
     };
 
@@ -124,11 +116,36 @@ const EventManagePage: React.FC = () => {
         setTimeout(() => setToast(prev => ({ ...prev, show: false })), 3000);
     };
 
+    // Load photographer profile for sharing (handled within modal indirectly or via prop if needed, but keeping local state if used solely for that)
+    // Actually EventShareModal takes photographerName prop.
+    const [photographerName, setPhotographerName] = useState<string>('');
+
+    useEffect(() => {
+        const name = localStorage.getItem('photographerName');
+        if (name) setPhotographerName(name);
+    }, []);
+
+    const shareEvent = () => {
+        setShareModalOpen(true);
+    };
 
     // Helper to check if processing is active
     const checkIsProcessing = (batchList: any[]) => {
         return batchList.some(b => b.status !== 'done' && b.status !== 'failed');
     };
+    useEffect(() => {
+        const loadProfile = async () => {
+            try {
+                const profile = await BackendService.getProfile();
+                if (profile?.name) {
+                    localStorage.setItem('photographerName', profile.name);
+                }
+            } catch (error) {
+                console.error('Failed to load profile', error);
+            }
+        };
+        loadProfile();
+    }, []);
 
     // 1. Check for redirected upload state
     useEffect(() => {
@@ -532,7 +549,14 @@ const EventManagePage: React.FC = () => {
                                     className="w-32 justify-center px-4 py-2 text-sm font-bold text-cyan-600 bg-cyan-50 hover:bg-cyan-100 rounded-xl transition-colors flex items-center gap-2 border border-cyan-100"
                                 >
                                     <Heart className="w-4 h-4" />
-                                    <span>לזוג</span>
+                                    <span>לבעלי האירוע</span>
+                                </button>
+                                <button
+                                    onClick={shareEvent}
+                                    className="w-32 justify-center px-4 py-2 text-sm font-bold text-green-600 bg-green-50 hover:bg-green-100 rounded-xl transition-colors flex items-center gap-2 border border-green-100"
+                                >
+                                    <Share2 className="w-4 h-4" />
+                                    <span>שתף</span>
                                 </button>
                             </div>
                         )}
@@ -896,6 +920,14 @@ const EventManagePage: React.FC = () => {
                     </div>
                 </div>
             )}
+
+            {/* Share Modal */}
+            <EventShareModal
+                isOpen={shareModalOpen}
+                onClose={() => setShareModalOpen(false)}
+                event={event}
+                photographerName={photographerName}
+            />
         </Layout>
     );
 };
