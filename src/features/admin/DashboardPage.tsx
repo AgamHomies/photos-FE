@@ -23,6 +23,7 @@ import {
     X
 } from 'lucide-react';
 import { Toast } from '../../components';
+import EventShareModal from './components/EventShareModal';
 
 const DashboardPage: React.FC = () => {
     const navigate = useNavigate();
@@ -60,13 +61,16 @@ const DashboardPage: React.FC = () => {
         title: ''
     });
 
+    const [shareModalOpen, setShareModalOpen] = useState(false);
+    const [shareEventData, setShareEventData] = useState<Event | null>(null);
+
     const openLinkModal = (e: React.MouseEvent, type: 'guest' | 'couple', path: string) => {
         e.stopPropagation();
         setLinkModalConfig({
             isOpen: true,
             type,
             url: `${window.location.origin}${path}`,
-            title: type === 'guest' ? 'קישור לאורחים' : 'קישור לזוג'
+            title: type === 'guest' ? 'קישור לאורחים' : 'קישור לבעלי האירוע'
         });
     };
 
@@ -102,6 +106,12 @@ const DashboardPage: React.FC = () => {
         }
     };
 
+    const shareEvent = (event: Event, e: React.MouseEvent) => {
+        e.stopPropagation();
+        setShareEventData(event);
+        setShareModalOpen(true);
+    };
+
     const [totalPages, setTotalPages] = useState(0);
     const [totalEvents, setTotalEvents] = useState(0);
 
@@ -118,6 +128,21 @@ const DashboardPage: React.FC = () => {
     useEffect(() => {
         loadData(currentPage);
     }, [currentPage]); // Remove searchTerm/showActiveOnly from here to avoid double fetch
+
+    // Load photographer profile for sharing
+    useEffect(() => {
+        const loadProfile = async () => {
+            try {
+                const profile = await BackendService.getProfile();
+                if (profile?.name) {
+                    localStorage.setItem('photographerName', profile.name);
+                }
+            } catch (error) {
+                console.error('Failed to load profile', error);
+            }
+        };
+        loadProfile();
+    }, []);
 
     // Initial load handled by the above effects? 
     // Actually, ensure we don't double load on mount.
@@ -520,7 +545,7 @@ const DashboardPage: React.FC = () => {
                                             {sortField === 'downloads' && (sortDirection === 'asc' ? '↑' : '↓')}
                                         </div>
                                     </th>
-                                    <th className="px-6 py-4 w-64">לינק ייחודי</th>
+                                    <th className="px-6 py-4 w-64 text-center">לינק ייחודי</th>
                                     <th className="px-6 py-4">סטטוס</th>
                                     <th className="px-6 py-4 rounded-tl-2xl">פעולות</th>
                                 </tr>
@@ -562,10 +587,10 @@ const DashboardPage: React.FC = () => {
                                         <td className="px-6 py-4 text-slate-600 text-sm font-medium">{event.downloads}</td>
                                         <td className="px-6 py-4">
                                             {event.isPublished || event.initialProcessingDone ? (
-                                                <div className="flex gap-2">
+                                                <div className="flex gap-2 justify-center">
                                                     <button
                                                         onClick={(e) => openLinkModal(e, 'guest', `/gallery/${event.slug || event.id}`)}
-                                                        className="w-28 justify-center px-3 py-1.5 text-xs font-bold text-slate-600 border border-slate-200 hover:bg-slate-50 rounded-lg transition-colors flex items-center gap-1.5"
+                                                        className="w-24 justify-center px-2 py-1.5 text-xs font-bold text-slate-600 border border-slate-200 hover:bg-slate-50 rounded-lg transition-colors flex items-center gap-1"
                                                         title="קישור לאורחים"
                                                     >
                                                         <Users className="w-3 h-3" />
@@ -574,22 +599,31 @@ const DashboardPage: React.FC = () => {
 
                                                     <button
                                                         onClick={(e) => openLinkModal(e, 'couple', `/gallery/${event.coupleSlug || event.id}`)}
-                                                        className="w-28 justify-center px-3 py-1.5 text-xs font-bold text-cyan-600 bg-cyan-50 hover:bg-cyan-100 rounded-lg transition-colors flex items-center gap-1.5 border border-cyan-100"
-                                                        title="קישור לזוג"
+                                                        className="w-24 justify-center px-2 py-1.5 text-xs font-bold text-cyan-600 bg-cyan-50 hover:bg-cyan-100 rounded-lg transition-colors flex items-center gap-1 border border-cyan-100"
+                                                        title="קישור לבעלי האירוע"
                                                     >
                                                         <Heart className="w-3 h-3" />
-                                                        <span>לזוג</span>
+                                                        <span>לבעלי האירוע</span>
+                                                    </button>
+
+                                                    <button
+                                                        onClick={(e) => shareEvent(event, e)}
+                                                        className="w-24 justify-center px-2 py-1.5 text-xs font-bold text-green-600 bg-green-50 hover:bg-green-100 rounded-lg transition-colors flex items-center gap-1 border border-green-100"
+                                                        title="שתף אירוע"
+                                                    >
+                                                        <Share2 className="w-3 h-3" />
+                                                        <span>שתף</span>
                                                     </button>
                                                 </div>
                                             ) : (
-                                                <div className="px-3 py-1.5 text-xs font-bold text-orange-500 bg-orange-50 rounded-lg flex items-center gap-1.5 border border-orange-100 cursor-help" title="התמונות עדיין עוברות עיבוד">
+                                                <div className="px-3 py-1.5 text-xs font-bold text-orange-500 bg-orange-50 rounded-lg flex items-center gap-1.5 border border-orange-100 cursor-help justify-center" title="התמונות עדיין עוברות עיבוד">
                                                     <div className="w-2 h-2 rounded-full bg-orange-500 animate-pulse"></div>
                                                     <span>בעיבוד...</span>
                                                 </div>
                                             )}
                                         </td>
                                         <td className="px-6 py-4">
-                                            <span className={`px-3 py-1 rounded-full text-xs font-bold ${event.status === 'active' ? 'bg-green-100 text-green-600' : 'bg-slate-100 text-slate-500'
+                                            <span className={`px-3 py-1 rounded-full text-xs font-bold whitespace-nowrap ${event.status === 'active' ? 'bg-green-100 text-green-600' : 'bg-slate-100 text-slate-500'
                                                 }`}>
                                                 {event.status === 'active' ? 'פעיל' : 'פג תוקף'}
                                             </span>
@@ -754,6 +788,14 @@ const DashboardPage: React.FC = () => {
                     </div>
                 )}
             </div>
+
+            {/* Share Modal */}
+            <EventShareModal
+                isOpen={shareModalOpen}
+                onClose={() => setShareModalOpen(false)}
+                event={shareEventData!}
+                photographerName={localStorage.getItem('photographerName') || undefined}
+            />
 
             <Toast
                 show={showToast}
