@@ -11,19 +11,14 @@ import {
    Phone,
    MapPin,
    Calendar,
-   Search,
    Loader2,
    X,
    CheckCircle2,
    Facebook,
-   XCircle,
    Globe,
-   Copy,
    Heart,
    ChevronLeft,
    ChevronRight,
-   ArrowUpDown,
-   Sparkles,
    ChevronsLeft,
    ChevronsRight,
    RefreshCw
@@ -251,7 +246,7 @@ const GalleryPage: React.FC<GalleryPageProps> = ({ mode: propMode }) => {
             window.history.replaceState({}, '', newUrl);
 
             // If photo is already in photos array (e.g. page 1), use it
-            const existingPhoto = photos.find(p => p.id == photoId);
+            const existingPhoto = photos.find(p => p.id === photoId);
             if (existingPhoto) {
                setLightboxPhoto(existingPhoto);
                return;
