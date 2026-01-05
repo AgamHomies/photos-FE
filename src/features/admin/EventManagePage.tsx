@@ -26,6 +26,8 @@ import {
 } from 'lucide-react';
 import EventPreviewModal from './components/EventPreviewModal';
 import { useUpload } from '../../context/UploadContext';
+import EventShareModal from './components/EventShareModal';
+import { unsecuredCopyToClipboard } from '../../utils/clipboard';
 
 const EventManagePage: React.FC = () => {
     const { id } = useParams<{ id: string }>();
@@ -86,25 +88,8 @@ const EventManagePage: React.FC = () => {
             isOpen: true,
             type,
             url,
-            title: type === 'guest' ? 'קישור לאורחים' : 'קישור לזוג'
+            title: type === 'guest' ? 'קישור לאורחים' : 'קישור לבעלי האירוע'
         });
-    };
-
-    const unsecuredCopyToClipboard = (text: string) => {
-        const textArea = document.createElement("textarea");
-        textArea.value = text;
-        document.body.appendChild(textArea);
-        textArea.focus();
-        textArea.select();
-        try {
-            document.execCommand('copy');
-            showNotification('הקישור הועתק בהצלחה');
-            setLinkModal(prev => ({ ...prev, isOpen: false }));
-        } catch (err) {
-            console.error('Unable to copy to clipboard', err);
-            showNotification('שגיאה בהעתקת הקישור', 'error');
-        }
-        document.body.removeChild(textArea);
     };
 
     const copyLink = async () => {
@@ -116,9 +101,13 @@ const EventManagePage: React.FC = () => {
             } catch (err) {
                 console.warn('Clipboard API failed, trying fallback', err);
                 unsecuredCopyToClipboard(linkModal.url);
+                showNotification('הקישור הועתק בהצלחה');
+                setLinkModal(prev => ({ ...prev, isOpen: false }));
             }
         } else {
             unsecuredCopyToClipboard(linkModal.url);
+            showNotification('הקישור הועתק בהצלחה');
+            setLinkModal(prev => ({ ...prev, isOpen: false }));
         }
     };
 
@@ -127,17 +116,23 @@ const EventManagePage: React.FC = () => {
         setTimeout(() => setToast(prev => ({ ...prev, show: false })), 3000);
     };
 
+    // Load photographer profile for sharing (handled within modal indirectly or via prop if needed, but keeping local state if used solely for that)
+    // Actually EventShareModal takes photographerName prop.
+    const [photographerName, setPhotographerName] = useState<string>('');
+
+    useEffect(() => {
+        const name = localStorage.getItem('photographerName');
+        if (name) setPhotographerName(name);
+    }, []);
+
     const shareEvent = () => {
         setShareModalOpen(true);
     };
-
 
     // Helper to check if processing is active
     const checkIsProcessing = (batchList: any[]) => {
         return batchList.some(b => b.status !== 'done' && b.status !== 'failed');
     };
-
-    // Load photographer profile for sharing
     useEffect(() => {
         const loadProfile = async () => {
             try {
@@ -554,7 +549,7 @@ const EventManagePage: React.FC = () => {
                                     className="w-32 justify-center px-4 py-2 text-sm font-bold text-cyan-600 bg-cyan-50 hover:bg-cyan-100 rounded-xl transition-colors flex items-center gap-2 border border-cyan-100"
                                 >
                                     <Heart className="w-4 h-4" />
-                                    <span>לזוג</span>
+                                    <span>לבעלי האירוע</span>
                                 </button>
                                 <button
                                     onClick={shareEvent}
@@ -927,99 +922,12 @@ const EventManagePage: React.FC = () => {
             )}
 
             {/* Share Modal */}
-            {shareModalOpen && event && (() => {
-                const couplePath = event.coupleSlug || event.id;
-                const guestPath = event.slug || event.id;
-                const coupleUrl = `${window.location.origin}/gallery/${couplePath}`;
-                const guestUrl = `${window.location.origin}/gallery/${guestPath}`;
-                const photographerName = localStorage.getItem('photographerName') || 'הצלם שלכם';
-
-                const shareText = `היי,
-שמחתי להיות שם ולתעד את הרגעים היפים שלכם!
-התמונות מוכנות והנה הקישור לגלריה המלאה עבורכם:
-${coupleUrl}
-
-בנוסף מצרף את הקישור לאורחים שם הם יוכלו להעלות סלפי ולקבל רק את התמונות שהם מופיעים בהם בצורה אוטומטית מאובטחת ומהירה, מבלי לחפש בכל האלבום.
-${guestUrl}
-
-נתראה בשמחות!
-${photographerName}`;
-
-                const handleCopyText = async () => {
-                    try {
-                        if (navigator.clipboard && navigator.clipboard.writeText) {
-                            await navigator.clipboard.writeText(shareText);
-                            showNotification('הטקסט הועתק ללוח');
-                        } else {
-                            unsecuredCopyToClipboard(shareText);
-                        }
-                        setShareModalOpen(false);
-                    } catch (err) {
-                        showNotification('שגיאה בהעתקה', 'error');
-                    }
-                };
-
-                const handleWhatsApp = () => {
-                    const whatsappUrl = `https://wa.me/?text=${encodeURIComponent(shareText)}`;
-                    window.open(whatsappUrl, '_blank');
-                    setShareModalOpen(false);
-                };
-
-                const handleEmail = () => {
-                    const subject = `גלריית ${event.name}`;
-                    const mailtoUrl = `mailto:?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(shareText)}`;
-                    window.location.href = mailtoUrl;
-                    setShareModalOpen(false);
-                };
-
-                return (
-                    <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4" onClick={() => setShareModalOpen(false)}>
-                        <div className="bg-white rounded-2xl shadow-2xl max-w-md w-full p-6" onClick={(e) => e.stopPropagation()}>
-                            <div className="flex justify-between items-center mb-4">
-                                <h3 className="text-xl font-bold text-slate-900">שתף אירוע</h3>
-                                <button
-                                    onClick={() => setShareModalOpen(false)}
-                                    className="p-2 hover:bg-slate-100 rounded-full transition-colors"
-                                >
-                                    <X className="w-5 h-5 text-slate-500" />
-                                </button>
-                            </div>
-
-                            <p className="text-sm text-slate-600 mb-6">{event.name}</p>
-
-                            <div className="space-y-3">
-                                <button
-                                    onClick={handleWhatsApp}
-                                    className="w-full flex items-center justify-center gap-3 px-4 py-3 bg-green-500 hover:bg-green-600 text-white rounded-xl font-bold transition-colors"
-                                >
-                                    <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
-                                        <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L0 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413Z" />
-                                    </svg>
-                                    <span>שתף בוואטסאפ</span>
-                                </button>
-
-                                <button
-                                    onClick={handleEmail}
-                                    className="w-full flex items-center justify-center gap-3 px-4 py-3 bg-slate-600 hover:bg-slate-700 text-white rounded-xl font-bold transition-colors"
-                                >
-                                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
-                                    </svg>
-                                    <span>שתף במייל</span>
-                                </button>
-
-                                <button
-                                    onClick={handleCopyText}
-                                    className="w-full flex items-center justify-center gap-3 px-4 py-3 bg-cyan-50 hover:bg-cyan-100 text-cyan-600 rounded-xl font-bold transition-colors border border-cyan-100"
-                                >
-                                    <Copy className="w-5 h-5" />
-                                    <span>העתק טקסט</span>
-                                </button>
-                            </div>
-                        </div>
-                    </div>
-                );
-            })()}
+            <EventShareModal
+                isOpen={shareModalOpen}
+                onClose={() => setShareModalOpen(false)}
+                event={event}
+                photographerName={photographerName}
+            />
         </Layout>
     );
 };
