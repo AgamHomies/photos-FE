@@ -125,20 +125,20 @@ const DashboardPage: React.FC = () => {
             case 'premium':
                 return (
                     <span className="bg-blue-100 text-blue-700 text-[10px] px-1.5 py-0.5 rounded-md font-bold border border-blue-200 shadow-sm">
-                        PREMIUM
+                        פרימיום
                     </span>
                 );
             case 'gold':
                 return (
                     <span className="bg-yellow-100 text-yellow-700 text-[10px] px-1.5 py-0.5 rounded-md font-bold border border-yellow-200 shadow-sm">
-                        GOLD
+                        זהב
                     </span>
                 );
             case 'basic':
             default:
                 return (
                     <span className="bg-gray-100 text-gray-600 text-[10px] px-1.5 py-0.5 rounded-md font-bold border border-gray-200">
-                        BASIC
+                        בסיסי
                     </span>
                 );
         }
@@ -638,23 +638,23 @@ const DashboardPage: React.FC = () => {
                                     >
                                         <td className="px-6 py-4">
                                             <div className="flex items-center gap-3">
-                                                {event.coverImage && !event.coverImage.includes('placeholder') ? (
-                                                    <img
-                                                        src={event.coverImage}
-                                                        alt={event.name}
-                                                        className="w-10 h-10 rounded-lg object-cover bg-slate-100"
-                                                    />
-                                                ) : (
-                                                    <div className="w-10 h-10 bg-cyan-100 rounded-lg flex items-center justify-center text-cyan-600">
-                                                        <ImageIcon className="w-5 h-5" />
-                                                    </div>
-                                                )}
-                                                <div className="flex-1">
-                                                    <div className="flex items-center gap-2">
-                                                        <div className="font-bold text-slate-900 group-hover:text-cyan-600 transition-colors">
-                                                            {event.name}
+                                                <div className="flex flex-col items-center gap-1">
+                                                    {event.coverImage && !event.coverImage.includes('placeholder') ? (
+                                                        <img
+                                                            src={event.coverImage}
+                                                            alt={event.name}
+                                                            className="w-10 h-10 rounded-lg object-cover bg-slate-100"
+                                                        />
+                                                    ) : (
+                                                        <div className="w-10 h-10 bg-cyan-100 rounded-lg flex items-center justify-center text-cyan-600">
+                                                            <ImageIcon className="w-5 h-5" />
                                                         </div>
-                                                        {getPackageBadge(event.packageType)}
+                                                    )}
+                                                    {getPackageBadge(event.packageType)}
+                                                </div>
+                                                <div className="flex-1">
+                                                    <div className="font-bold text-slate-900 group-hover:text-cyan-600 transition-colors">
+                                                        {event.name}
                                                     </div>
                                                     <div className="text-xs text-slate-400">{event.location || 'ללא מיקום'}</div>
                                                 </div>
