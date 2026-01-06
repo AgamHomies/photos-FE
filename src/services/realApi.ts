@@ -244,6 +244,8 @@ export const RealEventAPI = {
             coupleSlug: event.couple_slug,
             isPublished: event.is_published,
             initialProcessingDone: event.initial_processing_done,
+            selectionFinished: event.selection_finished,
+            selectionFinishedAt: event.selection_finished_at,
             createdAt: event.created_at,
         }));
 
@@ -275,6 +277,8 @@ export const RealEventAPI = {
                 coupleSlug: data.couple_slug,
                 isPublished: data.is_published,
                 initialProcessingDone: data.initial_processing_done,
+                selectionFinished: data.selection_finished,
+                selectionFinishedAt: data.selection_finished_at,
                 createdAt: data.created_at,
             };
         } catch (error) {
@@ -391,6 +395,8 @@ export const RealEventAPI = {
             coupleSlug: data.couple_slug,
             isPublished: data.is_published,
             initialProcessingDone: data.initial_processing_done,
+            selectionFinished: data.selection_finished,
+            selectionFinishedAt: data.selection_finished_at,
             createdAt: data.created_at,
         };
     },
@@ -432,13 +438,14 @@ export const RealPhotoAPI = {
             const data = await apiRequest(`/events/${eventId}/images?page=${page}&limit=${limit}`);
 
             return data.map((img: any) => ({
-                id: img.id,
+                id: img.id.toString(),
                 url: img.url,
                 thumbnailUrl: img.thumbnail_url || img.url,
-                title: img.filename || 'Photo',
-                date: img.uploaded_at,
+                title: img.title || 'Photo',
+                date: img.created_at,
                 width: img.width,
                 height: img.height,
+                isFavorite: img.is_favorite,
             }));
         } catch (error) {
             console.error('Failed to get event photos:', error);
@@ -495,7 +502,7 @@ export const RealPhotoAPI = {
     getPublicPhoto: async (eventId: string, photoId: string): Promise<any> => {
         const data = await apiRequest(`/public/events/${eventId}/images/${photoId}`);
         return {
-            id: data.id,
+            id: data.id.toString(),
             url: data.url,
             thumbnailUrl: data.thumbnail_url || data.url,
             title: data.filename || 'Photo',
@@ -675,12 +682,65 @@ export const RealGalleryAPI = {
         }
         const data = await response.json();
         return data.map((img: any) => ({
-            id: img.id,
+            id: img.id.toString(),
             url: img.url,
             thumbnailUrl: img.thumbnail_url || img.url,
             title: img.title || 'Photo',
             width: img.width,
             height: img.height,
         }));
+    },
+
+    // Favorite Photos
+    toggleFavorite: async (eventId: string, photoId: string, isFavorite: boolean): Promise<{ success: boolean; isFavorite: boolean }> => {
+        return await apiRequest(`/events/${eventId}/photos/${photoId}/favorite`, {
+            method: 'PATCH',
+            body: JSON.stringify({ is_favorite: isFavorite }),
+        });
+    },
+
+    getFavorites: async (eventId: string): Promise<{ photos: Photo[]; total: number }> => {
+        const data = await apiRequest(`/events/${eventId}/favorites`);
+        return {
+            photos: data.photos.map((img: any) => ({
+                id: img.id.toString(),
+                url: img.url,
+                thumbnailUrl: img.thumbnail_url || img.url,
+                title: img.title || 'Photo',
+                date: img.created_at,
+                width: img.width,
+                height: img.height,
+                isFavorite: img.is_favorite,
+            })),
+            total: data.total,
+        };
+    },
+
+    finalizeSelection: async (eventId: string): Promise<any> => {
+        return await apiRequest(`/events/${eventId}/finalize-selection`, {
+            method: 'POST',
+        });
+    },
+
+    unfinalizeSelection: async (eventId: string): Promise<any> => {
+        return await apiRequest(`/events/${eventId}/unfinalize-selection`, {
+            method: 'POST',
+        });
+    },
+
+    downloadFavorites: async (eventId: string): Promise<Blob> => {
+        const token = await getAuthToken();
+        const response = await fetch(`${API_BASE_URL}/events/${eventId}/download-favorites`, {
+            headers: {
+                'Authorization': `Bearer ${token}`,
+            },
+        });
+
+        if (!response.ok) {
+            const data = await response.json().catch(() => ({}));
+            throw new Error(data.detail || 'Failed to download favorites');
+        }
+
+        return await response.blob();
     },
 };

@@ -20,8 +20,10 @@ import {
     Heart,
     Share2,
     Copy,
-    X
+    X,
+    Loader2
 } from 'lucide-react';
+// Backend API service
 import { Toast } from '../../components';
 import EventShareModal from './components/EventShareModal';
 
@@ -37,6 +39,7 @@ const DashboardPage: React.FC = () => {
     const [eventToDelete, setEventToDelete] = useState<Event | null>(null);
     const [sortField, setSortField] = useState<keyof Event | 'downloads' | 'guestVisits' | 'photoCount'>('createdAt');
     const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('desc');
+    const [downloadingEventId, setDownloadingEventId] = useState<string | null>(null);
     const itemsPerPage = 5;
 
     const [showToast, setShowToast] = useState(false);
@@ -233,6 +236,32 @@ const DashboardPage: React.FC = () => {
         } catch (error) {
             console.error('Failed to publish event:', error);
             triggerToast('שגיאה בפרסום האירוע.', 'error');
+        }
+    };
+
+    const handleDownloadFavorites = async (e: React.MouseEvent, event: Event) => {
+        e.stopPropagation();
+        if (downloadingEventId) return;
+
+        setDownloadingEventId(event.id);
+        triggerToast('מכין את ההורדה...', 'success');
+
+        try {
+            const blob = await BackendService.downloadFavorites(event.id);
+
+            const link = document.createElement('a');
+            link.href = URL.createObjectURL(blob);
+            link.download = `${event.name.replace(/\s+/g, '_')}_favorites.zip`;
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+
+            triggerToast('ההורדה הושלמה!', 'success');
+        } catch (error) {
+            console.error('Failed to download favorites:', error);
+            triggerToast('שגיאה בהורדת המועדפים', 'error');
+        } finally {
+            setDownloadingEventId(null);
         }
     };
 
@@ -630,6 +659,21 @@ const DashboardPage: React.FC = () => {
                                         </td>
                                         <td className="px-6 py-4">
                                             <div className="flex items-center gap-2" onClick={(e) => e.stopPropagation()}>
+                                                {event.selectionFinished && (
+                                                    <button
+                                                        onClick={(e) => handleDownloadFavorites(e, event)}
+                                                        disabled={downloadingEventId === event.id}
+                                                        className="flex items-center gap-1.5 px-3 py-1.5 bg-slate-50 text-slate-600 hover:bg-slate-100 border border-slate-200 rounded-lg text-xs font-bold transition-all shadow-sm active:scale-95 disabled:opacity-50"
+                                                        title="הורד תמונות שנבחרו ע״י הזוג"
+                                                    >
+                                                        {downloadingEventId === event.id ? (
+                                                            <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                                                        ) : (
+                                                            <Heart className="w-3.5 h-3.5 fill-current" />
+                                                        )}
+                                                        <span>הורדת מועדפים</span>
+                                                    </button>
+                                                )}
                                                 <button
                                                     onClick={(e) => {
                                                         e.stopPropagation();

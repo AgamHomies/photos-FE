@@ -22,7 +22,8 @@ import {
     X,
     FolderUp,
     Eye,
-    Share2
+    Share2,
+    Download
 } from 'lucide-react';
 import EventPreviewModal from './components/EventPreviewModal';
 import { useUpload } from '../../context/UploadContext';
@@ -46,6 +47,7 @@ const EventManagePage: React.FC = () => {
     const [serverProgressStage, setServerProgressStage] = useState('');
     const hasStartedUpload = useRef(false);
     const [isRefreshing, setIsRefreshing] = useState(false);
+    const [downloadingFavorites, setDownloadingFavorites] = useState(false);
     const prevUploading = useRef(false);
     const folderInputRef = useRef<HTMLInputElement>(null);
 
@@ -449,6 +451,31 @@ const EventManagePage: React.FC = () => {
         }
     };
 
+    const handleDownloadFavorites = async () => {
+        if (!event || downloadingFavorites) return;
+
+        setDownloadingFavorites(true);
+        showNotification('מכין את ההורדה...', 'success');
+
+        try {
+            const blob = await BackendService.downloadFavorites(event.id);
+
+            const link = document.createElement('a');
+            link.href = URL.createObjectURL(blob);
+            link.download = `${event.name.replace(/\s+/g, '_')}_favorites.zip`;
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+
+            showNotification('ההורדה הושלמה!', 'success');
+        } catch (error) {
+            console.error('Failed to download favorites:', error);
+            showNotification('שגיאה בהורדת המועדפים', 'error');
+        } finally {
+            setDownloadingFavorites(false);
+        }
+    };
+
     const handleDeleteEvent = async () => {
         if (window.confirm('האם אתה בטוח שברצונך למחוק את האירוע? פעולה זו תמחק את כל הנתונים והתמונות לצמיתות.')) {
             if (id) {
@@ -558,6 +585,21 @@ const EventManagePage: React.FC = () => {
                                     <Share2 className="w-4 h-4" />
                                     <span>שתף</span>
                                 </button>
+                                {event.selectionFinished && (
+                                    <button
+                                        onClick={handleDownloadFavorites}
+                                        disabled={downloadingFavorites}
+                                        className="w-40 justify-center px-4 py-2 text-sm font-bold text-slate-600 bg-slate-50 hover:bg-slate-100 rounded-xl transition-colors flex items-center gap-2 border border-slate-200 shadow-sm"
+                                        title="הורד תמונות שנבחרו על ידי הזוג"
+                                    >
+                                        {downloadingFavorites ? (
+                                            <Loader2 className="w-4 h-4 animate-spin" />
+                                        ) : (
+                                            <Download className="w-4 h-4" />
+                                        )}
+                                        <span>הורד מועדפים</span>
+                                    </button>
+                                )}
                             </div>
                         )}
                     </div>

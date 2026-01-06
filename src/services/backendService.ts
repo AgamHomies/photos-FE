@@ -270,6 +270,48 @@ export const BackendService = {
         }
         return await RealGalleryAPI.getSelection(slug, selectionHash);
     },
+
+    // ============================================
+    // Favorite Photos
+    // ============================================
+    toggleFavorite: async (eventId: string, photoId: string, isFavorite: boolean): Promise<{ success: boolean; isFavorite: boolean }> => {
+        if (USE_MOCK) {
+            console.warn('toggleFavorite not implemented for mock');
+            return { success: true, isFavorite };
+        }
+        return await RealGalleryAPI.toggleFavorite(eventId, photoId, isFavorite);
+    },
+
+    getFavorites: async (eventId: string): Promise<{ photos: Photo[]; total: number }> => {
+        if (USE_MOCK) {
+            console.warn('getFavorites not implemented for mock');
+            return { photos: [], total: 0 };
+        }
+        return await RealGalleryAPI.getFavorites(eventId);
+    },
+
+    finalizeSelection: async (eventId: string): Promise<any> => {
+        if (USE_MOCK) {
+            console.warn('finalizeSelection not implemented for mock');
+            return { success: true };
+        }
+        return await RealGalleryAPI.finalizeSelection(eventId);
+    },
+
+    unfinalizeSelection: async (eventId: string): Promise<any> => {
+        if (USE_MOCK) {
+            console.warn('unfinalizeSelection not implemented for mock');
+            return { success: true };
+        }
+        return await RealGalleryAPI.unfinalizeSelection(eventId);
+    },
+
+    downloadFavorites: async (eventId: string): Promise<Blob> => {
+        if (USE_MOCK) {
+            throw new Error('downloadFavorites not implemented for mock');
+        }
+        return await RealGalleryAPI.downloadFavorites(eventId);
+    },
 };
 
 // Export for backward compatibility

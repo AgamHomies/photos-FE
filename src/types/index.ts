@@ -24,6 +24,7 @@ export interface Photo {
   shareLink?: string;
   matchScore?: number;
   takenAt?: string;
+  isFavorite?: boolean;
 }
 
 export interface PhotographerRegistration {
@@ -64,6 +65,8 @@ export interface Event {
   // Publishing & Processing
   isPublished?: boolean;
   initialProcessingDone?: boolean; // Frontend property (camelCase)
+  selectionFinished?: boolean;
+  selectionFinishedAt?: string;
   createdAt?: string;
 }
 

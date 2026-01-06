@@ -26,7 +26,8 @@ import {
    Sparkles,
    ChevronsLeft,
    ChevronsRight,
-   RefreshCw
+   RefreshCw,
+   Edit
 } from 'lucide-react';
 import { Toast } from '../../components';
 import { SortingControl } from './components/SortingControl';
@@ -57,12 +58,22 @@ const GalleryPage: React.FC<GalleryPageProps> = ({ mode: propMode }) => {
    const [lightboxPhoto, setLightboxPhoto] = useState<Photo | null>(null);
    const [selectedPhotos, setSelectedPhotos] = useState<Set<string>>(new Set());
 
+   // Favorites state (couple mode only)
+   const [showOnlyFavorites, setShowOnlyFavorites] = useState(false);
+   const [favorites, setFavorites] = useState<Set<string>>(new Set());
+   const [favoritePhotos, setFavoritePhotos] = useState<Photo[]>([]);
+   const [selectionFinished, setSelectionFinished] = useState(false);
+   const [showFinalizeModal, setShowFinalizeModal] = useState(false);
+   const [showUnfinalizeModal, setShowUnfinalizeModal] = useState(false);
+
    // Pagination State
    const [page, setPage] = useState(1);
    const [itemsPerPage, setItemsPerPage] = useState(12); // Default for desktop
 
    // Calculate total pages based on mode
-   const totalItems = mode === 'full' ? (event?.photoCount || 0) : (viewState === 'results' ? searchResults.length : 0);
+   const totalItems = mode === 'full'
+      ? (showOnlyFavorites ? favorites.size : (event?.photoCount || 0))
+      : (viewState === 'results' ? searchResults.length : 0);
    const totalPages = Math.ceil(totalItems / itemsPerPage);
 
    const resultsRef = useRef<HTMLDivElement>(null);
@@ -110,10 +121,24 @@ const GalleryPage: React.FC<GalleryPageProps> = ({ mode: propMode }) => {
       return sorted;
    }, [searchResults, sortBy, viewState]);
 
-   // Reset to page 1 when sorting changes
+   // Filter photos by favorites (couple mode only)
+   const filteredPhotos = React.useMemo(() => {
+      if (mode !== 'full' || !showOnlyFavorites) {
+         return photos;
+      }
+
+      // Client-side pagination for favorites view
+      const start = (page - 1) * itemsPerPage;
+      const end = start + itemsPerPage;
+
+      // For now, favorites are sorted by their existing order (which is desc by time from API)
+      return favoritePhotos.slice(start, end);
+   }, [photos, favoritePhotos, showOnlyFavorites, mode, page, itemsPerPage]);
+
+   // Reset to page 1 when sorting or favorites filter changes
    useEffect(() => {
       setPage(1);
-   }, [sortBy]);
+   }, [sortBy, showOnlyFavorites]);
 
 
 
@@ -139,6 +164,101 @@ const GalleryPage: React.FC<GalleryPageProps> = ({ mode: propMode }) => {
       setToastMessage(message);
       setToastType(type);
       setShowToast(true);
+   };
+
+   // Toggle favorite status
+   const toggleFavorite = async (photoId: string) => {
+      if (!event || mode !== 'full') return;
+
+      if (selectionFinished) {
+         triggerToast('לא ניתן לערוך מועדפים לאחר שליחה לצלם. יש ללחוץ על "עריכה מחדש" קודם.', 'error');
+         return;
+      }
+
+      const isFavorite = favorites.has(photoId);
+      const newIsFavorite = !isFavorite;
+
+      // Optimistic update
+      setFavorites(prev => {
+         const newSet = new Set(prev);
+         if (newIsFavorite) {
+            newSet.add(photoId);
+         } else {
+            newSet.delete(photoId);
+         }
+         return newSet;
+      });
+
+      // Find the photo object first to use for updating favoritePhotos
+      const photoToUpdate = photos.find(p => String(p.id) === String(photoId));
+      if (!photoToUpdate && !favorites.has(String(photoId))) return; // Should not happen
+
+      const updatedPhoto = photoToUpdate
+         ? { ...photoToUpdate, isFavorite: newIsFavorite }
+         : { id: String(photoId), isFavorite: newIsFavorite } as Photo; // Fallback for edge cases
+
+      // Update photos array
+      setPhotos(prev => prev.map(p =>
+         String(p.id) === String(photoId) ? updatedPhoto : p
+      ));
+
+      // Update favoritePhotos list (the actual list used for filtering)
+      if (newIsFavorite) {
+         setFavoritePhotos(prev => {
+            // Avoid duplicates
+            if (prev.some(p => String(p.id) === String(photoId))) return prev;
+            return [updatedPhoto, ...prev];
+         });
+      } else {
+         setFavoritePhotos(prev => prev.filter(p => String(p.id) !== String(photoId)));
+      }
+
+      try {
+         await BackendService.toggleFavorite(event.id, photoId, newIsFavorite);
+      } catch (error) {
+         // Revert on error
+         setFavorites(prev => {
+            const newSet = new Set(prev);
+            if (isFavorite) {
+               newSet.add(photoId);
+            } else {
+               newSet.delete(photoId);
+            }
+            return newSet;
+         });
+         setPhotos(prev => prev.map(p =>
+            p.id === photoId ? { ...p, isFavorite } : p
+         ));
+         triggerToast('שגיאה בעדכון מועדפים', 'error');
+      }
+   };
+
+   const handleFinalizeSelection = async () => {
+      if (!event) return;
+
+      try {
+         await BackendService.finalizeSelection(event.id);
+         setSelectionFinished(true);
+         setShowFinalizeModal(false);
+         triggerToast('הבחירה הסתיימה בהצלחה! הודעה נשלחה לצלם.', 'success');
+      } catch (error) {
+         console.error('Failed to finalize selection:', error);
+         triggerToast('שגיאה בסיום הבחירה', 'error');
+      }
+   };
+
+   const handleUnfinalizeSelection = async () => {
+      if (!event) return;
+
+      try {
+         await BackendService.unfinalizeSelection(event.id);
+         setSelectionFinished(false);
+         setShowUnfinalizeModal(false);
+         triggerToast('הבחירה נפתחה מחדש לעריכה.', 'success');
+      } catch (error) {
+         console.error('Failed to unfinalize selection:', error);
+         triggerToast('שגיאה בפתיחת הבחירה מחדש', 'error');
+      }
    };
 
    useEffect(() => {
@@ -256,6 +376,7 @@ const GalleryPage: React.FC<GalleryPageProps> = ({ mode: propMode }) => {
             }
 
             setMode(currentMode);
+            setSelectionFinished(eventData.selectionFinished || false);
 
             console.log('Event loaded:', { id: eventData.id, photographerId: eventData.photographerId });
 
@@ -283,6 +404,22 @@ const GalleryPage: React.FC<GalleryPageProps> = ({ mode: propMode }) => {
                   const eventPhotos = await BackendService.getEventPhotos(eventData.id, 1, itemsPerPage);
                   setPhotos(eventPhotos);
                   setViewState('results');
+
+                  // Load favorites for couple mode
+                  try {
+                     const favoritesData = await BackendService.getFavorites(eventData.id);
+                     const favoriteIds = new Set(favoritesData.photos.map(p => p.id));
+                     setFavorites(favoriteIds);
+                     setFavoritePhotos(favoritesData.photos);
+
+                     // Update photos with favorite status
+                     setPhotos(prev => prev.map(p => ({
+                        ...p,
+                        isFavorite: favoriteIds.has(String(p.id))
+                     })));
+                  } catch (error) {
+                     console.error('Failed to load favorites:', error);
+                  }
                } else {
                   // Check for persisted search results if view=results is in URL
                   const viewParam = initialParams.get('view');
@@ -324,16 +461,34 @@ const GalleryPage: React.FC<GalleryPageProps> = ({ mode: propMode }) => {
       if (newPage < 1 || newPage > totalPages) return;
 
       if (mode === 'full' && event) {
-         // Server-side pagination
-         setLoading(true);
-         try {
-            const newPhotos = await BackendService.getEventPhotos(event.id, newPage, itemsPerPage);
-            setPhotos(newPhotos);
+         if (showOnlyFavorites) {
+            // Client-side pagination for favorites
             setPage(newPage);
-         } catch (error) {
-            console.error("Failed to change page", error);
-         } finally {
-            setLoading(false);
+
+            // Scroll to top of results
+            resultsRef.current?.scrollIntoView({ behavior: 'smooth' });
+         } else {
+            // Server-side pagination
+            setLoading(true);
+            try {
+               const newPhotos = await BackendService.getEventPhotos(event.id, newPage, itemsPerPage);
+               setPhotos(newPhotos);
+
+               // Re-apply is_favorite status from the favorites Set
+               setPhotos(prev => prev.map(p => ({
+                  ...p,
+                  isFavorite: favorites.has(String(p.id))
+               })));
+
+               setPage(newPage);
+
+               // Scroll to top of results
+               resultsRef.current?.scrollIntoView({ behavior: 'smooth' });
+            } catch (error) {
+               console.error("Failed to change page", error);
+            } finally {
+               setLoading(false);
+            }
          }
       } else if (viewState === 'results') {
          // Client-side pagination (update triggered by useEffect)
@@ -667,42 +822,55 @@ const GalleryPage: React.FC<GalleryPageProps> = ({ mode: propMode }) => {
       }
    };
 
-   const handleDownloadAll = async () => {
-      if (photos.length === 0) return;
+   const handleDownloadAll = async (forceAllFavorites = false) => {
+      // Determine what to download based on state and selections
+      let photosToDownload: Photo[] = [];
 
-      const photosToDownload = selectedPhotos.size > 0
-         ? photos.filter(p => selectedPhotos.has(p.id))
-         : photos;
+      if (forceAllFavorites) {
+         // Explicitly download all favorites
+         photosToDownload = favoritePhotos;
+      } else if (selectedPhotos.size > 0) {
+         // Download specific selection from the current filtered view
+         photosToDownload = (showOnlyFavorites ? favoritePhotos : photos).filter(p => selectedPhotos.has(p.id));
+      } else if (showOnlyFavorites) {
+         // Download all favorites if filter is on and nothing selected
+         photosToDownload = favoritePhotos;
+      }
 
-      if (mode === 'full' && selectedPhotos.size === 0) {
+      // If nothing selected and filter is off, and it's full mode (couple view)
+      // download everything via the dedicated public endpoint.
+      if (mode === 'full' && selectedPhotos.size === 0 && !showOnlyFavorites) {
          window.location.href = `${CONFIG.API_BASE_URL}/public/events/${id}/download-all`;
-      } else {
-         const imageIds = photosToDownload.map(p => parseInt(p.id));
+         return;
+      }
 
-         try {
-            const response = await fetch(`${CONFIG.API_BASE_URL}/public/events/${id}/download-zip`, {
-               method: 'POST',
-               headers: { 'Content-Type': 'application/json' },
-               body: JSON.stringify({ image_ids: imageIds })
-            });
+      if (photosToDownload.length === 0) return;
 
-            if (response.ok) {
-               const blob = await response.blob();
-               const url = window.URL.createObjectURL(blob);
-               const link = document.createElement('a');
-               link.href = url;
-               link.download = 'photos.zip';
-               document.body.appendChild(link);
-               link.click();
-               document.body.removeChild(link);
-               window.URL.revokeObjectURL(url);
-            } else {
-               triggerToast('שגיאה ביצירת קובץ ההורדה', 'error');
-            }
-         } catch (e) {
-            console.error(e);
-            triggerToast('שגיאה בהורדה', 'error');
+      const imageIds = photosToDownload.map(p => parseInt(p.id));
+
+      try {
+         const response = await fetch(`${CONFIG.API_BASE_URL}/public/events/${id}/download-zip`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ image_ids: imageIds })
+         });
+
+         if (response.ok) {
+            const blob = await response.blob();
+            const url = window.URL.createObjectURL(blob);
+            const link = document.createElement('a');
+            link.href = url;
+            link.download = showOnlyFavorites ? 'favorites.zip' : 'photos.zip';
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            window.URL.revokeObjectURL(url);
+         } else {
+            triggerToast('שגיאה ביצירת קובץ ההורדה', 'error');
          }
+      } catch (e) {
+         console.error(e);
+         triggerToast('שגיאה בהורדה', 'error');
       }
    };
 
@@ -766,7 +934,7 @@ END:VCARD`;
    };
 
    const selectAllPhotos = () => {
-      const allPhotoIds = new Set(photos.map(p => p.id));
+      const allPhotoIds = new Set(filteredPhotos.map(p => p.id));
       setSelectedPhotos(allPhotoIds);
    };
 
@@ -995,11 +1163,46 @@ END:VCARD`;
                      {/* Action Buttons - Left on Desktop */}
                      <div className="flex flex-wrap items-center gap-3">
                         <button
-                           onClick={selectedPhotos.size === photos.length ? deselectAllPhotos : selectAllPhotos}
+                           onClick={selectedPhotos.size === filteredPhotos.length ? deselectAllPhotos : selectAllPhotos}
                            className="text-sm font-medium text-[#8B7355] hover:text-[#C4A882]"
                         >
-                           {selectedPhotos.size === photos.length ? 'נקה בחירה' : 'בחר הכל'}
+                           {selectedPhotos.size === filteredPhotos.length ? 'נקה בחירה' : 'בחר הכל'}
                         </button>
+
+                        {/* Favorites & Finalize (Couple Mode Only) */}
+                        {mode === 'full' && (
+                           <div className="flex items-center gap-3">
+                              <button
+                                 onClick={() => setShowOnlyFavorites(!showOnlyFavorites)}
+                                 className={`px-4 py-2 rounded-full text-sm font-bold shadow-sm transition-all flex items-center gap-2 ${showOnlyFavorites
+                                    ? 'bg-red-500 text-white'
+                                    : 'bg-white text-red-500 border border-red-200 hover:bg-red-50'
+                                    }`}
+                              >
+                                 <Heart className={`w-4 h-4 ${showOnlyFavorites ? 'fill-current' : ''}`} />
+                                 <span>מועדפים ({favorites.size})</span>
+                              </button>
+
+                              {!selectionFinished ? (
+                                 <button
+                                    onClick={() => setShowFinalizeModal(true)}
+                                    className="px-4 py-2 rounded-full text-sm font-bold shadow-sm transition-all flex items-center gap-2 bg-[#4A3B2C] text-white hover:bg-[#3A2B1C]"
+                                 >
+                                    <CheckCircle2 className="w-4 h-4" />
+                                    <span>סיימתי לבחור</span>
+                                 </button>
+                              ) : (
+                                 <button
+                                    onClick={() => setShowUnfinalizeModal(true)}
+                                    className="px-4 py-2 rounded-full text-sm font-bold flex items-center gap-2 bg-green-100 text-green-700 border border-green-200 hover:bg-green-200 transition-colors shadow-sm"
+                                    title="לחץ כאן כדי לפתוח את הבחירה מחדש לעריכה"
+                                 >
+                                    <CheckCircle2 className="w-4 h-4" />
+                                    <span>הבחירה נשלחה לצלם</span>
+                                 </button>
+                              )}
+                           </div>
+                        )}
 
                         <button
                            onClick={handleShareSelection}
@@ -1010,12 +1213,22 @@ END:VCARD`;
                            {selectedPhotos.size > 0 ? `שתף (${selectedPhotos.size})` : 'שתף'}
                         </button>
                         <button
-                           onClick={handleDownloadAll}
+                           onClick={() => handleDownloadAll()}
                            className="bg-[#C4A882] text-white px-5 py-2.5 rounded-full text-sm font-bold shadow-sm hover:bg-[#B39872] transition-all flex items-center gap-2"
                         >
                            <Download className="w-4 h-4" />
                            {selectedPhotos.size > 0 ? `הורד (${selectedPhotos.size})` : 'הורד הכל'}
                         </button>
+
+                        {showOnlyFavorites && (
+                           <button
+                              onClick={() => handleDownloadAll(true)}
+                              className="bg-white text-[#C4A882] border border-[#C4A882] px-5 py-2.5 rounded-full text-sm font-bold shadow-sm hover:bg-[#FDFBF7] transition-all flex items-center gap-2"
+                           >
+                              <Download className="w-4 h-4" />
+                              <span>הורד את כל המועדפים</span>
+                           </button>
+                        )}
                      </div>
                   </div>
 
@@ -1031,7 +1244,7 @@ END:VCARD`;
 
                   {/* Grid */}
                   <div className="flex flex-wrap justify-center pb-8" dir="rtl">
-                     {photos.map((photo) => {
+                     {filteredPhotos.map((photo) => {
                         const isSelected = selectedPhotos.has(photo.id);
                         return (
                            <div
@@ -1062,6 +1275,26 @@ END:VCARD`;
                               >
                                  <CheckCircle2 className="w-5 h-5" />
                               </button>
+
+                              {/* Top Left - Favorite (Couple Mode Only) */}
+                              {mode === 'full' && (
+                                 <button
+                                    type="button"
+                                    onClick={(e) => {
+                                       e.stopPropagation();
+                                       toggleFavorite(photo.id);
+                                    }}
+                                    className={`absolute top-3 left-3 w-10 h-10 z-20 rounded-full flex items-center justify-center transition-all ${favorites.has(photo.id)
+                                       ? 'bg-red-500 text-white shadow-md'
+                                       : 'bg-white/20 md:hover:bg-white active:bg-white text-white md:hover:text-red-500 active:text-red-500 backdrop-blur-sm'
+                                       } ${selectionFinished ? 'cursor-not-allowed' : ''}`}
+                                    title={selectionFinished
+                                       ? 'הבחירה נעולה - לחץ על "הבחירה נשלחה לצלם" כדי לערוך מחדש'
+                                       : (favorites.has(photo.id) ? 'הסר ממועדפים' : 'הוסף למועדפים')}
+                                 >
+                                    <Heart className={`w-5 h-5 ${favorites.has(photo.id) ? 'fill-current' : ''} ${selectionFinished && !favorites.has(photo.id) ? 'opacity-40' : ''}`} />
+                                 </button>
+                              )}
 
                               {/* Bottom Actions - Always visible on mobile, hover on desktop */}
                               <div className="absolute bottom-3 right-3 left-3 flex justify-end gap-2 opacity-100 md:opacity-0 md:group-hover:opacity-100 transition-all md:translate-y-2 md:group-hover:translate-y-0">
@@ -1259,6 +1492,70 @@ END:VCARD`;
                </div>
             </div>
          </footer>
+
+         {/* Finalize Selection Modal */}
+         {showFinalizeModal && (
+            <div className="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-fade-in" dir="rtl">
+               <div className="bg-white rounded-2xl max-w-md w-full p-6 shadow-2xl animate-scale-in">
+                  <div className="flex flex-col items-center text-center gap-4">
+                     <div className="w-16 h-16 bg-red-50 rounded-full flex items-center justify-center">
+                        <Heart className="w-8 h-8 text-red-500 fill-current" />
+                     </div>
+                     <h2 className="text-xl font-bold text-[#4A3B2C]">סיום בחירת תמונות</h2>
+                     <p className="text-[#8B7355] leading-relaxed">
+                        האם אתם בטוחים שסיימתם לבחור את התמונות שאתם אוהבים?<br />
+                        לאחר האישור, תישלח הודעה לצלם והרשימה תופיע אצלו להורדה.
+                     </p>
+                     <div className="flex flex-col w-full gap-3 mt-4">
+                        <button
+                           onClick={handleFinalizeSelection}
+                           className="w-full bg-[#4A3B2C] text-white py-3 rounded-xl font-bold hover:bg-[#3A2B1C] transition-all shadow-md active:scale-[0.98]"
+                        >
+                           כן, סיימתי ושלח לצלם
+                        </button>
+                        <button
+                           onClick={() => setShowFinalizeModal(false)}
+                           className="w-full bg-[#F0EBE3] text-[#4A3B2C] py-3 rounded-xl font-bold hover:bg-[#E8DFD3] transition-all"
+                        >
+                           לא עכשיו, אני רוצה להמשיך
+                        </button>
+                     </div>
+                  </div>
+               </div>
+            </div>
+         )}
+
+         {/* Unfinalize Selection Modal */}
+         {showUnfinalizeModal && (
+            <div className="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-fade-in" dir="rtl">
+               <div className="bg-white rounded-2xl max-w-md w-full p-6 shadow-2xl animate-scale-in">
+                  <div className="flex flex-col items-center text-center gap-4">
+                     <div className="w-16 h-16 bg-blue-50 rounded-full flex items-center justify-center">
+                        <Edit className="w-8 h-8 text-blue-500" />
+                     </div>
+                     <h2 className="text-xl font-bold text-[#4A3B2C]">פתיחת בחירה לעריכה</h2>
+                     <p className="text-[#8B7355] leading-relaxed">
+                        האם אתם בטוחים שאתם רוצים לערוך את התמונות מחדש?<br />
+                        הבחירה הקודמת תימחק מרשימת ההורדה של הצלם עד שתאשרו שוב.
+                     </p>
+                     <div className="flex flex-col w-full gap-3 mt-4">
+                        <button
+                           onClick={handleUnfinalizeSelection}
+                           className="w-full bg-[#4A3B2C] text-white py-3 rounded-xl font-bold hover:bg-[#3A2B1C] transition-all shadow-md active:scale-[0.98]"
+                        >
+                           כן, אני רוצה לערוך מחדש
+                        </button>
+                        <button
+                           onClick={() => setShowUnfinalizeModal(false)}
+                           className="w-full bg-[#F0EBE3] text-[#4A3B2C] py-3 rounded-xl font-bold hover:bg-[#E8DFD3] transition-all"
+                        >
+                           ביטול
+                        </button>
+                     </div>
+                  </div>
+               </div>
+            </div>
+         )}
 
          {/* Lightbox */}
          {lightboxPhoto && (
