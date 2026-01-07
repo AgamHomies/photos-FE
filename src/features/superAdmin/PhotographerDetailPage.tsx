@@ -249,26 +249,35 @@ const PhotographerDetailPage: React.FC = () => {
 
                             {/* Package Stats Table */}
                             <div className="mt-4 border border-gray-100 rounded-lg p-2 bg-gray-50/50">
-                                <div className="grid grid-cols-3 gap-2 text-[10px] text-gray-400 font-medium mb-1 text-center uppercase">
-                                    <div className="text-right">חבילה</div>
+                                <div className="grid grid-cols-[1.2fr_0.9fr_0.9fr] gap-2 text-[10px] text-gray-400 font-medium mb-1 text-center uppercase">
+                                    <div className="text-right pr-1">חבילה</div>
                                     <div>סה״כ</div>
                                     <div>פעילים</div>
                                 </div>
 
-                                <div className="grid grid-cols-3 gap-2 text-xs py-1 border-b border-gray-100 items-center text-center">
-                                    <div className="font-bold text-gray-700 text-right">בסיס</div>
+                                <div className="grid grid-cols-[1.2fr_0.9fr_0.9fr] gap-2 text-xs py-1 border-b border-gray-100 items-center text-center">
+                                    <div className="font-bold text-gray-700 text-right flex items-center justify-start gap-1">
+                                        <Star className="w-3 h-3 fill-current" />
+                                        <span>בסיס</span>
+                                    </div>
                                     <div className="text-gray-900">{photographer.stats.stats_basic?.total || 0}</div>
                                     <div className="text-green-600 bg-green-50 rounded px-1">{photographer.stats.stats_basic?.active || 0}</div>
                                 </div>
 
-                                <div className="grid grid-cols-3 gap-2 text-xs py-1 border-b border-gray-100 items-center text-center">
-                                    <div className="font-bold text-cyan-600 text-right">פרימיום</div>
+                                <div className="grid grid-cols-[1.2fr_0.9fr_0.9fr] gap-2 text-xs py-1 border-b border-gray-100 items-center text-center">
+                                    <div className="font-bold text-cyan-600 text-right flex items-center justify-start gap-1">
+                                        <Award className="w-3 h-3" />
+                                        <span>פרימיום</span>
+                                    </div>
                                     <div className="text-gray-900">{photographer.stats.stats_premium?.total || 0}</div>
                                     <div className="text-green-600 bg-green-50 rounded px-1">{photographer.stats.stats_premium?.active || 0}</div>
                                 </div>
 
-                                <div className="grid grid-cols-3 gap-2 text-xs py-1 items-center text-center">
-                                    <div className="font-bold text-amber-600 text-right">זהב</div>
+                                <div className="grid grid-cols-[1.2fr_0.9fr_0.9fr] gap-2 text-xs py-1 items-center text-center">
+                                    <div className="font-bold text-amber-600 text-right flex items-center justify-start gap-1">
+                                        <Crown className="w-3 h-3 fill-current" />
+                                        <span>זהב</span>
+                                    </div>
                                     <div className="text-gray-900">{photographer.stats.stats_gold?.total || 0}</div>
                                     <div className="text-green-600 bg-green-50 rounded px-1">{photographer.stats.stats_gold?.active || 0}</div>
                                 </div>
