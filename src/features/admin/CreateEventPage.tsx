@@ -225,16 +225,22 @@ const CreateEventPage: React.FC = () => {
         try {
             // 1. Creating Event
             setProcessingStage('יוצר אירוע במערכת...');
-            setUploadProgress(10);
+            setUploadProgress(0);
 
-            const newEvent = await BackendService.createEvent({
+            const eventPayload = {
                 name: formData.name,
                 date: formData.date,
                 location: formData.location,
                 coverImage: '',
                 expiryDate: new Date(new Date().setFullYear(new Date().getFullYear() + 1)).toISOString().split('T')[0],
                 packageType: packageType
-            });
+            };
+
+            // Auto-purchase package first to ensure success (Requested behavior)
+            console.log('Auto-purchasing package...');
+            await BackendService.mockPay(packageType);
+            // Create event
+            const newEvent = await BackendService.createEvent(eventPayload);
 
             // 2. Redirect to Admin Page with files to upload
             navigate(`/admin/events/${newEvent.id}`, {
@@ -245,7 +251,7 @@ const CreateEventPage: React.FC = () => {
                 }
             });
 
-        } catch (error) {
+        } catch (error: any) {
             console.error(error);
             triggerToast('אירעה שגיאה ביצירת האירוע', 'error');
             setStep('details');

@@ -358,9 +358,11 @@ const DashboardPage: React.FC = () => {
                             <div className="p-2.5 bg-orange-50 text-orange-500 rounded-xl mb-3 w-fit">
                                 <Calendar className="w-5 h-5" />
                             </div>
-                            <div className="relative" title={`${stats.activeEvents ?? 0}/${stats.totalEvents ?? 0}`}>
-                                <h3 className="text-3xl font-black text-slate-900 leading-none mb-1 truncate max-w-[200px]">
-                                    {`${stats.activeEvents ?? 0}/${stats.totalEvents ?? 0}`}
+                            <div className="relative" title={`${stats.totalEvents ?? 0}/${stats.activeEvents ?? 0}`}>
+                                <h3 className="text-3xl font-black text-slate-900 leading-none mb-1 truncate max-w-[200px] flex items-center gap-1">
+                                    <span>{stats.totalEvents ?? 0}</span>
+                                    <span className="text-slate-300 font-light text-2xl">/</span>
+                                    <span className="text-green-600">{stats.activeEvents ?? 0}</span>
                                 </h3>
                                 <p className="text-slate-500 font-semibold text-xs">אירועים פעילים</p>
                             </div>
@@ -368,16 +370,16 @@ const DashboardPage: React.FC = () => {
                             {/* Body - Package Table (flex-1) */}
                             <div className="w-full pt-3 mt-4 border-t border-slate-100">
                                 <div className="flex-1">
-                                    <div className="grid grid-cols-3 gap-2 text-[10px] text-slate-400 font-semibold mb-2">
-                                        <div className="text-right">חבילה</div>
+                                    <div className="grid grid-cols-[1.5fr_0.7fr_0.8fr] gap-2 text-[10px] text-slate-400 font-semibold mb-2">
+                                        <div className="text-right pr-1">חבילה</div>
                                         <div className="text-center">סה״כ</div>
                                         <div className="text-center">פעילים</div>
                                     </div>
                                     <div className="space-y-2">
-                                        <div className="grid grid-cols-3 gap-2 items-center text-xs">
-                                            <div className="text-right font-bold text-slate-500 flex items-center justify-end gap-1">
+                                        <div className="grid grid-cols-[1.5fr_0.7fr_0.8fr] gap-2 items-center text-xs">
+                                            <div className="text-right font-bold text-slate-500 flex items-center justify-start gap-1">
+                                                <Star className="w-3 h-3 fill-current" />
                                                 <span>בסיס</span>
-                                                <Star className="w-3 h-3" />
                                             </div>
                                             <div className="text-center font-bold text-slate-900">{stats.statsBasic?.total || 0}</div>
                                             <div className="text-center">
@@ -386,10 +388,10 @@ const DashboardPage: React.FC = () => {
                                                 </span>
                                             </div>
                                         </div>
-                                        <div className="grid grid-cols-3 gap-2 items-center text-xs">
-                                            <div className="text-right font-bold text-cyan-600 flex items-center justify-end gap-1">
-                                                <span>פרי..</span>
+                                        <div className="grid grid-cols-[1.5fr_0.7fr_0.8fr] gap-2 items-center text-xs">
+                                            <div className="text-right font-bold text-cyan-600 flex items-center justify-start gap-1">
                                                 <Award className="w-3 h-3" />
+                                                <span>פרימיום</span>
                                             </div>
                                             <div className="text-center font-bold text-slate-900">{stats.statsPremium?.total || 0}</div>
                                             <div className="text-center">
@@ -398,10 +400,10 @@ const DashboardPage: React.FC = () => {
                                                 </span>
                                             </div>
                                         </div>
-                                        <div className="grid grid-cols-3 gap-2 items-center text-xs">
-                                            <div className="text-right font-bold text-amber-500 flex items-center justify-end gap-1">
+                                        <div className="grid grid-cols-[1.5fr_0.7fr_0.8fr] gap-2 items-center text-xs">
+                                            <div className="text-right font-bold text-amber-500 flex items-center justify-start gap-1">
+                                                <Crown className="w-3 h-3 fill-current" />
                                                 <span>זהב</span>
-                                                <Crown className="w-3 h-3" />
                                             </div>
                                             <div className="text-center font-bold text-slate-900">{stats.statsGold?.total || 0}</div>
                                             <div className="text-center">
