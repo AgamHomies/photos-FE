@@ -47,7 +47,12 @@ const apiRequest = async (
     const data = await response.json();
 
     if (!response.ok) {
-        throw new Error(data.error?.message || data.detail || 'Request failed');
+        // Handle object-based detail from backend (e.g. {code: "LIMIT_REACHED", message: "..."})
+        const errorMessage = typeof data.detail === 'object' && data.detail.message
+            ? data.detail.message
+            : (data.detail || data.error?.message || 'Request failed');
+
+        throw new Error(errorMessage);
     }
 
     return data;

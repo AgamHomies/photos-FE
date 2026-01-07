@@ -10,7 +10,11 @@ import {
     User,
     Mail,
     FileText,
-    Share2
+    Share2,
+    Crown,
+    Award,
+    Star,
+    MapPin
 } from 'lucide-react';
 import SuperAdminService, { PhotographerDetail, EventSummary } from '../../services/superAdminService';
 
@@ -41,6 +45,31 @@ const PhotographerDetailPage: React.FC = () => {
             setError(err.message || 'Failed to load photographer data');
         } finally {
             setLoading(false);
+        }
+    };
+
+    const getPackageVisuals = (type?: string) => {
+        const normalizedType = type?.toLowerCase();
+        switch (normalizedType) {
+            case 'premium':
+                return {
+                    bg: 'bg-cyan-500',
+                    icon: Award,
+                    label: 'פרימיום'
+                };
+            case 'gold':
+                return {
+                    bg: 'bg-amber-500',
+                    icon: Crown,
+                    label: 'זהב'
+                };
+            case 'basic':
+            default:
+                return {
+                    bg: 'bg-slate-500',
+                    icon: Star,
+                    label: 'בסיס'
+                };
         }
     };
 
@@ -227,19 +256,19 @@ const PhotographerDetailPage: React.FC = () => {
                                 </div>
 
                                 <div className="grid grid-cols-3 gap-2 text-xs py-1 border-b border-gray-100 items-center text-center">
-                                    <div className="font-bold text-gray-700 text-right">Basic</div>
+                                    <div className="font-bold text-gray-700 text-right">בסיס</div>
                                     <div className="text-gray-900">{photographer.stats.stats_basic?.total || 0}</div>
                                     <div className="text-green-600 bg-green-50 rounded px-1">{photographer.stats.stats_basic?.active || 0}</div>
                                 </div>
 
                                 <div className="grid grid-cols-3 gap-2 text-xs py-1 border-b border-gray-100 items-center text-center">
-                                    <div className="font-bold text-blue-600 text-right">Premium</div>
+                                    <div className="font-bold text-cyan-600 text-right">פרימיום</div>
                                     <div className="text-gray-900">{photographer.stats.stats_premium?.total || 0}</div>
                                     <div className="text-green-600 bg-green-50 rounded px-1">{photographer.stats.stats_premium?.active || 0}</div>
                                 </div>
 
                                 <div className="grid grid-cols-3 gap-2 text-xs py-1 items-center text-center">
-                                    <div className="font-bold text-amber-600 text-right">Gold</div>
+                                    <div className="font-bold text-amber-600 text-right">זהב</div>
                                     <div className="text-gray-900">{photographer.stats.stats_gold?.total || 0}</div>
                                     <div className="text-green-600 bg-green-50 rounded px-1">{photographer.stats.stats_gold?.active || 0}</div>
                                 </div>
@@ -261,31 +290,36 @@ const PhotographerDetailPage: React.FC = () => {
                             {events.map((event) => (
                                 <div
                                     key={event.id}
-                                    className="p-4 border border-blue-100 rounded-xl hover:shadow-md transition-shadow"
+                                    className="border border-blue-100 rounded-xl hover:shadow-md transition-shadow overflow-hidden flex items-stretch"
                                 >
-                                    <div className="flex items-start justify-between mb-3">
-                                        <div className="flex-1">
-                                            <div className="flex items-center justify-between">
-                                                <h4 className="font-bold text-gray-900 mb-1">{event.name}</h4>
-                                                {event.package_type && (
-                                                    <span className={`px-2 py-0.5 rounded-md text-[10px] font-bold uppercase
-                                                        ${event.package_type.toLowerCase() === 'premium' ? 'bg-blue-100 text-blue-700' :
-                                                            event.package_type.toLowerCase() === 'gold' ? 'bg-amber-100 text-amber-700' :
-                                                                'bg-gray-100 text-gray-700'}`}>
-                                                        {event.package_type}
-                                                    </span>
-                                                )}
-                                            </div>
-                                            <div className="flex items-center gap-4 text-sm text-gray-900/60 mt-1">
-                                                <span>{event.slug}</span>
-                                                <span className={`px-2 py-1 rounded-full text-xs ${event.status === 'ready' || event.status === 'active'
-                                                    ? 'bg-green-100 text-green-700'
-                                                    : 'bg-gray-100 text-gray-700'
-                                                    }`}>
-                                                    {event.status === 'ready' || event.status === 'active' ? 'פעיל' : 'טיוטה'}
-                                                </span>
-                                                <span>{new Date(event.created_at).toLocaleDateString('he-IL')}</span>
-                                            </div>
+                                    {/* Full Height Strip with Icon */}
+                                    <div className={`w-6 flex items-center justify-center shrink-0 ${(() => {
+                                        const visuals = getPackageVisuals(event.package_type);
+                                        return visuals.bg;
+                                    })()}`}>
+                                        {(() => {
+                                            const visuals = getPackageVisuals(event.package_type);
+                                            const Icon = visuals.icon;
+                                            return <Icon className="w-3.5 h-3.5 text-white" />;
+                                        })()}
+                                    </div>
+
+                                    <div className="flex-1 p-4">
+                                        <div className="flex items-center justify-between">
+                                            <h4 className="font-bold text-gray-900 mb-1 text-base">{event.name}</h4>
+                                            <span className={`px-2 py-1 rounded-full text-xs ${event.status === 'ready' || event.status === 'active'
+                                                ? 'bg-green-100 text-green-700'
+                                                : 'bg-gray-100 text-gray-700'
+                                                }`}>
+                                                {event.status === 'ready' || event.status === 'active' ? 'פעיל' : 'טיוטה'}
+                                            </span>
+                                        </div>
+                                        <div className="flex items-center gap-4 text-sm text-gray-900/60 mt-0.5">
+                                            <span>{event.slug}</span>
+                                            <span className="flex items-center gap-1">
+                                                <Calendar className="w-3 h-3" />
+                                                {new Date(event.created_at).toLocaleDateString('he-IL')}
+                                            </span>
                                         </div>
                                     </div>
 

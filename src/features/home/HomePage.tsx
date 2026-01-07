@@ -315,10 +315,6 @@ const HomePage: React.FC = () => {
                   <div className="p-1 rounded-full bg-slate-100 text-slate-500 shrink-0"><Check className="w-3.5 h-3.5" /></div>
                   <span>קישור פעיל לחודש</span>
                 </div>
-                <div className="flex items-center gap-3 w-full">
-                  <div className="p-1 rounded-full bg-slate-100 text-slate-500 shrink-0"><Check className="w-3.5 h-3.5" /></div>
-                  <span>זיהוי פנים חכם</span>
-                </div>
               </div>
 
 
@@ -346,10 +342,6 @@ const HomePage: React.FC = () => {
               <div className="w-full space-y-4 text-sm text-slate-700 mb-8 flex-1 text-right px-4">
                 <div className="flex items-center gap-3 w-full">
                   <div className="p-1 rounded-full bg-cyan-100 text-cyan-600 shrink-0"><Check className="w-3.5 h-3.5" /></div>
-                  <span className="text-base">הכל בחבילת בסיס +</span>
-                </div>
-                <div className="flex items-center gap-3 w-full">
-                  <div className="p-1 rounded-full bg-cyan-100 text-cyan-600 shrink-0"><Check className="w-3.5 h-3.5" /></div>
                   <span className="text-base font-medium">עד <span className="font-bold text-slate-900">10,000</span> תמונות</span>
                 </div>
                 <div className="flex items-center gap-3 w-full">
@@ -373,7 +365,7 @@ const HomePage: React.FC = () => {
 
               <h3 className="text-xl font-bold text-slate-900 mb-2">חבילת זהב</h3>
               <div className="flex items-baseline justify-center gap-1 mb-2">
-                <span className="text-4xl font-black text-slate-900">₪499</span>
+                <span className="text-4xl font-black text-slate-900">₪529</span>
                 <span className="text-slate-500 font-medium text-lg">/ אירוע</span>
               </div>
               <p className="text-slate-500 text-sm font-medium mb-8">אירועי ענק ופסטיבלים</p>
@@ -381,19 +373,13 @@ const HomePage: React.FC = () => {
               <div className="w-full space-y-4 text-sm text-slate-600 mb-8 flex-1 text-right px-4">
                 <div className="flex items-center gap-3 w-full">
                   <div className="p-1 rounded-full bg-slate-100 text-slate-500 shrink-0"><Check className="w-3.5 h-3.5" /></div>
-                  <span>עד <span className="font-bold text-slate-900">20,000</span> תמונות</span>
+                  <span><span className="font-bold text-slate-900">ללא הגבלת תמונות</span></span>
                 </div>
                 <div className="flex items-center gap-3 w-full">
                   <div className="p-1 rounded-full bg-slate-100 text-slate-500 shrink-0"><Check className="w-3.5 h-3.5" /></div>
                   <span>קישור פעיל לחודשיים</span>
                 </div>
-                <div className="flex items-center gap-3 w-full">
-                  <div className="p-1 rounded-full bg-slate-100 text-slate-500 shrink-0"><Check className="w-3.5 h-3.5" /></div>
-                  <span>זיהוי פנים חכם</span>
-                </div>
               </div>
-
-
             </div>
           </div>
 

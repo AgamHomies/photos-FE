@@ -160,13 +160,13 @@ const PackageSelectionModal: React.FC<PackageSelectionModalProps> = ({ isOpen, o
                             </div>
 
                             <h3 className="text-xl font-bold text-slate-900 mb-1">חבילת זהב</h3>
-                            <div className="text-3xl font-black text-slate-900 mb-2">₪499</div>
+                            <div className="text-3xl font-black text-slate-900 mb-2">₪529</div>
                             <p className="text-slate-500 text-sm font-medium mb-6 text-center">אירועי ענק ופסטיבלים</p>
 
                             <div className="w-full space-y-3 text-sm text-slate-600 mb-8 flex-1">
                                 <div className="flex items-center gap-3 w-full">
                                     <div className="p-1 rounded-full bg-slate-100 text-slate-500 shrink-0"><Check className="w-3 h-3" /></div>
-                                    <span>עד <span className="font-bold text-slate-900">20,000</span> תמונות</span>
+                                    <span><span className="font-bold text-slate-900">ללא הגבלת תמונות</span></span>
                                 </div>
                                 <div className="flex items-center gap-3 w-full">
                                     <div className="p-1 rounded-full bg-slate-100 text-slate-500 shrink-0"><Check className="w-3 h-3" /></div>

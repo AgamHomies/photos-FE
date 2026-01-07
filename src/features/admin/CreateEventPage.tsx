@@ -42,7 +42,7 @@ const CreateEventPage: React.FC = () => {
     const PACKAGE_LIMITS = {
         basic: 1200,
         premium: 10000,
-        gold: 20000
+        gold: 30000
     };
 
     const triggerToast = (message: string, type: 'success' | 'error' = 'success') => {
@@ -143,6 +143,11 @@ const CreateEventPage: React.FC = () => {
         const totalPhotos = galleryFiles.length + imageFiles.length;
 
         if (totalPhotos > photoLimit) {
+            if (packageType === 'gold') {
+                triggerToast('להעלאה של 30000 תמונות נדרש אישור מיוחד (:', 'error');
+                return;
+            }
+
             // Determine suggested package
             let suggested: 'premium' | 'gold' = 'premium';
             if (totalPhotos > PACKAGE_LIMITS.premium) {
@@ -173,6 +178,12 @@ const CreateEventPage: React.FC = () => {
             const totalPhotos = galleryFiles.length + imageFiles.length;
 
             if (totalPhotos > photoLimit) {
+                if (packageType === 'gold') {
+                    triggerToast('להעלאה של 30000 תמונות נדרש אישור מיוחד (:', 'error');
+                    e.target.value = '';
+                    return;
+                }
+
                 // Determine suggested package
                 let suggested: 'premium' | 'gold' = 'premium';
                 if (totalPhotos > PACKAGE_LIMITS.premium) {
@@ -395,7 +406,7 @@ const CreateEventPage: React.FC = () => {
                                     <div className="flex items-center gap-2 text-sm">
                                         <span className="text-slate-600">מגבלת תמונות בחבילה:</span>
                                         <span className="font-bold text-cyan-600 text-base">
-                                            {PACKAGE_LIMITS[packageType].toLocaleString()}
+                                            {packageType === 'gold' ? 'אין הגבלה' : PACKAGE_LIMITS[packageType].toLocaleString()}
                                         </span>
                                     </div>
                                 </div>
@@ -635,7 +646,7 @@ const CreateEventPage: React.FC = () => {
                                     </div>
                                 </div>
                                 <div className="text-2xl font-bold text-cyan-600">
-                                    עד {PACKAGE_LIMITS[suggestedPackage].toLocaleString()} תמונות
+                                    {suggestedPackage === 'gold' ? 'ללא הגבלת תמונות' : `עד ${PACKAGE_LIMITS[suggestedPackage].toLocaleString()} תמונות`}
                                 </div>
                             </div>
                         </div>

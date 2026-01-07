@@ -21,7 +21,11 @@ import {
     Share2,
     Copy,
     X,
-    Zap
+    Zap,
+    Crown,
+    Award,
+    Star,
+    MapPin
 } from 'lucide-react';
 import { Toast } from '../../components';
 import PackageSelectionModal from './components/PackageSelectionModal';
@@ -120,27 +124,27 @@ const DashboardPage: React.FC = () => {
         }
     };
 
-    const getPackageBadge = (type?: string) => {
+    const getPackageVisuals = (type?: string) => {
         switch (type) {
             case 'premium':
-                return (
-                    <span className="bg-blue-100 text-blue-700 text-[10px] px-1.5 py-0.5 rounded-md font-bold border border-blue-200 shadow-sm">
-                        פרימיום
-                    </span>
-                );
+                return {
+                    bg: 'bg-cyan-500',
+                    icon: Award,
+                    label: 'פרימיום'
+                };
             case 'gold':
-                return (
-                    <span className="bg-yellow-100 text-yellow-700 text-[10px] px-1.5 py-0.5 rounded-md font-bold border border-yellow-200 shadow-sm">
-                        זהב
-                    </span>
-                );
+                return {
+                    bg: 'bg-amber-500',
+                    icon: Crown,
+                    label: 'זהב'
+                };
             case 'basic':
             default:
-                return (
-                    <span className="bg-gray-100 text-gray-600 text-[10px] px-1.5 py-0.5 rounded-md font-bold border border-gray-200">
-                        בסיסי
-                    </span>
-                );
+                return {
+                    bg: 'bg-slate-500',
+                    icon: Star,
+                    label: 'בסיס'
+                };
         }
     };
 
@@ -371,7 +375,10 @@ const DashboardPage: React.FC = () => {
                                     </div>
                                     <div className="space-y-2">
                                         <div className="grid grid-cols-3 gap-2 items-center text-xs">
-                                            <div className="text-right">{getPackageBadge('basic')}</div>
+                                            <div className="text-right font-bold text-slate-500 flex items-center justify-end gap-1">
+                                                <span>בסיס</span>
+                                                <Star className="w-3 h-3" />
+                                            </div>
                                             <div className="text-center font-bold text-slate-900">{stats.statsBasic?.total || 0}</div>
                                             <div className="text-center">
                                                 <span className="bg-green-50 text-green-600 rounded-md py-0.5 px-2 font-bold text-[10px] inline-block min-w-[25px]">
@@ -380,7 +387,10 @@ const DashboardPage: React.FC = () => {
                                             </div>
                                         </div>
                                         <div className="grid grid-cols-3 gap-2 items-center text-xs">
-                                            <div className="text-right">{getPackageBadge('premium')}</div>
+                                            <div className="text-right font-bold text-cyan-600 flex items-center justify-end gap-1">
+                                                <span>פרי..</span>
+                                                <Award className="w-3 h-3" />
+                                            </div>
                                             <div className="text-center font-bold text-slate-900">{stats.statsPremium?.total || 0}</div>
                                             <div className="text-center">
                                                 <span className="bg-green-50 text-green-600 rounded-md py-0.5 px-2 font-bold text-[10px] inline-block min-w-[25px]">
@@ -389,7 +399,10 @@ const DashboardPage: React.FC = () => {
                                             </div>
                                         </div>
                                         <div className="grid grid-cols-3 gap-2 items-center text-xs">
-                                            <div className="text-right">{getPackageBadge('gold')}</div>
+                                            <div className="text-right font-bold text-amber-500 flex items-center justify-end gap-1">
+                                                <span>זהב</span>
+                                                <Crown className="w-3 h-3" />
+                                            </div>
                                             <div className="text-center font-bold text-slate-900">{stats.statsGold?.total || 0}</div>
                                             <div className="text-center">
                                                 <span className="bg-green-50 text-green-600 rounded-md py-0.5 px-2 font-bold text-[10px] inline-block min-w-[25px]">
@@ -429,7 +442,7 @@ const DashboardPage: React.FC = () => {
                             </div>
                         </div>
 
-                        {/* 3. צפיות */}
+                        {/* 3. כניסות אורחים */}
                         <div className="bg-white p-5 rounded-2xl shadow-sm border border-slate-100 hover:shadow-md transition-all relative">
                             <div className="flex flex-col items-start text-right h-full justify-between">
                                 <div>
@@ -437,7 +450,7 @@ const DashboardPage: React.FC = () => {
                                         <Eye className="w-5 h-5" />
                                     </div>
                                     <h3 className="text-3xl font-black text-slate-900 leading-none mb-1">{(stats.totalPageVisits || 0).toLocaleString()}</h3>
-                                    <p className="text-slate-500 font-semibold text-xs">צפיות</p>
+                                    <p className="text-slate-500 font-semibold text-xs">כניסות אורחים</p>
                                 </div>
                                 <div className="w-full pt-3 border-t border-slate-100 flex justify-between text-right mt-3">
                                     <div>
@@ -460,7 +473,7 @@ const DashboardPage: React.FC = () => {
                                         {stats.totalPageVisits > 0 ? Math.round((stats.totalDownloads / stats.totalPageVisits) * 100) : 0}%
                                     </span>
                                     <p className="text-slate-600 text-[10px] font-semibold mt-1 opacity-0 group-hover:opacity-100 transition-opacity leading-tight absolute left-0 w-20">
-                                        אחוז המרה מהצפיות
+                                        אחוז המרה מהכניסות אורחים
                                     </p>
                                 </div>
                             </div>
@@ -493,7 +506,7 @@ const DashboardPage: React.FC = () => {
                                         {stats.totalPageVisits > 0 ? Math.round((stats.phoneSaves / stats.totalPageVisits) * 100) : 0}%
                                     </span>
                                     <p className="text-slate-600 text-[10px] font-semibold mt-1 opacity-0 group-hover:opacity-100 transition-opacity leading-tight absolute left-0 w-20">
-                                        אחוז המרה מהצפיות
+                                        אחוז המרה מהכניסות אורחים
                                     </p>
                                 </div>
                             </div>
@@ -526,7 +539,7 @@ const DashboardPage: React.FC = () => {
                                         {stats.totalPageVisits > 0 ? Math.round((stats.totalSocialTraffic / stats.totalPageVisits) * 100) : 0}%
                                     </span>
                                     <p className="text-slate-600 text-[10px] font-semibold mt-1 opacity-0 group-hover:opacity-100 transition-opacity leading-tight absolute left-0 w-20">
-                                        אחוז המרה מהצפיות
+                                        אחוז המרה מהכניסות אורחים
                                     </p>
                                 </div>
                             </div>
@@ -588,7 +601,8 @@ const DashboardPage: React.FC = () => {
                         <table className="w-full text-right">
                             <thead className="bg-slate-50 text-slate-500 text-xs uppercase font-medium">
                                 <tr>
-                                    <th className="px-6 py-4 rounded-tr-2xl cursor-pointer hover:bg-slate-100" onClick={() => handleSort('name')}>
+                                    <th scope="col" className="w-6 p-0 rounded-tr-lg"></th>
+                                    <th className="px-6 py-4 cursor-pointer hover:bg-slate-100" onClick={() => handleSort('name')}>
                                         <div className="flex items-center gap-1">
                                             שם אירוע
                                             {sortField === 'name' && (sortDirection === 'asc' ? '↑' : '↓')}
@@ -627,7 +641,6 @@ const DashboardPage: React.FC = () => {
                                     </th>
                                     <th className="px-6 py-4 w-64 text-center">לינק ייחודי</th>
                                     <th className="px-6 py-4">סטטוס</th>
-                                    <th className="px-6 py-4 rounded-tl-2xl">פעולות</th>
                                 </tr>
                             </thead>
                             <tbody className="divide-y divide-slate-100">
@@ -637,27 +650,44 @@ const DashboardPage: React.FC = () => {
                                         onClick={() => navigate(`/admin/events/${event.id}?tab=details`)}
                                         className="hover:bg-slate-50/80 transition-colors cursor-pointer group"
                                     >
+                                        <td className="p-0 relative w-6">
+                                            {/* Package Indicator - Separate Column */}
+                                            <div className={`absolute inset-0 flex items-center justify-center ${(() => {
+                                                const visuals = getPackageVisuals(event.packageType);
+                                                return visuals.bg;
+                                            })()}`}>
+                                                {(() => {
+                                                    const visuals = getPackageVisuals(event.packageType);
+                                                    const Icon = visuals.icon;
+                                                    return <Icon className="w-3.5 h-3.5 text-white" />;
+                                                })()}
+                                            </div>
+                                        </td>
+
                                         <td className="px-6 py-4">
                                             <div className="flex items-center gap-3">
-                                                <div className="flex flex-col items-center gap-1">
-                                                    {event.coverImage && !event.coverImage.includes('placeholder') ? (
-                                                        <img
-                                                            src={event.coverImage}
-                                                            alt={event.name}
-                                                            className="w-10 h-10 rounded-lg object-cover bg-slate-100"
-                                                        />
-                                                    ) : (
-                                                        <div className="w-10 h-10 bg-cyan-100 rounded-lg flex items-center justify-center text-cyan-600">
-                                                            <ImageIcon className="w-5 h-5" />
-                                                        </div>
-                                                    )}
-                                                    {getPackageBadge(event.packageType)}
-                                                </div>
-                                                <div className="flex-1">
-                                                    <div className="font-bold text-slate-900 group-hover:text-cyan-600 transition-colors">
-                                                        {event.name}
+                                                {event.coverImage && !event.coverImage.includes('placeholder') ? (
+                                                    <img
+                                                        src={event.coverImage}
+                                                        alt={event.name}
+                                                        className="w-12 h-12 rounded-xl object-cover bg-slate-100 border border-slate-100 shrink-0"
+                                                    />
+                                                ) : (
+                                                    <div className="w-12 h-12 bg-slate-50 rounded-xl flex items-center justify-center text-slate-400 border border-slate-100 shrink-0">
+                                                        <ImageIcon className="w-6 h-6" />
                                                     </div>
-                                                    <div className="text-xs text-slate-400">{event.location || 'ללא מיקום'}</div>
+                                                )}
+                                                <div>
+                                                    <div
+                                                        className="font-bold text-slate-900 group-hover:text-cyan-600 transition-colors text-base"
+                                                        title={event.name}
+                                                    >
+                                                        {event.name.length > 23 ? `${event.name.substring(0, 23)}...` : event.name}
+                                                    </div>
+                                                    <div className="text-xs text-slate-400 mt-0.5 flex items-center gap-1">
+                                                        <MapPin className="w-3 h-3" />
+                                                        {event.location || 'ללא מיקום'}
+                                                    </div>
                                                 </div>
                                             </div>
                                         </td>
@@ -711,17 +741,6 @@ const DashboardPage: React.FC = () => {
                                                 }`}>
                                                 {event.status === 'active' ? 'פעיל' : 'פג תוקף'}
                                             </span>
-                                        </td>
-                                        <td className="px-6 py-4">
-                                            <div className="flex items-center justify-center" onClick={(e) => e.stopPropagation()}>
-                                                <button
-                                                    onClick={(e) => openDeleteModal(event, e)}
-                                                    className="p-2 hover:bg-red-50 rounded-lg text-slate-400 hover:text-red-500 transition-colors"
-                                                    title="מחיקה"
-                                                >
-                                                    <Trash2 className="w-4 h-4" />
-                                                </button>
-                                            </div>
                                         </td>
                                     </tr>
                                 ))}

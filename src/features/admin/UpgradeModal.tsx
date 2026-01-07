@@ -145,7 +145,7 @@ const UpgradeModal: React.FC<UpgradeModalProps> = ({ isOpen, onClose, onSuccess,
                         >
                             <div className="flex justify-between items-start mb-3">
                                 <span className="text-2xl font-bold bg-slate-100 text-slate-700 px-4 py-1.5 rounded-full group-hover:bg-cyan-50 group-hover:text-cyan-600 transition-colors">
-                                    ₪499
+                                    ₪529
                                 </span>
                                 <div className="text-right">
                                     <h3 className="font-bold text-slate-900 text-xl group-hover:text-cyan-600 transition-colors">חבילת זהב</h3>
@@ -155,7 +155,7 @@ const UpgradeModal: React.FC<UpgradeModalProps> = ({ isOpen, onClose, onSuccess,
                             <div className="space-y-2 text-sm text-slate-600">
                                 <div className="flex items-center gap-2">
                                     <Check className="w-4 h-4 text-cyan-500" />
-                                    <span>עד 20,000 תמונות</span>
+                                    <span>ללא הגבלת תמונות</span>
                                 </div>
                                 <div className="flex items-center gap-2">
                                     <Check className="w-4 h-4 text-cyan-500" />

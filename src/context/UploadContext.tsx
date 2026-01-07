@@ -129,7 +129,7 @@ export const UploadProvider: React.FC<{ children: ReactNode }> = ({ children }) 
             console.error(error);
             updateUploadState(eventId, {
                 isUploading: false,
-                error: 'שגיאה בהעלאת תמונות'
+                error: error instanceof Error ? error.message : 'שגיאה בהעלאת תמונות'
             });
         }
     }, [clearUpload]);
