@@ -1,6 +1,6 @@
 import React, { useState, useRef } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { Upload, Image as ImageIcon, Check, Calendar, MapPin, Camera, ScanFace, Send, Star, FolderUp, Eye } from 'lucide-react';
+import { useNavigate, useLocation } from 'react-router-dom';
+import { Upload, Image as ImageIcon, Check, Calendar, MapPin, Camera, ScanFace, Send, Star, FolderUp, Eye, Trash2, Award, Crown } from 'lucide-react';
 import { BackendService } from '../../services/backendService';
 import Layout from '../../components/Layout';
 import { Toast } from '../../components';
@@ -8,6 +8,11 @@ import EventPreviewModal from './components/EventPreviewModal';
 
 const CreateEventPage: React.FC = () => {
     const navigate = useNavigate();
+    const location = useLocation();
+    const [packageType, setPackageType] = useState<'basic' | 'premium' | 'gold'>(
+        (location.state?.packageType as 'basic' | 'premium' | 'gold') || 'basic'
+    );
+
     const [step, setStep] = useState<'details' | 'upload' | 'processing' | 'done'>('details');
     const [formData, setFormData] = useState({
         name: '',
@@ -27,6 +32,18 @@ const CreateEventPage: React.FC = () => {
     const [showToast, setShowToast] = useState(false);
     const [toastMessage, setToastMessage] = useState('');
     const [toastType, setToastType] = useState<'success' | 'error'>('success');
+
+    // Upgrade suggestion state
+    const [showUpgradeModal, setShowUpgradeModal] = useState(false);
+    const [suggestedPackage, setSuggestedPackage] = useState<'premium' | 'gold'>('premium');
+    const [attemptedPhotoCount, setAttemptedPhotoCount] = useState(0);
+
+    // Package photo limits
+    const PACKAGE_LIMITS = {
+        basic: 1200,
+        premium: 10000,
+        gold: 30000
+    };
 
     const triggerToast = (message: string, type: 'success' | 'error' = 'success') => {
         setToastMessage(message);
@@ -121,6 +138,28 @@ const CreateEventPage: React.FC = () => {
             return;
         }
 
+        // Check photo limit based on selected package
+        const photoLimit = PACKAGE_LIMITS[packageType];
+        const totalPhotos = galleryFiles.length + imageFiles.length;
+
+        if (totalPhotos > photoLimit) {
+            if (packageType === 'gold') {
+                triggerToast('להעלאה של 30000 תמונות נדרש אישור מיוחד (:', 'error');
+                return;
+            }
+
+            // Determine suggested package
+            let suggested: 'premium' | 'gold' = 'premium';
+            if (totalPhotos > PACKAGE_LIMITS.premium) {
+                suggested = 'gold';
+            }
+
+            setAttemptedPhotoCount(totalPhotos);
+            setSuggestedPackage(suggested);
+            setShowUpgradeModal(true);
+            return;
+        }
+
         setGalleryFiles(prev => [...prev, ...imageFiles]);
     };
 
@@ -131,6 +170,30 @@ const CreateEventPage: React.FC = () => {
 
             if (files.length > 0 && imageFiles.length === 0) {
                 triggerToast('לא נמצאו תמונות בתיקייה שנבחרה', 'error');
+                return;
+            }
+
+            // Check photo limit based on selected package
+            const photoLimit = PACKAGE_LIMITS[packageType];
+            const totalPhotos = galleryFiles.length + imageFiles.length;
+
+            if (totalPhotos > photoLimit) {
+                if (packageType === 'gold') {
+                    triggerToast('להעלאה של 30000 תמונות נדרש אישור מיוחד (:', 'error');
+                    e.target.value = '';
+                    return;
+                }
+
+                // Determine suggested package
+                let suggested: 'premium' | 'gold' = 'premium';
+                if (totalPhotos > PACKAGE_LIMITS.premium) {
+                    suggested = 'gold';
+                }
+
+                setAttemptedPhotoCount(totalPhotos);
+                setSuggestedPackage(suggested);
+                setShowUpgradeModal(true);
+                e.target.value = '';
                 return;
             }
 
@@ -169,7 +232,8 @@ const CreateEventPage: React.FC = () => {
                 date: formData.date,
                 location: formData.location,
                 coverImage: '',
-                expiryDate: new Date(new Date().setFullYear(new Date().getFullYear() + 1)).toISOString().split('T')[0]
+                expiryDate: new Date(new Date().setFullYear(new Date().getFullYear() + 1)).toISOString().split('T')[0],
+                packageType: packageType
             });
 
             // 2. Redirect to Admin Page with files to upload
@@ -205,12 +269,50 @@ const CreateEventPage: React.FC = () => {
 
                     {step === 'details' && (
                         <form onSubmit={handleSubmit} className="space-y-6">
+                            {/* Package Display Banner */}
+                            <div className="bg-gradient-to-r from-cyan-500 to-cyan-600 rounded-2xl p-4 shadow-lg">
+                                <div className="flex items-center justify-center text-white">
+                                    <div className="text-center">
+                                        <div className="text-sm opacity-90 mb-1">חבילה נבחרת</div>
+                                        <div className="flex items-center justify-center gap-2 text-2xl font-bold">
+                                            {packageType === 'basic' && (
+                                                <>
+                                                    <Star className="w-6 h-6" />
+                                                    <span>חבילת בסיס</span>
+                                                </>
+                                            )}
+                                            {packageType === 'premium' && (
+                                                <>
+                                                    <Award className="w-6 h-6" />
+                                                    <span>חבילת פרימיום</span>
+                                                </>
+                                            )}
+                                            {packageType === 'gold' && (
+                                                <>
+                                                    <Crown className="w-6 h-6" />
+                                                    <span>חבילת זהב</span>
+                                                </>
+                                            )}
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
 
                             {/* Unified Card: Event Details & Cover Image */}
                             <div className="bg-white rounded-2xl shadow-sm border border-slate-100 p-4 md:p-8">
-                                <div className="flex items-center gap-2 mb-6 text-slate-800 font-bold text-lg">
-                                    <Calendar className="w-5 h-5 text-cyan-500" />
-                                    <h2>פרטי האירוע</h2>
+                                <div className="flex items-center justify-between mb-6">
+                                    <div className="flex items-center gap-2 text-slate-800 font-bold text-lg">
+                                        <Calendar className="w-5 h-5 text-cyan-500" />
+                                        <h2>פרטי האירוע</h2>
+                                    </div>
+                                    <button
+                                        type="button"
+                                        onClick={() => setIsPreviewOpen(true)}
+                                        className="bg-cyan-50 text-cyan-600 px-6 py-2 rounded-xl font-bold hover:bg-cyan-100 transition-colors flex items-center gap-2 shadow-sm text-sm border border-cyan-100"
+                                    >
+                                        <Eye className="w-4 h-4" />
+                                        <span>תצוגה מקדימה</span>
+                                    </button>
                                 </div>
 
                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-8 md:gap-12 mb-4">
@@ -262,9 +364,9 @@ const CreateEventPage: React.FC = () => {
                                     </div>
 
                                     {/* Left Column: Cover Image Upload */}
-                                    <div className="flex flex-col">
+                                    <div className="flex flex-col h-full">
                                         <label className="block text-sm font-medium text-slate-700 mb-2 text-right">תמונת קאבר</label>
-                                        <div className="border-2 border-dashed border-slate-200 rounded-xl p-4 text-center hover:border-cyan-500 transition-colors cursor-pointer relative group aspect-[3/2] w-full max-w-sm mx-auto flex flex-col items-center justify-center bg-slate-50">
+                                        <div className="border-2 border-dashed border-slate-200 rounded-xl p-4 text-center hover:border-cyan-500 transition-colors cursor-pointer relative group flex-1 w-full mx-auto flex flex-col items-center justify-center bg-slate-50">
                                             <input
                                                 type="file"
                                                 accept="image/*"
@@ -272,7 +374,7 @@ const CreateEventPage: React.FC = () => {
                                                 className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10"
                                             />
                                             {coverPreview ? (
-                                                <div className="relative w-full h-full rounded-lg overflow-hidden shadow-sm">
+                                                <div className="absolute inset-2 rounded-lg overflow-hidden shadow-sm">
                                                     <img src={coverPreview} alt="Cover Preview" className="w-full h-full object-cover" />
                                                     <div className="absolute inset-0 bg-black/40 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
                                                         <span className="text-white font-medium">לחץ להחלפה</span>
@@ -291,23 +393,22 @@ const CreateEventPage: React.FC = () => {
                                     </div>
                                 </div>
 
-                                <div className="mt-4 pt-4 border-t border-slate-100">
-                                    <button
-                                        type="button"
-                                        onClick={() => setIsPreviewOpen(true)}
-                                        className="flex items-center justify-center gap-2 text-cyan-600 font-bold bg-cyan-50 px-6 py-4 rounded-xl hover:bg-cyan-100 transition-colors w-full"
-                                    >
-                                        <Eye className="w-5 h-5" />
-                                        <span>תצוגה מקדימה לגלריה</span>
-                                    </button>
-                                </div>
+
                             </div>
 
                             {/* Card 3: Gallery Images */}
                             <div className="bg-white rounded-2xl shadow-sm border border-slate-100 p-4 md:p-8">
-                                <div className="flex items-center gap-2 mb-6 text-slate-800 font-bold text-lg">
-                                    <ImageIcon className="w-5 h-5 text-cyan-500" />
-                                    <h2>העלאת תמונות האירוע</h2>
+                                <div className="mb-6">
+                                    <div className="flex items-center gap-2 text-slate-800 font-bold text-lg mb-2">
+                                        <ImageIcon className="w-5 h-5 text-cyan-500" />
+                                        <h2>העלאת תמונות האירוע</h2>
+                                    </div>
+                                    <div className="flex items-center gap-2 text-sm">
+                                        <span className="text-slate-600">מגבלת תמונות בחבילה:</span>
+                                        <span className="font-bold text-cyan-600 text-base">
+                                            {packageType === 'gold' ? 'אין הגבלה' : PACKAGE_LIMITS[packageType].toLocaleString()}
+                                        </span>
+                                    </div>
                                 </div>
 
                                 <div
@@ -364,9 +465,32 @@ const CreateEventPage: React.FC = () => {
                                     </div>
 
                                     {galleryFiles.length > 0 && (
-                                        <div className="mt-4 inline-flex items-center gap-2 bg-green-50 text-green-700 px-4 py-2 rounded-full text-sm font-bold relative z-20">
-                                            <Check className="w-4 h-4" />
-                                            נבחרו {galleryFiles.length} תמונות
+                                        <div className="mt-6 mx-auto max-w-xs bg-white border border-slate-200 rounded-2xl p-3 shadow-sm flex items-center justify-between relative z-20">
+                                            <div className="flex items-center gap-3">
+                                                <div className="w-10 h-10 bg-green-50 text-green-500 rounded-full flex items-center justify-center flex-shrink-0">
+                                                    <Check className="w-5 h-5" />
+                                                </div>
+                                                <div className="text-right">
+                                                    <div className="font-bold text-slate-800 text-base">
+                                                        נבחרו {galleryFiles.length} תמונות
+                                                    </div>
+                                                    <div className="text-[10px] text-slate-500">
+                                                        מוכנות להעלאה
+                                                    </div>
+                                                </div>
+                                            </div>
+
+                                            <button
+                                                type="button"
+                                                onClick={(e) => {
+                                                    e.preventDefault();
+                                                    setGalleryFiles([]);
+                                                }}
+                                                className="p-1.5 text-slate-400 hover:text-red-500 hover:bg-red-50 rounded-lg transition-all"
+                                                title="נקה בחירה"
+                                            >
+                                                <Trash2 className="w-4 h-4" />
+                                            </button>
                                         </div>
                                     )}
                                 </div>
@@ -487,6 +611,67 @@ const CreateEventPage: React.FC = () => {
                     </div>
                 </div>
             </div>
+            {/* Upgrade Suggestion Modal */}
+            {showUpgradeModal && (
+                <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+                    <div className="bg-white rounded-3xl shadow-2xl max-w-md w-full overflow-hidden">
+                        <div className="bg-gradient-to-r from-cyan-500 to-cyan-600 p-6">
+                            <div className="flex items-center justify-center">
+                                <Upload className="w-12 h-12 text-white" />
+                            </div>
+                        </div>
+                        <div className="p-8 text-center">
+                            <h3 className="text-2xl font-bold text-slate-900 mb-4">
+                                רגע! יש לך הרבה תמונות 📸
+                            </h3>
+                            <p className="text-slate-700 text-lg mb-4">
+                                בחרת להעלות <span className="font-bold text-cyan-600">{attemptedPhotoCount.toLocaleString()}</span> תמונות
+                            </p>
+                            <p className="text-slate-600 mb-6">
+                                החבילה שלך מאפשרת עד <span className="font-bold">{PACKAGE_LIMITS[packageType].toLocaleString()}</span> תמונות.
+                                <br />
+                                מה דעתך לעבור לחבילת <span className="font-bold text-cyan-600">
+                                    {suggestedPackage === 'premium' ? 'פרימיום' : 'זהב'}
+                                </span>?
+                            </p>
+                            <div className="bg-cyan-50 rounded-xl p-4 mb-6">
+                                <div className="flex items-center justify-center gap-2 mb-2">
+                                    {suggestedPackage === 'premium' ? (
+                                        <Award className="w-6 h-6 text-cyan-600" />
+                                    ) : (
+                                        <Crown className="w-6 h-6 text-cyan-600" />
+                                    )}
+                                    <div className="text-sm text-slate-600">
+                                        חבילת {suggestedPackage === 'premium' ? 'פרימיום' : 'זהב'}
+                                    </div>
+                                </div>
+                                <div className="text-2xl font-bold text-cyan-600">
+                                    {suggestedPackage === 'gold' ? 'ללא הגבלת תמונות' : `עד ${PACKAGE_LIMITS[suggestedPackage].toLocaleString()} תמונות`}
+                                </div>
+                            </div>
+                        </div>
+                        <div className="p-6 bg-slate-50 flex gap-3">
+                            <button
+                                onClick={() => {
+                                    setPackageType(suggestedPackage);
+                                    setShowUpgradeModal(false);
+                                    triggerToast('החבילה שודרגה בהצלחה! ✨', 'success');
+                                }}
+                                className="flex-1 px-6 py-3 bg-cyan-500 hover:bg-cyan-600 text-white rounded-xl font-bold transition-colors"
+                            >
+                                עבור לחבילת {suggestedPackage === 'premium' ? 'פרימיום' : 'זהב'}
+                            </button>
+                            <button
+                                onClick={() => setShowUpgradeModal(false)}
+                                className="px-6 py-3 bg-slate-200 hover:bg-slate-300 text-slate-700 rounded-xl font-bold transition-colors"
+                            >
+                                ביטול
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
+
             <EventPreviewModal
                 isOpen={isPreviewOpen}
                 onClose={() => setIsPreviewOpen(false)}

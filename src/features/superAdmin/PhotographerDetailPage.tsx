@@ -10,7 +10,11 @@ import {
     User,
     Mail,
     FileText,
-    Share2
+    Share2,
+    Crown,
+    Award,
+    Star,
+    MapPin
 } from 'lucide-react';
 import SuperAdminService, { PhotographerDetail, EventSummary } from '../../services/superAdminService';
 
@@ -41,6 +45,31 @@ const PhotographerDetailPage: React.FC = () => {
             setError(err.message || 'Failed to load photographer data');
         } finally {
             setLoading(false);
+        }
+    };
+
+    const getPackageVisuals = (type?: string) => {
+        const normalizedType = type?.toLowerCase();
+        switch (normalizedType) {
+            case 'premium':
+                return {
+                    bg: 'bg-cyan-500',
+                    icon: Award,
+                    label: 'פרימיום'
+                };
+            case 'gold':
+                return {
+                    bg: 'bg-amber-500',
+                    icon: Crown,
+                    label: 'זהב'
+                };
+            case 'basic':
+            default:
+                return {
+                    bg: 'bg-slate-500',
+                    icon: Star,
+                    label: 'בסיס'
+                };
         }
     };
 
@@ -195,7 +224,7 @@ const PhotographerDetailPage: React.FC = () => {
                                         <div className="p-2 bg-purple-50 rounded-lg">
                                             <Eye className="w-4 h-4 text-purple-600" />
                                         </div>
-                                        <div className="text-xs text-gray-900/60">צפיות</div>
+                                        <div className="text-xs text-gray-900/60">כניסות אורחים</div>
                                     </div>
                                     <div className="text-2xl font-bold text-gray-900">
                                         {photographer.stats.total_views.toLocaleString()}
@@ -217,6 +246,33 @@ const PhotographerDetailPage: React.FC = () => {
                                     </div>
                                 </div>
                             </div>
+
+                            {/* Package Stats Table */}
+                            <div className="mt-4 border border-gray-100 rounded-lg p-2 bg-gray-50/50">
+                                <div className="grid grid-cols-3 gap-2 text-[10px] text-gray-400 font-medium mb-1 text-center uppercase">
+                                    <div className="text-right">חבילה</div>
+                                    <div>סה״כ</div>
+                                    <div>פעילים</div>
+                                </div>
+
+                                <div className="grid grid-cols-3 gap-2 text-xs py-1 border-b border-gray-100 items-center text-center">
+                                    <div className="font-bold text-gray-700 text-right">בסיס</div>
+                                    <div className="text-gray-900">{photographer.stats.stats_basic?.total || 0}</div>
+                                    <div className="text-green-600 bg-green-50 rounded px-1">{photographer.stats.stats_basic?.active || 0}</div>
+                                </div>
+
+                                <div className="grid grid-cols-3 gap-2 text-xs py-1 border-b border-gray-100 items-center text-center">
+                                    <div className="font-bold text-cyan-600 text-right">פרימיום</div>
+                                    <div className="text-gray-900">{photographer.stats.stats_premium?.total || 0}</div>
+                                    <div className="text-green-600 bg-green-50 rounded px-1">{photographer.stats.stats_premium?.active || 0}</div>
+                                </div>
+
+                                <div className="grid grid-cols-3 gap-2 text-xs py-1 items-center text-center">
+                                    <div className="font-bold text-amber-600 text-right">זהב</div>
+                                    <div className="text-gray-900">{photographer.stats.stats_gold?.total || 0}</div>
+                                    <div className="text-green-600 bg-green-50 rounded px-1">{photographer.stats.stats_gold?.active || 0}</div>
+                                </div>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -234,21 +290,36 @@ const PhotographerDetailPage: React.FC = () => {
                             {events.map((event) => (
                                 <div
                                     key={event.id}
-                                    className="p-4 border border-blue-100 rounded-xl hover:shadow-md transition-shadow"
+                                    className="border border-blue-100 rounded-xl hover:shadow-md transition-shadow overflow-hidden flex items-stretch"
                                 >
-                                    <div className="flex items-start justify-between mb-3">
-                                        <div className="flex-1">
-                                            <h4 className="font-bold text-gray-900 mb-1">{event.name}</h4>
-                                            <div className="flex items-center gap-4 text-sm text-gray-900/60">
-                                                <span>{event.slug}</span>
-                                                <span className={`px-2 py-1 rounded-full text-xs ${event.status === 'ready' || event.status === 'active'
-                                                    ? 'bg-green-100 text-green-700'
-                                                    : 'bg-gray-100 text-gray-700'
-                                                    }`}>
-                                                    {event.status === 'ready' || event.status === 'active' ? 'פעיל' : 'טיוטה'}
-                                                </span>
-                                                <span>{new Date(event.created_at).toLocaleDateString('he-IL')}</span>
-                                            </div>
+                                    {/* Full Height Strip with Icon */}
+                                    <div className={`w-6 flex items-center justify-center shrink-0 ${(() => {
+                                        const visuals = getPackageVisuals(event.package_type);
+                                        return visuals.bg;
+                                    })()}`}>
+                                        {(() => {
+                                            const visuals = getPackageVisuals(event.package_type);
+                                            const Icon = visuals.icon;
+                                            return <Icon className="w-3.5 h-3.5 text-white" />;
+                                        })()}
+                                    </div>
+
+                                    <div className="flex-1 p-4">
+                                        <div className="flex items-center justify-between">
+                                            <h4 className="font-bold text-gray-900 mb-1 text-base">{event.name}</h4>
+                                            <span className={`px-2 py-1 rounded-full text-xs ${event.status === 'ready' || event.status === 'active'
+                                                ? 'bg-green-100 text-green-700'
+                                                : 'bg-gray-100 text-gray-700'
+                                                }`}>
+                                                {event.status === 'ready' || event.status === 'active' ? 'פעיל' : 'טיוטה'}
+                                            </span>
+                                        </div>
+                                        <div className="flex items-center gap-4 text-sm text-gray-900/60 mt-0.5">
+                                            <span>{event.slug}</span>
+                                            <span className="flex items-center gap-1">
+                                                <Calendar className="w-3 h-3" />
+                                                {new Date(event.created_at).toLocaleDateString('he-IL')}
+                                            </span>
                                         </div>
                                     </div>
 
@@ -266,7 +337,7 @@ const PhotographerDetailPage: React.FC = () => {
                                             <div className="font-bold text-gray-900">{event.contact_saves}</div>
                                         </div>
                                         <div className="bg-blue-50 p-2 rounded-lg text-center">
-                                            <div className="text-xs text-gray-900/60 mb-1">צפיות</div>
+                                            <div className="text-xs text-gray-900/60 mb-1">כניסות אורחים</div>
                                             <div className="font-bold text-gray-900">{event.views}</div>
                                         </div>
                                     </div>

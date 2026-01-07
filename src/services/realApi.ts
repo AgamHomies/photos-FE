@@ -11,6 +11,11 @@ const getAuthToken = async (): Promise<string | null> => {
     return session?.access_token || null;
 };
 
+// Helper to map backend status to frontend status
+const mapEventStatus = (status: string): 'active' | 'expired' => {
+    return (status === 'active' || status === 'ready' || status === 'processing' || status === 'draft') ? 'active' : 'expired';
+};
+
 // Helper function for API requests
 const apiRequest = async (
     endpoint: string,
@@ -42,7 +47,12 @@ const apiRequest = async (
     const data = await response.json();
 
     if (!response.ok) {
-        throw new Error(data.error?.message || data.detail || 'Request failed');
+        // Handle object-based detail from backend (e.g. {code: "LIMIT_REACHED", message: "..."})
+        const errorMessage = typeof data.detail === 'object' && data.detail.message
+            ? data.detail.message
+            : (data.detail || data.error?.message || 'Request failed');
+
+        throw new Error(errorMessage);
     }
 
     return data;
@@ -239,12 +249,13 @@ export const RealEventAPI = {
             phoneSaves: event.stats?.contact_saved_count || 0,
             uniqueLink: `${CONFIG.API_BASE_URL}/public/e/${event.guest_slug || event.id}`,
             expiryDate: event.expiry_date || '',
-            status: (event.status === 'active' || event.status === 'ready' || event.status === 'processing' || event.status === 'draft') ? 'active' : 'expired',
+            status: mapEventStatus(event.status),
             slug: event.guest_slug,
             coupleSlug: event.couple_slug,
             isPublished: event.is_published,
             initialProcessingDone: event.initial_processing_done,
             createdAt: event.created_at,
+            packageType: event.package_type || 'basic',
         }));
 
         return {
@@ -270,12 +281,13 @@ export const RealEventAPI = {
                 phoneSaves: data.stats?.contact_saved_count || 0,
                 uniqueLink: `${CONFIG.API_BASE_URL}/public/e/${data.guest_slug || data.id}`,
                 expiryDate: data.expiry_date || '',
-                status: (data.status === 'active' || data.status === 'ready' || data.status === 'processing' || data.status === 'draft') ? 'active' : 'expired',
+                status: mapEventStatus(data.status),
                 slug: data.guest_slug,
                 coupleSlug: data.couple_slug,
                 isPublished: data.is_published,
                 initialProcessingDone: data.initial_processing_done,
                 createdAt: data.created_at,
+                packageType: data.package_type || 'basic',
             };
         } catch (error) {
             console.error('Failed to get event:', error);
@@ -290,6 +302,7 @@ export const RealEventAPI = {
             event_date: `${eventData.date}T00:00:00`,
             location: eventData.location || '',
             expiry_date: eventData.expiryDate,
+            package_type: eventData.packageType || 'basic',
         };
 
         const data = await apiRequest('/events/', {
@@ -313,6 +326,7 @@ export const RealEventAPI = {
             slug: data.guest_slug,
             coupleSlug: data.couple_slug,
             createdAt: data.created_at,
+            packageType: data.package_type || 'basic',
         };
     },
 
@@ -342,10 +356,11 @@ export const RealEventAPI = {
             phoneSaves: data.stats?.contact_saved_count || 0,
             uniqueLink: `${CONFIG.API_BASE_URL}/public/e/${data.guest_slug || data.id}`,
             expiryDate: data.expiry_date || '',
-            status: (data.status === 'active' || data.status === 'ready' || data.status === 'processing' || data.status === 'draft') ? 'active' : 'expired',
+            status: mapEventStatus(data.status),
             slug: data.guest_slug,
             coupleSlug: data.couple_slug,
             createdAt: data.created_at,
+            packageType: data.package_type || 'basic',
         };
     },
 
@@ -386,12 +401,13 @@ export const RealEventAPI = {
             phoneSaves: data.stats?.contact_saved_count || 0,
             uniqueLink: `${CONFIG.API_BASE_URL}/public/e/${data.guest_slug || data.id}`,
             expiryDate: data.expiry_date || '',
-            status: (data.status === 'active' || data.status === 'ready' || data.status === 'processing' || data.status === 'draft') ? 'active' : 'expired',
+            status: mapEventStatus(data.status),
             slug: data.guest_slug,
             coupleSlug: data.couple_slug,
             isPublished: data.is_published,
             initialProcessingDone: data.initial_processing_done,
             createdAt: data.created_at,
+            packageType: data.package_type || 'basic',
         };
     },
 
@@ -568,7 +584,7 @@ export const RealGalleryAPI = {
                 downloads: eventData.downloads || 0,
                 uniqueLink: `${CONFIG.API_BASE_URL}/public/e/${eventData.guest_slug || eventData.id}`,
                 expiryDate: eventData.expiry_date || '',
-                status: (eventData.status === 'active' || eventData.status === 'ready' || eventData.status === 'processing' || eventData.status === 'draft') ? 'active' : 'expired',
+                status: mapEventStatus(eventData.status),
                 slug: eventData.guest_slug,
                 coupleSlug: eventData.couple_slug,
                 mode: data.mode, // Map mode
@@ -683,4 +699,16 @@ export const RealGalleryAPI = {
             height: img.height,
         }));
     },
+};
+
+// ============================================
+// Payment API
+// ============================================
+export const RealPaymentAPI = {
+    mockPay: async (packageId: string): Promise<any> => {
+        return await apiRequest('/payments/mock-pay', {
+            method: 'POST',
+            body: JSON.stringify({ package_id: packageId }),
+        });
+    }
 };

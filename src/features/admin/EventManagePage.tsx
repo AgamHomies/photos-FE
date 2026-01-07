@@ -723,11 +723,12 @@ const EventManagePage: React.FC = () => {
                                         עריכת פרטי אירוע
                                     </h2>
                                     <button
-                                        type="submit"
-                                        className="bg-slate-900 text-white px-6 py-2 rounded-xl font-bold hover:bg-slate-800 transition-colors flex items-center gap-2 shadow-sm text-sm"
+                                        type="button"
+                                        onClick={() => setLinkModal(prev => ({ ...prev, isOpen: true, type: 'preview' }))}
+                                        className="bg-cyan-50 text-cyan-600 px-6 py-2 rounded-xl font-bold hover:bg-cyan-100 transition-colors flex items-center gap-2 shadow-sm text-sm border border-cyan-100"
                                     >
-                                        <Save className="w-4 h-4" />
-                                        <span>שמור שינויים</span>
+                                        <Eye className="w-4 h-4" />
+                                        <span>תצוגה מקדימה</span>
                                     </button>
                                 </div>
 
@@ -768,9 +769,9 @@ const EventManagePage: React.FC = () => {
                                         </div>
 
                                         {/* Left Column: Cover Image Upload */}
-                                        <div className="flex flex-col">
+                                        <div className="flex flex-col h-full">
                                             <label className="block text-sm font-medium text-slate-700 mb-2">תמונת קאבר</label>
-                                            <div className="border-2 border-dashed border-slate-200 rounded-xl p-6 text-center hover:border-cyan-500 transition-colors cursor-pointer relative group bg-slate-50 aspect-[3/2] w-full flex flex-col items-center justify-center">
+                                            <div className="border-2 border-dashed border-slate-200 rounded-xl p-6 text-center hover:border-cyan-500 transition-colors cursor-pointer relative group bg-slate-50 flex-1 w-full flex flex-col items-center justify-center">
                                                 <input
                                                     type="file"
                                                     accept="image/*"
@@ -785,7 +786,7 @@ const EventManagePage: React.FC = () => {
                                                     disabled={!!isClientUploading}
                                                 />
                                                 {event.coverImage ? (
-                                                    <div className="relative w-full h-full rounded-lg overflow-hidden">
+                                                    <div className="absolute inset-2 rounded-lg overflow-hidden">
                                                         <img src={event.coverImage} alt="Cover" className="w-full h-full object-cover" />
                                                         <div className="absolute inset-0 bg-black/40 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
                                                             <div className="text-white font-medium flex items-center gap-2">
@@ -810,12 +811,11 @@ const EventManagePage: React.FC = () => {
                                     {/* Preview Button (Full Width Bottom) */}
                                     <div className="mt-4 pt-4 border-t border-slate-100">
                                         <button
-                                            type="button"
-                                            onClick={() => setLinkModal(prev => ({ ...prev, isOpen: true, type: 'preview' }))}
-                                            className="flex items-center justify-center gap-2 text-cyan-600 font-bold bg-cyan-50 px-6 py-4 rounded-xl hover:bg-cyan-100 transition-colors w-full"
+                                            type="submit"
+                                            className="flex items-center justify-center gap-2 bg-slate-900 text-white px-6 py-4 rounded-xl font-bold hover:bg-slate-800 transition-colors w-full shadow-lg"
                                         >
-                                            <Eye className="w-5 h-5" />
-                                            <span>תצוגה מקדימה לגלריה</span>
+                                            <Save className="w-5 h-5" />
+                                            <span>שמור שינויים</span>
                                         </button>
                                     </div>
                                 </div>

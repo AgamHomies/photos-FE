@@ -16,6 +16,7 @@ import {
     RealPhotoAPI,
     RealDashboardAPI,
     RealGalleryAPI,
+    RealPaymentAPI,
 } from './realApi';
 import { PhotographerRegistration, PhotographerProfile, Photo, Event, DashboardStats } from '../types';
 
@@ -269,6 +270,18 @@ export const BackendService = {
             return [];
         }
         return await RealGalleryAPI.getSelection(slug, selectionHash);
+    },
+
+    // ============================================
+    // Payments
+    // ============================================
+    mockPay: async (packageId: string): Promise<boolean> => {
+        if (USE_MOCK) {
+            console.log('Mock payment success for', packageId);
+            return true;
+        }
+        const result = await RealPaymentAPI.mockPay(packageId);
+        return result.success;
     },
 };
 

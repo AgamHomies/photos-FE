@@ -11,25 +11,108 @@ import {
    Phone,
    MapPin,
    Calendar,
-   Search,
    Loader2,
    X,
    CheckCircle2,
    Facebook,
-   XCircle,
    Globe,
-   Copy,
    Heart,
    ChevronLeft,
    ChevronRight,
-   ArrowUpDown,
-   Sparkles,
    ChevronsLeft,
    ChevronsRight,
    RefreshCw
 } from 'lucide-react';
 import { Toast } from '../../components';
 import { SortingControl } from './components/SortingControl';
+
+// Lightbox Component to handle scroll locking and backdrop click
+const LightboxOverlay: React.FC<{
+   photo: Photo;
+   onClose: () => void;
+   onNext: (e?: React.MouseEvent) => void;
+   onPrev: (e?: React.MouseEvent) => void;
+   onDownload: (photo: Photo, e?: React.MouseEvent) => void;
+   onShare: (photo: Photo, e: React.MouseEvent) => void;
+   hasNext: boolean;
+   hasPrev: boolean;
+}> = ({ photo, onClose, onNext, onPrev, onDownload, onShare, hasNext, hasPrev }) => {
+
+   // Lock body scroll
+   useEffect(() => {
+      document.body.style.overflow = 'hidden';
+      return () => {
+         document.body.style.overflow = 'unset';
+      };
+   }, []);
+
+   return (
+      <div
+         className="fixed inset-0 z-50 bg-black/95 flex items-center justify-center p-4 backdrop-blur-md animate-fade-in text-white/90"
+         onClick={onClose} // Close on backdrop click
+      >
+         <button
+            onClick={(e) => {
+               e.stopPropagation();
+               onClose();
+            }}
+            className="absolute top-6 right-6 p-2 text-white/50 hover:text-white transition-colors z-[60]"
+         >
+            <X className="w-8 h-8" />
+         </button>
+
+         <img
+            src={photo.url}
+            alt="Full view"
+            className="max-w-full max-h-[85vh] object-contain rounded-md shadow-2xl"
+            onClick={(e) => e.stopPropagation()} // Prevent close on image click
+         />
+
+         {/* Navigation Buttons */}
+         <button
+            onClick={(e) => {
+               e.stopPropagation();
+               onNext(e);
+            }}
+            className={`absolute left-4 top-1/2 transform -translate-y-1/2 p-3 rounded-full bg-white/10 hover:bg-white/20 text-white transition-all backdrop-blur-sm border border-white/10 z-[60] ${!hasNext ? 'opacity-30 cursor-not-allowed' : ''}`}
+            disabled={!hasNext}
+            title="הבא"
+         >
+            <ChevronLeft className="w-8 h-8" />
+         </button>
+
+         <button
+            onClick={(e) => {
+               e.stopPropagation();
+               onPrev(e);
+            }}
+            className={`absolute right-4 top-1/2 transform -translate-y-1/2 p-3 rounded-full bg-white/10 hover:bg-white/20 text-white transition-all backdrop-blur-sm border border-white/10 z-[60] ${!hasPrev ? 'opacity-30 cursor-not-allowed' : ''}`}
+            disabled={!hasPrev}
+            title="הקודם"
+         >
+            <ChevronRight className="w-8 h-8" />
+         </button>
+
+         <div
+            className="absolute bottom-8 flex gap-6 z-[60]"
+            onClick={(e) => e.stopPropagation()}
+         >
+            <button onClick={(e) => onDownload(photo, e)} className="text-white flex flex-col items-center gap-1 hover:text-[#C4A882] transition-colors">
+               <div className="w-12 h-12 bg-white/10 rounded-full flex items-center justify-center backdrop-blur-sm border border-white/10">
+                  <Download className="w-6 h-6" />
+               </div>
+               <span className="text-xs font-medium">הורד</span>
+            </button>
+            <button onClick={(e) => onShare(photo, e)} className="text-white flex flex-col items-center gap-1 hover:text-[#C4A882] transition-colors">
+               <div className="w-12 h-12 bg-white/10 rounded-full flex items-center justify-center backdrop-blur-sm border border-white/10">
+                  <Share2 className="w-6 h-6" />
+               </div>
+               <span className="text-xs font-medium">שתף</span>
+            </button>
+         </div>
+      </div>
+   );
+};
 
 interface GalleryPageProps {
    mode?: 'guest' | 'full';
@@ -163,7 +246,7 @@ const GalleryPage: React.FC<GalleryPageProps> = ({ mode: propMode }) => {
             window.history.replaceState({}, '', newUrl);
 
             // If photo is already in photos array (e.g. page 1), use it
-            const existingPhoto = photos.find(p => p.id == photoId);
+            const existingPhoto = photos.find(p => p.id === photoId);
             if (existingPhoto) {
                setLightboxPhoto(existingPhoto);
                return;
@@ -280,7 +363,12 @@ const GalleryPage: React.FC<GalleryPageProps> = ({ mode: propMode }) => {
             // and let the loadSelection effect handle the view.
             if (!hasSelectionId) {
                if (currentMode === 'full') {
-                  const eventPhotos = await BackendService.getEventPhotos(eventData.id, 1, itemsPerPage);
+                  // Restore page
+                  const savedPage = sessionStorage.getItem(`gallery_page_${eventId}`);
+                  const startPage = savedPage ? parseInt(savedPage) : 1;
+                  setPage(startPage);
+
+                  const eventPhotos = await BackendService.getEventPhotos(eventData.id, startPage, itemsPerPage);
                   setPhotos(eventPhotos);
                   setViewState('results');
                } else {
@@ -294,7 +382,12 @@ const GalleryPage: React.FC<GalleryPageProps> = ({ mode: propMode }) => {
                            setSearchResults(parsedResults);
                            setViewState('results');
                            setSortBy('matchScore');
-                           // Also restore page? Maybe not needed for MVP
+
+                           // Restore page if available
+                           const savedPage = sessionStorage.getItem(`gallery_page_${eventId}`);
+                           if (savedPage) {
+                              setPage(parseInt(savedPage));
+                           }
                         } else {
                            // URL says results but no data found (expired?), revert to landing
                            console.log('No saved results found, reverting to landing');
@@ -327,6 +420,9 @@ const GalleryPage: React.FC<GalleryPageProps> = ({ mode: propMode }) => {
          // Server-side pagination
          setLoading(true);
          try {
+            // Save page
+            sessionStorage.setItem(`gallery_page_${event.id}`, newPage.toString());
+
             const newPhotos = await BackendService.getEventPhotos(event.id, newPage, itemsPerPage);
             setPhotos(newPhotos);
             setPage(newPage);
@@ -337,6 +433,9 @@ const GalleryPage: React.FC<GalleryPageProps> = ({ mode: propMode }) => {
          }
       } else if (viewState === 'results') {
          // Client-side pagination (update triggered by useEffect)
+         if (id) {
+            sessionStorage.setItem(`gallery_page_${id}`, newPage.toString());
+         }
          setPage(newPage);
       }
    };
@@ -1262,66 +1361,22 @@ END:VCARD`;
 
          {/* Lightbox */}
          {lightboxPhoto && (
-            <div className="fixed inset-0 z-50 bg-black/95 flex items-center justify-center p-4 backdrop-blur-md animate-fade-in text-white/90">
-               <button
-                  onClick={() => setLightboxPhoto(null)}
-                  className="absolute top-6 right-6 p-2 text-white/50 hover:text-white transition-colors"
-               >
-                  <X className="w-8 h-8" />
-               </button>
-
-               <img
-                  src={lightboxPhoto.url}
-                  alt="Full view"
-                  className="max-w-full max-h-[85vh] object-contain rounded-md shadow-2xl"
-               />
-
-               {/* Navigation Buttons */}
-               <button
-                  onClick={handleNextPhoto}
-                  className={`absolute left-4 top-1/2 transform -translate-y-1/2 p-3 rounded-full bg-white/10 hover:bg-white/20 text-white transition-all backdrop-blur-sm border border-white/10 ${(() => {
-                     const navArray = viewState === 'results' ? searchResults : photos;
-                     return navArray.findIndex(p => p.id === lightboxPhoto.id) >= navArray.length - 1 ? 'opacity-30 cursor-not-allowed' : '';
-                  })()}`}
-                  disabled={(() => {
-                     const navArray = viewState === 'results' ? searchResults : photos;
-                     return navArray.findIndex(p => p.id === lightboxPhoto.id) >= navArray.length - 1;
-                  })()}
-                  title="הבא"
-               >
-                  <ChevronLeft className="w-8 h-8" />
-               </button>
-
-               <button
-                  onClick={handlePrevPhoto}
-                  className={`absolute right-4 top-1/2 transform -translate-y-1/2 p-3 rounded-full bg-white/10 hover:bg-white/20 text-white transition-all backdrop-blur-sm border border-white/10 ${(() => {
-                     const navArray = viewState === 'results' ? searchResults : photos;
-                     return navArray.findIndex(p => p.id === lightboxPhoto.id) <= 0 ? 'opacity-30 cursor-not-allowed' : '';
-                  })()}`}
-                  disabled={(() => {
-                     const navArray = viewState === 'results' ? searchResults : photos;
-                     return navArray.findIndex(p => p.id === lightboxPhoto.id) <= 0;
-                  })()}
-                  title="הקודם"
-               >
-                  <ChevronRight className="w-8 h-8" />
-               </button>
-
-               <div className="absolute bottom-8 flex gap-6">
-                  <button onClick={(e) => handleDownload(lightboxPhoto, e)} className="text-white flex flex-col items-center gap-1 hover:text-[#C4A882] transition-colors">
-                     <div className="w-12 h-12 bg-white/10 rounded-full flex items-center justify-center backdrop-blur-sm border border-white/10">
-                        <Download className="w-6 h-6" />
-                     </div>
-                     <span className="text-xs font-medium">הורד</span>
-                  </button>
-                  <button onClick={(e) => handleShare(lightboxPhoto, e)} className="text-white flex flex-col items-center gap-1 hover:text-[#C4A882] transition-colors">
-                     <div className="w-12 h-12 bg-white/10 rounded-full flex items-center justify-center backdrop-blur-sm border border-white/10">
-                        <Share2 className="w-6 h-6" />
-                     </div>
-                     <span className="text-xs font-medium">שתף</span>
-                  </button>
-               </div>
-            </div>
+            <LightboxOverlay
+               photo={lightboxPhoto}
+               onClose={() => setLightboxPhoto(null)}
+               onNext={handleNextPhoto}
+               onPrev={handlePrevPhoto}
+               onDownload={handleDownload}
+               onShare={handleShare}
+               hasNext={(() => {
+                  const navArray = viewState === 'results' ? searchResults : photos;
+                  return navArray.findIndex(p => p.id === lightboxPhoto.id) < navArray.length - 1;
+               })()}
+               hasPrev={(() => {
+                  const navArray = viewState === 'results' ? searchResults : photos;
+                  return navArray.findIndex(p => p.id === lightboxPhoto.id) > 0;
+               })()}
+            />
          )}
 
          {/* Toast Notification */}
@@ -1335,6 +1390,5 @@ END:VCARD`;
       </div>
    );
 };
-
 
 export default GalleryPage;

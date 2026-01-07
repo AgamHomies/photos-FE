@@ -73,6 +73,18 @@ const Header: React.FC<HeaderProps> = ({ isAuthenticated }) => {
                             onClick={() => {
                                 navigate('/');
                                 setTimeout(() => {
+                                    const section = document.getElementById('pricing-section');
+                                    section?.scrollIntoView({ behavior: 'smooth' });
+                                }, 100);
+                            }}
+                            className="hover:text-cyan-500 transition-colors"
+                        >
+                            תמחור
+                        </button>
+                        <button
+                            onClick={() => {
+                                navigate('/');
+                                setTimeout(() => {
                                     const section = document.getElementById('faq-section');
                                     section?.scrollIntoView({ behavior: 'smooth' });
                                 }, 100);
@@ -194,6 +206,16 @@ const Header: React.FC<HeaderProps> = ({ isAuthenticated }) => {
                                 className="text-right py-2 hover:text-cyan-500 transition-colors"
                             >
                                 למה לבחור בנו?
+                            </button>
+                            <button
+                                onClick={() => {
+                                    navigate('/');
+                                    setIsMenuOpen(false);
+                                    setTimeout(() => document.getElementById('pricing-section')?.scrollIntoView({ behavior: 'smooth' }), 100);
+                                }}
+                                className="text-right py-2 hover:text-cyan-500 transition-colors"
+                            >
+                                תמחור
                             </button>
                             <button
                                 onClick={() => {

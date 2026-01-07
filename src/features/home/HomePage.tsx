@@ -2,28 +2,28 @@ import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
   Camera,
-  Users,
-  Zap,
-  ScanFace,
-  Images,
-  Aperture,
+  Image,
   ChevronDown,
   ChevronUp,
   ArrowRight,
   Play,
   CheckCircle2,
   CloudUpload,
-  Share2,
   LayoutGrid,
   TrendingUp,
   Target,
   MessageCircle,
   Clock,
-  ShieldCheck
+  Check,
+  Star,
+  Award,
+  Crown,
+  Sparkles
 } from 'lucide-react';
 
 import Layout from '../../components/Layout';
 import { useAuth } from '../../hooks/useAuth';
+import { PhoneMockupDemo } from './PhoneMockupDemo';
 
 const HomePage: React.FC = () => {
   const [openFaq, setOpenFaq] = useState<number | null>(null);
@@ -42,6 +42,10 @@ const HomePage: React.FC = () => {
     }
   }, [isAuthenticated, isLoading, navigate]);
 
+  // ... (rest of imports)
+
+
+
 
   const steps = [
     {
@@ -55,7 +59,7 @@ const HomePage: React.FC = () => {
       description: "האורחים מעלים סלפי דרך הלינק הייחודי שלהם"
     },
     {
-      icon: <Images className="w-8 h-8 text-white" />,
+      icon: <Image className="w-8 h-8 text-white" />,
       title: "3. יצירת גלריה אישית",
       description: "המערכת מוצאת ומציגה רק את התמונות שבהם הם מופיעים, בתוך עמוד ממותג של הצלם"
     }
@@ -84,7 +88,7 @@ const HomePage: React.FC = () => {
       icon: <CheckCircle2 className="w-6 h-6 text-white" />,
       bg: "bg-amber-500",
       title: "תמחור פשוט ונגיש",
-      description: "אירוע ראשון עלינו! אחר כך — רק 250 ₪ לאירוע. בלי התחייבויות ובלי אותיות קטנות."
+      description: "אירוע ראשון עלינו! ולאחר מכן משלמים לפי התמחור שמופיע למטה, פר אירוע בלבד. בלי מנוי חודשי, בלי התחייבות!"
     }
   ];
 
@@ -123,8 +127,8 @@ const HomePage: React.FC = () => {
           <div className="flex flex-col lg:flex-row items-center gap-12 lg:gap-20">
 
             {/* Text Content */}
-            <div className="lg:w-1/2 text-center lg:text-right">
-              <h1 className="text-3xl md:text-4xl lg:text-6xl font-bold text-slate-900 mb-6 leading-tight">
+            <div className="lg:w-1/2 text-center lg:text-right lg:-mt-24">
+              <h1 className="text-5xl md:text-6xl lg:text-7xl font-bold text-slate-900 mb-6 leading-tight">
                 באירוע הבא, כולם ידעו <br />
                 <span className="text-cyan-500">מי צילם אותם!</span>
               </h1>
@@ -169,31 +173,40 @@ const HomePage: React.FC = () => {
             </div>
 
             {/* Hero Image / Mockup */}
-            <div className="lg:w-1/2 relative">
-              <div className="relative z-10 bg-white p-3 lg:p-6 rounded-[2.5rem] shadow-2xl transform rotate-[-1deg] lg:rotate-[-2deg] hover:rotate-0 transition-transform duration-500 border border-slate-100">
-                <div className="relative rounded-2xl overflow-hidden bg-slate-100 aspect-[4/3]">
-                  {/* Placeholder for the phone mockup image from the user's screenshot */}
-                  <div className="absolute inset-0 flex items-center justify-center bg-slate-50">
-                    <div className="text-center">
-                      <div className="flex justify-center gap-4 mb-4">
-                        <div className="w-16 h-32 bg-slate-800 rounded-2xl border-4 border-slate-900 shadow-xl"></div>
-                        <div className="w-20 h-40 bg-slate-800 rounded-2xl border-4 border-slate-900 shadow-2xl transform -translate-y-4 z-10"></div>
-                        <div className="w-16 h-32 bg-slate-800 rounded-2xl border-4 border-slate-900 shadow-xl"></div>
-                      </div>
-                      <p className="text-slate-400 font-medium">תצוגה מקדימה של האפליקציה</p>
-                    </div>
+            <div className="lg:w-1/2 relative flex flex-col items-center justify-center">
+
+              {/* Emphasis Badge */}
+              <div className="mb-8 relative z-20 hover:scale-105 transition-transform duration-300">
+                <div className="bg-white shadow-[0_10px_40px_-10px_rgba(0,0,0,0.15)] border border-slate-100 px-6 py-3 rounded-2xl flex items-center gap-3 relative overflow-hidden">
+                  <div className="absolute inset-0 bg-gradient-to-r from-cyan-50/50 to-purple-50/50 opacity-50"></div>
+                  <span className="relative flex h-3 w-3">
+                    <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-cyan-400 opacity-75"></span>
+                    <span className="relative inline-flex rounded-full h-3 w-3 bg-cyan-500"></span>
+                  </span>
+                  <div className="relative">
+                    <p className="font-bold text-slate-800 text-sm leading-none mb-1">הדמייה של הגלריה לאורחים</p>
+                    <p className="text-[10px] text-slate-500 font-medium">מיד לאחר שהעלתם את התמונות למערכת</p>
                   </div>
-                  {/* If we had the real image, we would put it here */}
-                  {/* <img src="/path/to/hero-image.png" alt="App Preview" className="w-full h-full object-cover" /> */}
                 </div>
-
-                {/* Floating Badge */}
-
+                {/* Arrow pointing down */}
+                <div className="absolute left-1/2 -ml-2 -bottom-2 w-4 h-4 bg-white transform rotate-45 border-b border-r border-slate-100"></div>
               </div>
 
-              {/* Decorative blobs */}
-              <div className="hidden absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[120%] h-[120%] bg-gradient-to-tr from-cyan-200/40 to-blue-200/40 rounded-full filter blur-3xl -z-10 opacity-70"></div>
+              <div className="relative z-10 bg-white p-2 rounded-[3rem] shadow-2xl transform lg:rotate-[-1deg] hover:rotate-0 transition-transform duration-500 border-4 border-slate-900 w-[280px] sm:w-[320px]">
+                <div className="relative rounded-[2.5rem] overflow-hidden bg-slate-900 ring-8 ring-slate-900" style={{ aspectRatio: '9/19' }}>
+                  {/* Animated App Demo - High Fidelity Replica */}
+                  <PhoneMockupDemo />
+                </div>
+                {/* If we had the real image, we would put it here */}
+                {/* <img src="/path/to/hero-image.png" alt="App Preview" className="w-full h-full object-cover" /> */}
+              </div>
+
+              {/* Floating Badge */}
+
             </div>
+
+            {/* Decorative blobs */}
+            <div className="hidden absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[120%] h-[120%] bg-gradient-to-tr from-cyan-200/40 to-blue-200/40 rounded-full filter blur-3xl -z-10 opacity-70"></div>
           </div>
         </div>
       </section>
@@ -271,8 +284,122 @@ const HomePage: React.FC = () => {
         </div>
       </section>
 
+      {/* Pricing Section */}
+      <section id="pricing-section" className="py-12 lg:py-24 bg-white relative overflow-hidden">
+        <div className="container mx-auto px-4">
+          <div className="text-center mb-16">
+            <h2 className="text-3xl lg:text-5xl font-bold text-slate-900 mb-6">תמחור גמיש ופשוט</h2>
+            <p className="text-lg text-slate-600 max-w-2xl mx-auto">תשלום פר אירוע, ללא דמי מנוי חודשיים וללא התחייבות.</p>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-8 items-center max-w-6xl mx-auto">
+            {/* Basic Package */}
+            <div className="group relative h-full bg-white border border-slate-200 rounded-[2rem] p-8 transition-all hover:border-slate-300 hover:shadow-xl hover:shadow-slate-900/5 flex flex-col items-center text-center">
+              <div className="mb-6 p-4 bg-slate-50 rounded-2xl group-hover:bg-slate-100 transition-colors">
+                <Star className="w-8 h-8 text-slate-400 group-hover:text-slate-600 transition-colors" />
+              </div>
+
+              <h3 className="text-xl font-bold text-slate-900 mb-2">חבילת בסיס</h3>
+              <div className="flex items-baseline justify-center gap-1 mb-2">
+                <span className="text-4xl font-black text-slate-900">₪199</span>
+                <span className="text-slate-500 font-medium text-lg">/ אירוע</span>
+              </div>
+              <p className="text-slate-500 text-sm font-medium mb-8">אירועים קטנים וימי הולדת</p>
+
+              <div className="w-full space-y-4 text-sm text-slate-600 mb-8 flex-1 text-right px-4">
+                <div className="flex items-center gap-3 w-full">
+                  <div className="p-1 rounded-full bg-slate-100 text-slate-500 shrink-0"><Check className="w-3.5 h-3.5" /></div>
+                  <span>עד <span className="font-bold text-slate-900">1,200</span> תמונות</span>
+                </div>
+                <div className="flex items-center gap-3 w-full">
+                  <div className="p-1 rounded-full bg-slate-100 text-slate-500 shrink-0"><Check className="w-3.5 h-3.5" /></div>
+                  <span>קישור פעיל לחודש</span>
+                </div>
+              </div>
+
+
+            </div>
+
+            {/* Premium Package - Recommended */}
+            <div className="group relative h-full bg-white border-2 border-cyan-500 rounded-[2rem] p-8 shadow-2xl shadow-cyan-900/10 transform md:-translate-y-4 transition-all hover:shadow-cyan-900/20 flex flex-col items-center text-center z-10 w-full">
+              {/* Elegant Badge */}
+              <div className="absolute -top-3 left-1/2 -translate-x-1/2 bg-cyan-50 text-cyan-700 border border-cyan-200 px-4 py-1 rounded-full text-sm font-bold shadow-sm flex items-center gap-1.5 whitespace-nowrap">
+                <Sparkles className="w-3.5 h-3.5" />
+                <span>מומלץ ביותר</span>
+              </div>
+
+              <div className="mb-6 p-5 bg-gradient-to-br from-cyan-500 to-cyan-600 rounded-2xl shadow-lg shadow-cyan-500/20 group-hover:scale-110 transition-transform duration-300">
+                <Award className="w-10 h-10 text-white" />
+              </div>
+
+              <h3 className="text-2xl font-bold text-slate-900 mb-2">חבילת פרימיום</h3>
+              <div className="flex items-baseline justify-center gap-1 mb-2">
+                <span className="text-5xl font-black text-slate-900">₪279</span>
+                <span className="text-slate-500 font-medium text-xl">/ אירוע</span>
+              </div>
+              <p className="text-cyan-600 text-sm font-medium mb-8 bg-cyan-50 px-3 py-1 rounded-full inline-block">הבחירה המשתלמת ביותר</p>
+
+              <div className="w-full space-y-4 text-sm text-slate-700 mb-8 flex-1 text-right px-4">
+                <div className="flex items-center gap-3 w-full">
+                  <div className="p-1 rounded-full bg-cyan-100 text-cyan-600 shrink-0"><Check className="w-3.5 h-3.5" /></div>
+                  <span className="text-base font-medium">עד <span className="font-bold text-slate-900">10,000</span> תמונות</span>
+                </div>
+                <div className="flex items-center gap-3 w-full">
+                  <div className="p-1 rounded-full bg-cyan-100 text-cyan-600 shrink-0"><Check className="w-3.5 h-3.5" /></div>
+                  <span className="text-base">קישור פעיל לחודשיים</span>
+                </div>
+                <div className="flex items-center gap-3 w-full bg-cyan-50/50 p-2 rounded-lg -mr-2">
+                  <div className="p-1 rounded-full bg-cyan-100 text-cyan-600 shrink-0"><Check className="w-3.5 h-3.5" /></div>
+                  <span className="text-base font-bold text-cyan-800">מתאים במיוחד לחתונות 💍</span>
+                </div>
+              </div>
+
+
+            </div>
+
+            {/* Gold Package */}
+            <div className="group relative h-full bg-white border border-slate-200 rounded-[2rem] p-8 transition-all hover:border-amber-200 hover:shadow-xl hover:shadow-amber-900/5 flex flex-col items-center text-center">
+              <div className="mb-6 p-4 bg-slate-50 rounded-2xl group-hover:bg-amber-50 transition-colors">
+                <Crown className="w-8 h-8 text-slate-400 group-hover:text-amber-500 transition-colors" />
+              </div>
+
+              <h3 className="text-xl font-bold text-slate-900 mb-2">חבילת זהב</h3>
+              <div className="flex items-baseline justify-center gap-1 mb-2">
+                <span className="text-4xl font-black text-slate-900">₪529</span>
+                <span className="text-slate-500 font-medium text-lg">/ אירוע</span>
+              </div>
+              <p className="text-slate-500 text-sm font-medium mb-8">אירועי ענק ופסטיבלים</p>
+
+              <div className="w-full space-y-4 text-sm text-slate-600 mb-8 flex-1 text-right px-4">
+                <div className="flex items-center gap-3 w-full">
+                  <div className="p-1 rounded-full bg-slate-100 text-slate-500 shrink-0"><Check className="w-3.5 h-3.5" /></div>
+                  <span><span className="font-bold text-slate-900">ללא הגבלת תמונות</span></span>
+                </div>
+                <div className="flex items-center gap-3 w-full">
+                  <div className="p-1 rounded-full bg-slate-100 text-slate-500 shrink-0"><Check className="w-3.5 h-3.5" /></div>
+                  <span>קישור פעיל לחודשיים</span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div className="mt-16 text-center">
+            <button
+              onClick={() => navigate('/auth', { state: { mode: 'register' } })}
+              className="bg-slate-900 text-white text-xl font-bold py-5 px-12 rounded-2xl shadow-xl hover:shadow-2xl hover:bg-slate-800 hover:-translate-y-1 transition-all group"
+            >
+              <span className="flex items-center gap-3">
+                התחל עכשיו וקבל אירוע ראשון בחינם!!
+                <ArrowRight className="w-6 h-6 group-hover:translate-x-1 transition-transform" />
+              </span>
+            </button>
+            <p className="mt-4 text-slate-500">ללא התחייבות • ללא דמי מנוי • שלם רק כשאתה צריך</p>
+          </div>
+        </div>
+      </section>
+
       {/* FAQ Section */}
-      <section id="faq-section" className="py-12 lg:py-24 bg-white">
+      <section id="faq-section" className="py-12 lg:py-24 bg-slate-50">
         <div className="container mx-auto px-4 max-w-3xl">
           <div className="text-center mb-16">
             <h2 className="text-3xl font-bold text-slate-900 mb-4">שאלות נפוצות</h2>
@@ -349,7 +476,7 @@ const HomePage: React.FC = () => {
           </div>
         </div>
       </section>
-    </Layout>
+    </Layout >
   );
 };
 

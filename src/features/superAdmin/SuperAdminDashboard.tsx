@@ -131,7 +131,7 @@ const SuperAdminDashboard: React.FC = () => {
                                         <div className="p-3 bg-orange-50 rounded-xl"><Calendar className="w-6 h-6 text-orange-600" />
                                         </div>
                                     </div>
-                                    <div className="flex items-start gap-8">
+                                    <div className="flex items-start gap-8 mb-4">
                                         <div>
                                             <h3 className="text-3xl font-bold text-gray-900 mb-1">
                                                 {stats.total_events}
@@ -146,18 +146,47 @@ const SuperAdminDashboard: React.FC = () => {
                                         </div>
                                     </div>
 
-                                    <div className="border-t border-gray-100 pt-3 grid grid-cols-2 gap-4 mt-4">
-                                        <div>
-                                            <span className="text-xs text-gray-400 block">ממוצע לצלם</span>
-                                            <span className="text-sm font-semibold text-gray-700">{stats.avg_events_per_photographer}</span>
+                                    {/* Package Breakdown Table */}
+                                    <div className="border-t border-gray-100 mt-4 pt-4">
+                                        <div className="grid grid-cols-5 gap-2 text-[10px] text-gray-400 font-medium mb-2 text-center uppercase tracking-wider">
+                                            <div className="text-right">חבילה</div>
+                                            <div>סה״כ</div>
+                                            <div>פעילים</div>
+                                            <div>ממוצע</div>
+                                            <div>מקס׳</div>
                                         </div>
-                                        <div>
-                                            <span className="text-xs text-gray-400 block">מקסימום לצלם</span>
-                                            <span className="text-sm font-semibold text-gray-700">{stats.max_events_per_photographer}</span>
+
+                                        {/* Basic */}
+                                        <div className="grid grid-cols-5 gap-2 text-xs py-1.5 border-b border-gray-50 items-center text-center">
+                                            <div className="font-bold text-gray-600 text-right">Basic</div>
+                                            <div className="font-medium text-gray-900">{stats.stats_basic.total}</div>
+                                            <div className="text-green-600 font-medium bg-green-50 rounded-md py-0.5">{stats.stats_basic.active}</div>
+                                            <div className="text-gray-500">{stats.stats_basic.avg_per_photographer}</div>
+                                            <div className="text-gray-500">{stats.stats_basic.max_per_photographer}</div>
+                                        </div>
+
+                                        {/* Premium */}
+                                        <div className="grid grid-cols-5 gap-2 text-xs py-1.5 border-b border-gray-50 items-center text-center">
+                                            <div className="font-bold text-blue-600 text-right">Premium</div>
+                                            <div className="font-medium text-gray-900">{stats.stats_premium.total}</div>
+                                            <div className="text-green-600 font-medium bg-green-50 rounded-md py-0.5">{stats.stats_premium.active}</div>
+                                            <div className="text-gray-500">{stats.stats_premium.avg_per_photographer}</div>
+                                            <div className="text-gray-500">{stats.stats_premium.max_per_photographer}</div>
+                                        </div>
+
+                                        {/* Gold */}
+                                        <div className="grid grid-cols-5 gap-2 text-xs py-1.5 items-center text-center">
+                                            <div className="font-bold text-amber-600 text-right">Gold</div>
+                                            <div className="font-medium text-gray-900">{stats.stats_gold.total}</div>
+                                            <div className="text-green-600 font-medium bg-green-50 rounded-md py-0.5">{stats.stats_gold.active}</div>
+                                            <div className="text-gray-500">{stats.stats_gold.avg_per_photographer}</div>
+                                            <div className="text-gray-500">{stats.stats_gold.max_per_photographer}</div>
                                         </div>
                                     </div>
                                 </div>
                             </div>
+
+                            {/* ... (Total Images, Views, Downloads, Contact Saves remain same) ... */}
 
                             {/* Total Images */}
                             <div className="bg-white rounded-2xl p-6 shadow-lg border border-blue-100 flex flex-col justify-between h-full">
@@ -192,7 +221,7 @@ const SuperAdminDashboard: React.FC = () => {
                                     <h3 className="text-3xl font-bold text-gray-900 mb-1">
                                         {stats.total_views.toLocaleString()}
                                     </h3>
-                                    <p className="text-sm text-gray-600 mb-4">כניסות לאירועים</p>
+                                    <p className="text-sm text-gray-600 mb-4">כניסות אורחים</p>
 
                                     <div className="border-t border-gray-100 pt-3 grid grid-cols-2 gap-4">
                                         <div>
@@ -344,22 +373,57 @@ const SuperAdminDashboard: React.FC = () => {
                                     )}
                                 </div>
 
-                                <div className="grid grid-cols-2 gap-2 text-sm">
-                                    <div className="bg-blue-50 p-2 rounded-lg">
-                                        <div className="text-xs text-gray-900/60 mb-1">אירועים פעילים</div>
-                                        <div className="font-bold text-gray-900">{photographer.active_events}/{photographer.total_events}</div>
+                                {/* Package Stats Table */}
+                                <div className="border border-gray-100 rounded-lg p-2 mb-3 bg-gray-50/50">
+                                    <div className="grid grid-cols-3 gap-2 text-[10px] text-gray-400 font-medium mb-1 text-center uppercase">
+                                        <div className="text-right">חבילה</div>
+                                        <div>סה״כ</div>
+                                        <div>פעילים</div>
                                     </div>
-                                    <div className="bg-blue-50 p-2 rounded-lg">
-                                        <div className="text-xs text-gray-900/60 mb-1">תמונות</div>
+
+                                    <div className="grid grid-cols-3 gap-2 text-xs py-1 border-b border-gray-100 items-center text-center">
+                                        <div className="font-bold text-gray-700 text-right">Basic</div>
+                                        <div className="text-gray-900">{photographer.stats_basic?.total || 0}</div>
+                                        <div className="text-green-600 bg-green-50 rounded px-1">{photographer.stats_basic?.active || 0}</div>
+                                    </div>
+
+                                    <div className="grid grid-cols-3 gap-2 text-xs py-1 border-b border-gray-100 items-center text-center">
+                                        <div className="font-bold text-blue-600 text-right">Premium</div>
+                                        <div className="text-gray-900">{photographer.stats_premium?.total || 0}</div>
+                                        <div className="text-green-600 bg-green-50 rounded px-1">{photographer.stats_premium?.active || 0}</div>
+                                    </div>
+
+                                    <div className="grid grid-cols-3 gap-2 text-xs py-1 items-center text-center">
+                                        <div className="font-bold text-amber-600 text-right">Gold</div>
+                                        <div className="text-gray-900">{photographer.stats_gold?.total || 0}</div>
+                                        <div className="text-green-600 bg-green-50 rounded px-1">{photographer.stats_gold?.active || 0}</div>
+                                    </div>
+                                </div>
+
+                                <div className="grid grid-cols-3 gap-2 text-xs">
+                                    <div className="bg-blue-50 p-2 rounded-lg text-center">
+                                        <div className="text-gray-900/60 mb-0.5 whitespace-nowrap">תמונות</div>
                                         <div className="font-bold text-gray-900">{photographer.total_images}</div>
                                     </div>
-                                    <div className="bg-blue-50 p-2 rounded-lg">
-                                        <div className="text-xs text-gray-900/60 mb-1">הורדות</div>
-                                        <div className="font-bold text-gray-900">{photographer.total_downloads}</div>
+                                    <div className="bg-blue-50 p-2 rounded-lg text-center">
+                                        <div className="text-gray-900/60 mb-0.5 whitespace-nowrap">אירועים פעילים</div>
+                                        <div className="font-bold text-gray-900">{photographer.active_events}/{photographer.total_events}</div>
                                     </div>
-                                    <div className="bg-blue-50 p-2 rounded-lg">
-                                        <div className="text-xs text-gray-900/60 mb-1">צפיות</div>
+                                    <div className="bg-blue-50 p-2 rounded-lg text-center">
+                                        <div className="text-gray-900/60 mb-0.5 whitespace-nowrap">כניסות אורחים</div>
                                         <div className="font-bold text-gray-900">{photographer.total_views}</div>
+                                    </div>
+                                    <div className="bg-blue-50 p-2 rounded-lg text-center">
+                                        <div className="text-gray-900/60 mb-0.5 whitespace-nowrap">שמירות</div>
+                                        <div className="font-bold text-gray-900">{photographer.total_contact_saves}</div>
+                                    </div>
+                                    <div className="bg-blue-50 p-2 rounded-lg text-center">
+                                        <div className="text-gray-900/60 mb-0.5 whitespace-nowrap">כניסות פרופיל</div>
+                                        <div className="font-bold text-gray-900">{photographer.total_social_traffic || 0}</div>
+                                    </div>
+                                    <div className="bg-blue-50 p-2 rounded-lg text-center">
+                                        <div className="text-gray-900/60 mb-0.5 whitespace-nowrap">הורדות</div>
+                                        <div className="font-bold text-gray-900">{photographer.total_downloads}</div>
                                     </div>
                                 </div>
                             </div>
@@ -375,11 +439,7 @@ const SuperAdminDashboard: React.FC = () => {
             </div>
         </div >
     );
+
 };
 
 export default SuperAdminDashboard;
-
-
-
-
-
