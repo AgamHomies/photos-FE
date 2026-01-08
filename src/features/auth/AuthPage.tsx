@@ -7,6 +7,7 @@ import { BackendService } from '../../services/backendService';
 import { supabaseAuthService } from '../../services/supabaseAuthService';
 import { Toast } from '../../components';
 import { EmailVerificationPending } from './EmailVerificationPending';
+import { ForgotPasswordModal } from './ForgotPasswordModal';
 
 const AuthPage: React.FC = () => {
     const navigate = useNavigate();
@@ -48,9 +49,9 @@ const AuthPage: React.FC = () => {
     const [confirmPassword, setConfirmPassword] = useState('');
     const [confirmPasswordError, setConfirmPasswordError] = useState('');
     const [showConfirmPassword, setShowConfirmPassword] = useState(false);
-    const [rememberMe, setRememberMe] = useState(false);
     const [showResendVerification, setShowResendVerification] = useState(false);
     const [unverifiedEmail, setUnverifiedEmail] = useState('');
+    const [showForgotPasswordModal, setShowForgotPasswordModal] = useState(false);
 
     // Handle authenticated user (including OAuth callback)
     useEffect(() => {
@@ -243,6 +244,13 @@ const AuthPage: React.FC = () => {
         }
     };
 
+    const handleForgotPassword = async (email: string) => {
+        const { error } = await supabaseAuthService.resetPassword(email);
+        if (error) {
+            throw new Error(error.message);
+        }
+    };
+
     return (
         <div className="min-h-screen bg-slate-50 flex flex-col font-sans" dir="rtl">
             {/* Header */}
@@ -306,7 +314,7 @@ const AuthPage: React.FC = () => {
                                     </div>
                                 </div>
 
-                                <form className="space-y-5" onSubmit={handleSubmit}>
+                                <form className="space-y-5" onSubmit={handleSubmit} autoComplete="on">
                                     <div className="space-y-4">
                                         <div>
                                             <label htmlFor="email" className="block text-sm font-medium text-slate-700 mb-1">אימייל</label>
@@ -314,6 +322,7 @@ const AuthPage: React.FC = () => {
                                                 id="email"
                                                 name="email"
                                                 type="email"
+                                                autoComplete="username"
                                                 placeholder="you@example.com"
                                                 className={`block w-full border ${errors.email ? 'border-red-500' : 'border-slate-200'} rounded-xl px-4 py-3 focus:ring-2 focus:ring-cyan-500 focus:border-cyan-500 transition-colors bg-slate-50/50`}
                                                 value={formData.email}
@@ -329,6 +338,7 @@ const AuthPage: React.FC = () => {
                                                     id="password"
                                                     name="password"
                                                     type={showPassword ? "text" : "password"}
+                                                    autoComplete={isLogin ? "current-password" : "new-password"}
                                                     placeholder="••••••••"
                                                     className={`block w-full border ${errors.password ? 'border-red-500' : 'border-slate-200'} rounded-xl px-4 py-3 focus:ring-2 focus:ring-cyan-500 focus:border-cyan-500 transition-colors bg-slate-50/50`}
                                                     value={formData.password}
@@ -376,25 +386,15 @@ const AuthPage: React.FC = () => {
                                     </div>
 
                                     {isLogin ? (
-                                        <div className="flex items-center justify-between">
-                                            <div className="flex items-center">
-                                                <input
-                                                    id="remember-me"
-                                                    name="remember-me"
-                                                    type="checkbox"
-                                                    className="h-4 w-4 text-cyan-500 focus:ring-cyan-500 border-slate-300 rounded"
-                                                    checked={rememberMe}
-                                                    onChange={(e) => setRememberMe(e.target.checked)}
-                                                />
-                                                <label htmlFor="remember-me" className="mr-2 block text-sm text-slate-600">
-                                                    זכור אותי
-                                                </label>
-                                            </div>
-
+                                        <div className="flex items-center justify-end">
                                             <div className="text-sm">
-                                                <a href="#" className="font-medium text-cyan-600 hover:text-cyan-500">
+                                                <button
+                                                    type="button"
+                                                    onClick={() => setShowForgotPasswordModal(true)}
+                                                    className="font-medium text-cyan-600 hover:text-cyan-500"
+                                                >
                                                     שכחתי סיסמה
-                                                </a>
+                                                </button>
                                             </div>
                                         </div>
                                     ) : (
@@ -475,6 +475,12 @@ const AuthPage: React.FC = () => {
                     </div>
                 </div>
             </footer>
+
+            <ForgotPasswordModal
+                isOpen={showForgotPasswordModal}
+                onClose={() => setShowForgotPasswordModal(false)}
+                onSubmit={handleForgotPassword}
+            />
 
             <Toast
                 show={showToast}

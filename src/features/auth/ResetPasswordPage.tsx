@@ -30,13 +30,23 @@ const ResetPasswordPage: React.FC = () => {
         setIsSubmitting(true);
         try {
             const { error } = await supabaseAuthService.updatePassword(password);
+
             if (error) {
-                setError(error.message);
+                // Translate common Supabase errors to Hebrew
+                let errorMessage = error.message;
+                if (errorMessage.toLowerCase().includes('new password should be different')) {
+                    errorMessage = 'הסיסמה החדשה חייבת להיות שונה מהסיסמה הישנה';
+                } else if (errorMessage.toLowerCase().includes('password')) {
+                    errorMessage = 'שגיאה בעדכון הסיסמה. אנא נסה שנית.';
+                }
+                setError(errorMessage);
             } else {
                 setSuccess(true);
-                setTimeout(() => {
-                    navigate('/auth');
-                }, 3000);
+
+                // Sign out the user so they must log in with new password
+                await supabaseAuthService.signOut();
+
+                // User will click button to go to login page (no automatic redirect)
             }
         } catch (err: any) {
             setError('אירעה שגיאה. אנא נסה שנית.');
@@ -138,7 +148,7 @@ const ResetPasswordPage: React.FC = () => {
                         <button
                             type="submit"
                             disabled={isSubmitting}
-                            className="w-full flex justify-center py-3.5 px-4 border border-transparent text-sm font-bold rounded-xl text-white bg-slate-200 hover:bg-cyan-500 hover:text-white text-slate-500 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-cyan-500 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                            className="w-full flex justify-center py-3.5 px-4 border border-transparent text-sm font-bold rounded-xl text-white bg-cyan-500 hover:bg-cyan-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-cyan-500 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
                         >
                             {isSubmitting ? 'מאפס...' : 'אפס סיסמה'}
                         </button>
@@ -146,7 +156,10 @@ const ResetPasswordPage: React.FC = () => {
                         <div className="text-center">
                             <button
                                 type="button"
-                                onClick={() => navigate('/auth')}
+                                onClick={async () => {
+                                    await supabaseAuthService.signOut();
+                                    navigate('/auth');
+                                }}
                                 className="text-sm font-medium text-cyan-600 hover:text-cyan-500"
                             >
                                 נזכרת בסיסמה? התחבר כאן
