@@ -116,6 +116,18 @@ export class SupabaseAuthService {
     });
     return { error };
   }
+
+  /**
+   * Resend verification email
+   */
+  async resendVerificationEmail(email: string): Promise<{ error: AuthError | null }> {
+    const { error } = await supabase.auth.resend({
+      type: 'signup',
+      email: email,
+    });
+    return { error };
+  }
+
   /**
    * Update user data
    */
