@@ -1132,6 +1132,25 @@ END:VCARD`;
                   <div className="flex flex-wrap justify-center pb-8" dir="rtl">
                      {photos.map((photo) => {
                         const isSelected = selectedPhotos.has(photo.id);
+
+                        // Calculate object-position based on face bounding box
+                        const calculateObjectPosition = (boundingBox?: { Width: number; Height: number; Left: number; Top: number }): string => {
+                           if (!boundingBox) return 'center center';
+
+                           // Bounding box values are normalized (0-1)
+                           // Calculate the center of the face
+                           const faceCenterX = boundingBox.Left + (boundingBox.Width / 2);
+                           const faceCenterY = boundingBox.Top + (boundingBox.Height / 2);
+
+                           // Convert to percentage for CSS object-position
+                           const xPercent = faceCenterX * 100;
+                           const yPercent = faceCenterY * 100;
+
+                           return `${xPercent}% ${yPercent}%`;
+                        };
+
+                        const objectPosition = calculateObjectPosition(photo.boundingBox);
+
                         return (
                            <div
                               key={photo.id}
@@ -1142,6 +1161,7 @@ END:VCARD`;
                                  src={photo.url}
                                  alt="Gallery Item"
                                  className="w-full h-full object-cover transition-transform duration-500 md:group-hover:scale-105"
+                                 style={{ objectPosition }}
                                  loading="lazy"
                               />
 
