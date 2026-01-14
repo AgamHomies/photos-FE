@@ -132,7 +132,8 @@ const INITIAL_DATA: MockS3Data = {
                 downloads: 85,
                 uniqueLink: 'https://photos.com/e/sarah-tom',
                 expiryDate: '2024-10-15',
-                status: 'active'
+                status: 'active',
+                backgroundColor: '#000000'
             },
             {
                 id: 'evt-2',
@@ -146,7 +147,8 @@ const INITIAL_DATA: MockS3Data = {
                 downloads: 40,
                 uniqueLink: 'https://photos.com/e/david-bm',
                 expiryDate: '2023-10-20',
-                status: 'expired'
+                status: 'expired',
+                backgroundColor: '#0f172a'
             }
         ],
         'user2@test.com': [],
@@ -345,7 +347,8 @@ export const MockS3Service = {
             expiryDate: eventData.expiryDate || '',
             photoCount: 0,
             guestVisits: 0,
-            downloads: 0
+            downloads: 0,
+            backgroundColor: eventData.backgroundColor || '#000000'
         };
 
         if (!s3Data.events[currentUserEmail]) {

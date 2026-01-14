@@ -1,5 +1,6 @@
 import React from 'react';
-import { Calendar, MapPin, Camera, Heart, X, Monitor, Smartphone } from 'lucide-react';
+import { Calendar, MapPin, Camera, Heart, X, Monitor, Smartphone, Image as ImageIcon } from 'lucide-react';
+import { getThemeByColor } from '../../../utils/galleryThemes';
 
 interface EventPreviewModalProps {
     isOpen: boolean;
@@ -11,11 +12,15 @@ interface EventPreviewModalProps {
         coverImage: string | null;
         photographerName?: string;
         photographerImage?: string;
+        backgroundColor?: string;
     };
 }
 
 const EventPreviewModal: React.FC<EventPreviewModalProps> = ({ isOpen, onClose, data }) => {
     const [viewMode, setViewMode] = React.useState<'desktop' | 'mobile'>('desktop');
+
+    // Get theme based on background color to get the accent color
+    const theme = getThemeByColor(data.backgroundColor || '#FDFBF7');
 
     // Handle ESC key to close modal
     React.useEffect(() => {
@@ -64,7 +69,8 @@ const EventPreviewModal: React.FC<EventPreviewModalProps> = ({ isOpen, onClose, 
             onClick={onClose}
         >
             <div
-                className={`relative w-full bg-[#FDFBF7] rounded-3xl shadow-2xl overflow-hidden transition-all duration-300 flex flex-col ${viewMode === 'mobile' ? 'max-w-[400px] h-[85vh]' : 'max-w-5xl max-h-[90vh]'}`}
+                className={`relative w-full rounded-3xl shadow-2xl overflow-hidden transition-all duration-300 flex flex-col ${viewMode === 'mobile' ? 'max-w-[400px] h-[85vh]' : 'max-w-5xl max-h-[90vh]'}`}
+                style={{ backgroundColor: data.backgroundColor || '#FDFBF7' }}
                 onClick={(e) => e.stopPropagation()}
             >
 
@@ -101,71 +107,114 @@ const EventPreviewModal: React.FC<EventPreviewModalProps> = ({ isOpen, onClose, 
                 </button>
 
                 <div className="flex-grow overflow-y-auto">
-                    {/* Header removed as per request */}
-                    <div className="w-full pt-8 pb-4"></div>
+                    {/* Photographer Header Preview */}
+                    <div
+                        className="w-full pt-12 pb-8 text-center transition-all duration-300"
+                        style={{ backgroundColor: theme.headerBackground }}
+                    >
+                        <div className="mb-4">
+                            {data.photographerImage ? (
+                                <img
+                                    src={data.photographerImage}
+                                    alt="Logo"
+                                    className="w-20 h-20 mx-auto object-contain bg-transparent"
+                                    onError={(e) => {
+                                        e.currentTarget.style.display = 'none';
+                                        e.currentTarget.nextElementSibling?.classList.remove('hidden');
+                                    }}
+                                />
+                            ) : null}
+                            <div className={`${data.photographerImage ? 'hidden' : ''} w-20 h-20 mx-auto flex items-center justify-center text-slate-400`}>
+                                <ImageIcon className="w-8 h-8" />
+                            </div>
+                        </div>
+                        <h1 className="text-3xl font-bold mb-1" style={{ color: theme.textPrimary }}>
+                            {data.photographerName || 'שם הצלם'}
+                        </h1>
+                        <p className="text-sm tracking-[0.2em] uppercase opacity-70 mb-4" style={{ color: theme.textSecondary }}>
+                            PHOTOGRAPHY STUDIO
+                        </p>
+                    </div>
 
                     <div className="flex-grow w-full flex flex-col items-center pb-12">
-                        <div className={`w-full mx-auto px-4 transition-all duration-300 ${viewMode === 'mobile' ? 'max-w-full' : 'max-w-4xl'}`}>
-                            <div className="bg-white rounded-3xl shadow-xl overflow-hidden border border-[#E8DFD3]">
+                        <div className={`w-full mx-auto px-4 transition-all duration-300 mt-8 ${viewMode === 'mobile' ? 'max-w-full' : 'max-w-[1600px]'}`}>
+                            <div
+                                className="rounded-3xl shadow-xl overflow-hidden border transition-all duration-300"
+                                style={{
+                                    backgroundColor: theme.cardBackground,
+                                    borderColor: theme.cardBorder
+                                }}
+                            >
 
                                 {/* Card Header (Event Details) */}
-                                <div className="text-center py-8 px-6 border-b border-[#E8DFD3]">
-                                    <h2 id="event-preview-title" className={`font-bold text-[#4A3B2C] mb-4 ${viewMode === 'mobile' ? 'text-2xl' : 'text-3xl'}`}>
+                                <div
+                                    className="text-center py-10 px-6 border-b"
+                                    style={{ borderColor: theme.cardBorder }}
+                                >
+                                    <h2
+                                        id="event-preview-title"
+                                        className={`font-bold mb-4 transition-all duration-300 ${viewMode === 'mobile' ? 'text-2xl' : 'text-3xl'}`}
+                                        style={{ color: theme.textPrimary }}
+                                    >
                                         הגלריה שלך מהאירוע
                                     </h2>
 
-                                    <div className="flex flex-wrap items-center justify-center gap-4 text-[#8B7355] text-lg font-medium max-w-2xl mx-auto">
-                                        <div className="flex items-center gap-1.5">
-                                            <Heart className="w-4 h-4 text-[#C4A882]" />
+                                    <div className="flex flex-wrap items-center justify-center gap-6 text-lg font-medium max-w-2xl mx-auto" style={{ color: theme.textSecondary }}>
+                                        <div className="flex items-center gap-2">
+                                            <Heart className="w-5 h-5" style={{ color: theme.accentColor }} />
                                             <span>{data.name || 'שם האירוע'}</span>
                                         </div>
-                                        <span className={`${viewMode === 'mobile' ? 'hidden' : 'inline'} w-px h-4 bg-[#E8DFD3]`}></span>
+                                        <span className={`${viewMode === 'mobile' ? 'hidden' : 'inline'} w-px h-5`} style={{ backgroundColor: theme.cardBorder }}></span>
                                         <div className="flex items-center gap-2">
-                                            <Calendar className="w-4 h-4 text-[#C4A882]" />
+                                            <Calendar className="w-5 h-5" style={{ color: theme.accentColor }} />
                                             <span>{data.date ? new Date(data.date).toLocaleDateString('he-IL', { day: 'numeric', month: 'long', year: 'numeric' }) : 'תאריך'}</span>
                                         </div>
-                                        <span className={`${viewMode === 'mobile' ? 'hidden' : 'inline'} w-px h-4 bg-[#E8DFD3]`}></span>
+                                        <span className={`${viewMode === 'mobile' ? 'hidden' : 'inline'} w-px h-5`} style={{ backgroundColor: theme.cardBorder }}></span>
                                         <div className="flex items-center gap-2">
-                                            <MapPin className="w-4 h-4 text-[#C4A882]" />
+                                            <MapPin className="w-5 h-5" style={{ color: theme.accentColor }} />
                                             <span>{data.location || 'מיקום'}</span>
                                         </div>
                                     </div>
                                 </div>
 
-                                {/* Split Layout - Conditional Rendering based on viewMode */}
-                                <div className={`flex ${viewMode === 'mobile' ? 'flex-col' : 'flex-row h-[500px]'}`}>
+                                {/* Split Layout */}
+                                <div className={`flex ${viewMode === 'mobile' ? 'flex-col' : 'flex-row h-[600px]'}`}>
 
                                     {/* Content Side */}
-                                    <div className={`
-                                        flex flex-col justify-center items-center text-center bg-[#FAF9F6]
-                                        ${viewMode === 'mobile' ? 'w-full order-2 p-8' : 'w-1/2 order-1 p-12'}
-                                    `}>
-                                        <div className="w-16 h-16 bg-[#F0EBE3] rounded-full flex items-center justify-center mb-6">
-                                            <Camera className="w-8 h-8 text-[#C4A882]" />
+                                    <div
+                                        className={`flex flex-col justify-center items-center text-center ${viewMode === 'mobile' ? 'w-full order-2 p-8' : 'w-1/2 order-1 p-12'}`}
+                                        style={{ backgroundColor: theme.backgroundColor }}
+                                    >
+                                        <div
+                                            className="w-20 h-20 rounded-full flex items-center justify-center mb-8 shadow-sm transition-transform hover:scale-105"
+                                            style={{ backgroundColor: `${theme.accentColor}15` }}
+                                        >
+                                            <Camera className="w-10 h-10 transition-colors" style={{ color: theme.accentColor }} />
                                         </div>
 
-                                        <h3 className="text-2xl font-bold text-[#4A3B2C] mb-3">מצאו את התמונות שלכם מהאירוע</h3>
+                                        <h3 className="text-2xl font-bold mb-4" style={{ color: theme.textPrimary }}>מצאו את התמונות שלכם מהאירוע</h3>
 
-                                        <p className="text-[#8B7355] mb-8 max-w-sm leading-relaxed text-sm">
-                                            העלו סלפי ברור של עצמכם — והמערכת שלנו תזהה אוטומטית ותציג לכם רק את התמונות המדהימות שבהן הופעתם באירוע.
+                                        <p className="mb-10 max-w-sm leading-relaxed text-base" style={{ color: theme.textSecondary }}>
+                                            השתמשו בטכנולוגיית זיהוי הפנים המהפכנית שלנו כדי למצוא את כל התמונות שלכם בשניות
                                         </p>
 
                                         <div
-                                            className="bg-[#C4A882] text-white px-8 py-4 rounded-full font-bold shadow-md flex items-center gap-3 w-full max-w-xs justify-center opacity-80 cursor-not-allowed"
-                                            role="button"
-                                            aria-disabled="true"
-                                            aria-label="העלה סלפי - מצב הדגמה בלבד"
+                                            className="px-10 py-4 rounded-full font-bold shadow-lg transition-all hover:scale-105 cursor-default flex items-center gap-3"
+                                            style={{
+                                                backgroundColor: theme.accentColor,
+                                                color: '#FFFFFF'
+                                            }}
                                         >
-                                            <Camera className="w-5 h-5" />
+                                            <Camera className="w-6 h-6" />
                                             <span>העלה סלפי (דמו)</span>
                                         </div>
                                     </div>
 
                                     {/* Cover Image Side */}
                                     <div className={`
-                                        relative bg-slate-100
+                                        relative
                                         ${viewMode === 'mobile' ? 'w-full aspect-[3/2] order-1' : 'w-1/2 h-full order-2'}
-                                    `}>
+                                    `} style={{ backgroundColor: theme.cardBorder }}>
                                         {coverImageSrc ? (
                                             <img
                                                 src={coverImageSrc}

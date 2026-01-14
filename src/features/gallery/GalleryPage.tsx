@@ -25,6 +25,7 @@ import {
 } from 'lucide-react';
 import { Toast } from '../../components';
 import { SortingControl } from './components/SortingControl';
+import { getThemeByColor, BORDER_RADIUS_MAP } from '../../utils/galleryThemes';
 
 // Lightbox Component to handle scroll locking and backdrop click
 const LightboxOverlay: React.FC<{
@@ -151,7 +152,6 @@ const GalleryPage: React.FC<GalleryPageProps> = ({ mode: propMode }) => {
    const resultsRef = useRef<HTMLDivElement>(null);
 
    // Responsive itemsPerPage logic
-   // Responsive itemsPerPage logic
    useEffect(() => {
       const handleResize = () => {
          if (window.innerWidth < 768) {
@@ -198,9 +198,6 @@ const GalleryPage: React.FC<GalleryPageProps> = ({ mode: propMode }) => {
       setPage(1);
    }, [sortBy]);
 
-
-
-
    // Update displayed photos when page, itemsPerPage, or searchResults change
    useEffect(() => {
       if (mode === 'full') return; // In full mode, photos are controlled by manual fetches
@@ -239,7 +236,6 @@ const GalleryPage: React.FC<GalleryPageProps> = ({ mode: propMode }) => {
       if (photoId) {
          const openDeepLinkedPhoto = async () => {
             // 1. Clear the URL param immediately to prevent re-triggering
-            // We do this first or parallel to ensure subsequent renders don't see it
             const newParams = new URLSearchParams(window.location.search);
             newParams.delete('photoId');
             const newUrl = window.location.pathname + (newParams.toString() ? '?' + newParams.toString() : '');
@@ -263,7 +259,6 @@ const GalleryPage: React.FC<GalleryPageProps> = ({ mode: propMode }) => {
             }
          };
 
-         // Wait a bit for main data to load, or run immediately if independent
          if (!loading) {
             openDeepLinkedPhoto();
          }
@@ -274,44 +269,31 @@ const GalleryPage: React.FC<GalleryPageProps> = ({ mode: propMode }) => {
    useEffect(() => {
       const params = new URLSearchParams(window.location.search);
       const rawSelectionId = params.get('selectionId');
-      // Sanitize: sometimes users copy paste with line numbers like :1
       const selectionId = rawSelectionId ? rawSelectionId.split(':')[0] : null;
 
       if (selectionId && id) {
          const loadSelection = async () => {
             setLoading(true);
             try {
-               // Clear URL param
                const newParams = new URLSearchParams(window.location.search);
                newParams.delete('selectionId');
                const newUrl = window.location.pathname + (newParams.toString() ? '?' + newParams.toString() : '');
                window.history.replaceState({}, '', newUrl);
 
                const selectedPhotos = await BackendService.getSelection(id, selectionId);
-               console.log('GalleryPage: setting selected photos (directly to photos):', selectedPhotos.length);
-
-               // Set photos directly so they are available for lightbox navigation
                setPhotos(selectedPhotos);
 
-               // Open the first photo immediately
                if (selectedPhotos.length > 0) {
                   setLightboxPhoto(selectedPhotos[0]);
                }
 
-               // Set view state to landing so if they close lightbox, they see the selfie upload
-               console.log('GalleryPage: setting viewState to landing');
                setViewState('landing');
             } catch (err) {
                console.error("Failed to load selection", err);
                triggerToast('טעינת הבחירה נכשלה', 'error');
-
             } finally {
-               // Only turn off loading if event is already loaded to prevent "Event not found" flash
-               // If event is not loaded yet, loadData will handle turning off loading
                if (eventRef.current) {
                   setLoading(false);
-               } else {
-                  console.log('GalleryPage: selection loaded, but event not ready. Keeping loading=true');
                }
             }
          };
@@ -320,19 +302,14 @@ const GalleryPage: React.FC<GalleryPageProps> = ({ mode: propMode }) => {
    }, [id]);
 
    const loadData = async (eventId: string) => {
-      // Capture detailed state synchronously before any async operations
-      // This prevents race conditions where other effects (like selectionId loading)
-      // might clear the URL params while we are fetching data.
       const initialParams = new URLSearchParams(window.location.search);
       const hasSelectionId = !!initialParams.get('selectionId');
 
       try {
-         // First fetch the event to get the real numeric ID
          const eventData = await BackendService.getEvent(eventId);
 
          if (eventData) {
             setEvent(eventData);
-            // Determine mode from event data if available
             let currentMode = eventData.mode || propMode || 'guest';
             if (eventData.coupleSlug === eventId) {
                currentMode = 'full';
@@ -340,30 +317,17 @@ const GalleryPage: React.FC<GalleryPageProps> = ({ mode: propMode }) => {
 
             setMode(currentMode);
 
-            console.log('Event loaded:', { id: eventData.id, photographerId: eventData.photographerId });
-
             if (eventData.photographerId) {
-               console.log('Fetching photographer profile for:', eventData.photographerId);
                try {
                   const profile = await BackendService.getPhotographerProfile(eventData.photographerId);
-                  console.log('Photographer profile fetched:', profile);
                   setPhotographer(profile);
                } catch (err) {
                   console.error('Error fetching photographer profile:', err);
                }
-            } else {
-               console.warn('No photographerId found on event');
             }
 
-            // Now fetch photos using the real numeric ID
-            // Note: For full mode, we stick to fetching the specific page
-            // For guest (landing), we don't show photos initially
-
-            // If we have a selection ID, we skip all default photo loading/landing logic
-            // and let the loadSelection effect handle the view.
             if (!hasSelectionId) {
                if (currentMode === 'full') {
-                  // Restore page
                   const savedPage = sessionStorage.getItem(`gallery_page_${eventId}`);
                   const startPage = savedPage ? parseInt(savedPage) : 1;
                   setPage(startPage);
@@ -372,7 +336,6 @@ const GalleryPage: React.FC<GalleryPageProps> = ({ mode: propMode }) => {
                   setPhotos(eventPhotos);
                   setViewState('results');
                } else {
-                  // Check for persisted search results if view=results is in URL
                   const viewParam = initialParams.get('view');
                   if (viewParam === 'results') {
                      try {
@@ -383,16 +346,12 @@ const GalleryPage: React.FC<GalleryPageProps> = ({ mode: propMode }) => {
                            setViewState('results');
                            setSortBy('matchScore');
 
-                           // Restore page if available
                            const savedPage = sessionStorage.getItem(`gallery_page_${eventId}`);
                            if (savedPage) {
                               setPage(parseInt(savedPage));
                            }
                         } else {
-                           // URL says results but no data found (expired?), revert to landing
-                           console.log('No saved results found, reverting to landing');
                            setViewState('landing');
-                           // Clean URL
                            const newUrl = window.location.pathname;
                            window.history.replaceState({}, '', newUrl);
                         }
@@ -417,12 +376,9 @@ const GalleryPage: React.FC<GalleryPageProps> = ({ mode: propMode }) => {
       if (newPage < 1 || newPage > totalPages) return;
 
       if (mode === 'full' && event) {
-         // Server-side pagination
          setLoading(true);
          try {
-            // Save page
             sessionStorage.setItem(`gallery_page_${event.id}`, newPage.toString());
-
             const newPhotos = await BackendService.getEventPhotos(event.id, newPage, itemsPerPage);
             setPhotos(newPhotos);
             setPage(newPage);
@@ -432,14 +388,13 @@ const GalleryPage: React.FC<GalleryPageProps> = ({ mode: propMode }) => {
             setLoading(false);
          }
       } else if (viewState === 'results') {
-         // Client-side pagination (update triggered by useEffect)
          if (id) {
             sessionStorage.setItem(`gallery_page_${id}`, newPage.toString());
          }
          setPage(newPage);
+         // Client-side pagination updated by useEffect
       }
    };
-
 
    const resizeImage = (file: File): Promise<File> => {
       return new Promise((resolve, reject) => {
@@ -494,12 +449,11 @@ const GalleryPage: React.FC<GalleryPageProps> = ({ mode: propMode }) => {
    const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
       if (e.target.files && e.target.files[0]) {
          const originalFile = e.target.files[0];
-         setViewState('scanning'); // Show scanning state immediately
-         setSelectedImage(originalFile); // Show original while processing
+         setViewState('scanning');
+         setSelectedImage(originalFile);
 
          try {
             const resizedFile = await resizeImage(originalFile);
-            console.log(`Resized image: ${originalFile.size} -> ${resizedFile.size} bytes`);
             performFaceSearch(resizedFile);
          } catch (error) {
             console.error('Error resizing image:', error);
@@ -516,28 +470,20 @@ const GalleryPage: React.FC<GalleryPageProps> = ({ mode: propMode }) => {
       if (id) {
          sessionStorage.removeItem(`guest_results_${id}`);
       }
-      // Clear URL query params
       const newUrl = window.location.pathname;
       window.history.pushState({}, '', newUrl);
    };
 
    const performFaceSearch = async (selfieFile: File) => {
       try {
-         if (!id) {
-            console.error('No event ID available');
-            return;
-         }
+         if (!id) return;
 
-         // Call the real face search API
          const matches = await BackendService.searchFaces(id, selfieFile);
-
-         setSearchResults(matches); // Store all matches
-         setSortBy('matchScore'); // Default to matchScore match sort on new search
-         setPage(1); // Reset to first page
-         // Photos will be updated by useEffect based on page 1 and itemsPerPage
+         setSearchResults(matches);
+         setSortBy('matchScore');
+         setPage(1);
          setViewState('results');
 
-         // Persist results and update URL
          sessionStorage.setItem(`guest_results_${id}`, JSON.stringify(matches));
          const newUrl = `${window.location.pathname}?view=results`;
          window.history.pushState({}, '', newUrl);
@@ -554,19 +500,15 @@ const GalleryPage: React.FC<GalleryPageProps> = ({ mode: propMode }) => {
 
    const handleShare = async (photo: Photo, e: React.MouseEvent) => {
       e.stopPropagation();
-
-      // Get short link for smart sharing (with dynamic OG tags)
-      // Default fallback (client-side constructed)
       let shareUrl = `${window.location.origin}/share/photo/${photo.id}?url=${encodeURIComponent(photo.url)}&event=${encodeURIComponent(event?.name || 'אירוע')}&title=${encodeURIComponent(photo.title || 'תמונה מהאירוע')}`;
 
       try {
-         // Attempt to fetch smart short link from backend
          const publicPhoto = await BackendService.getPublicPhoto(photo.id);
          if (publicPhoto && publicPhoto.shareLink) {
             shareUrl = publicPhoto.shareLink;
          }
       } catch (err) {
-         console.error('Failed to get smart share link, falling back to legacy link', err);
+         console.error('Failed to get smart share link', err);
       }
 
       const unsecuredCopyToClipboard = (text: string) => {
@@ -574,7 +516,6 @@ const GalleryPage: React.FC<GalleryPageProps> = ({ mode: propMode }) => {
          textArea.value = text;
          textArea.style.position = "fixed";
          textArea.style.left = "-9999px";
-         textArea.style.top = "0";
          document.body.appendChild(textArea);
          textArea.focus();
          textArea.select();
@@ -582,7 +523,7 @@ const GalleryPage: React.FC<GalleryPageProps> = ({ mode: propMode }) => {
             document.execCommand('copy');
             triggerToast('הקישור לתמונה הועתק ללוח');
          } catch (err) {
-            console.error('Fallback: Unable to copy', err);
+            console.error('Fallback copy failed', err);
             window.prompt("העתק את הקישור:", text);
          }
          document.body.removeChild(textArea);
@@ -611,13 +552,10 @@ const GalleryPage: React.FC<GalleryPageProps> = ({ mode: propMode }) => {
 
    const handleShareSelection = async () => {
       if (selectedPhotos.size === 0 || !id) return;
-
       const imageIds = Array.from(selectedPhotos).map(id => parseInt(id));
 
       try {
          const result = await BackendService.shareSelection(id, imageIds);
-
-         // Logic to copy/share the link
          const shareUrl = result.shareLink;
          const shareTitle = `${selectedPhotos.size} תמונות מ${event?.name || 'האירוע'}`;
 
@@ -632,7 +570,6 @@ const GalleryPage: React.FC<GalleryPageProps> = ({ mode: propMode }) => {
                console.log('Error sharing', error);
             }
          } else {
-            // Fallback to clipboard
             const unsecuredCopyToClipboard = (text: string) => {
                const textArea = document.createElement("textarea");
                textArea.value = text;
@@ -658,30 +595,24 @@ const GalleryPage: React.FC<GalleryPageProps> = ({ mode: propMode }) => {
                unsecuredCopyToClipboard(shareUrl);
             }
          }
-
-         // Optional: Deselect after sharing? User might want to keep selection.
-         // deselectAllPhotos(); 
-
       } catch (error) {
          console.error('Failed to share selection:', error);
          triggerToast('יצירת הקישור נכשלה', 'error');
       }
    };
 
-   // Keyboard navigation for lightbox
    useEffect(() => {
       if (!lightboxPhoto) return;
 
       const handleKeyDown = (e: KeyboardEvent) => {
-         // Use searchResults for guest mode to enable navigation across all images, not just current page
          const navArray = viewState === 'results' ? searchResults : photos;
          const currentIndex = navArray.findIndex(p => p.id === lightboxPhoto.id);
 
-         if (e.key === 'ArrowLeft') { // Next in RTL
+         if (e.key === 'ArrowLeft') {
             if (currentIndex < navArray.length - 1) {
                setLightboxPhoto(navArray[currentIndex + 1]);
             }
-         } else if (e.key === 'ArrowRight') { // Prev in RTL
+         } else if (e.key === 'ArrowRight') {
             if (currentIndex > 0) {
                setLightboxPhoto(navArray[currentIndex - 1]);
             }
@@ -697,7 +628,6 @@ const GalleryPage: React.FC<GalleryPageProps> = ({ mode: propMode }) => {
    const handleNextPhoto = (e?: React.MouseEvent) => {
       e?.stopPropagation();
       if (!lightboxPhoto) return;
-      // Use searchResults for guest mode to enable navigation across all images
       const navArray = viewState === 'results' ? searchResults : photos;
       const currentIndex = navArray.findIndex(p => p.id === lightboxPhoto.id);
       if (currentIndex < navArray.length - 1) {
@@ -708,7 +638,6 @@ const GalleryPage: React.FC<GalleryPageProps> = ({ mode: propMode }) => {
    const handlePrevPhoto = (e?: React.MouseEvent) => {
       e?.stopPropagation();
       if (!lightboxPhoto) return;
-      // Use searchResults for guest mode to enable navigation across all images
       const navArray = viewState === 'results' ? searchResults : photos;
       const currentIndex = navArray.findIndex(p => p.id === lightboxPhoto.id);
       if (currentIndex > 0) {
@@ -721,28 +650,20 @@ const GalleryPage: React.FC<GalleryPageProps> = ({ mode: propMode }) => {
 
       try {
          const response = await fetch(`${CONFIG.API_BASE_URL}/public/events/${id}/images/${photo.id}/download-url`);
-
-         if (!response.ok) {
-            throw new Error('Download failed');
-         }
+         if (!response.ok) throw new Error('Download failed');
 
          const data = await response.json();
-         // Detecting iOS specifically
          const isIOS = /iPhone|iPad|iPod/i.test(navigator.userAgent);
          const isMobile = /Android/i.test(navigator.userAgent) || isIOS;
 
          if (isMobile && isIOS) {
-            // iOS doesn't support programmatic file downloads well (blocked by security)
-            // Best UX is to open in new tab and tell user to long-press save
             const win = window.open(data.url, '_blank');
             if (!win) {
-               triggerToast('חלון ההורדה נחסם. על מנת לבצע את הפעולה יש לאפשר חלונות קופצים.', 'error');
+               triggerToast('חלון ההורדה נחסם. יש לאפשר חלונות קופצים.', 'error');
             } else {
                triggerToast('לחץ לחיצה ארוכה על התמונה ושמור אותה.', 'success');
             }
          } else {
-            // For Desktop & Android: Create a temporary link and click it
-            // We rely on the backend sending 'Content-Disposition: attachment'
             const link = document.createElement('a');
             link.href = data.url;
             link.setAttribute('download', `photo-${photo.id}.jpg`);
@@ -750,18 +671,13 @@ const GalleryPage: React.FC<GalleryPageProps> = ({ mode: propMode }) => {
             link.click();
             document.body.removeChild(link);
          }
-
       } catch (error) {
          console.error('Download error:', error);
-         // Fallback to opening in new tab if anything fails
          const win = window.open(photo.url, '_blank');
          if (!win) {
-            triggerToast('ההורדה נחסמה. אנא אפשר חלונות קופצים בדפדפן או נסה לחיצה ארוכה ושמירה.', 'error');
-         } else {
-            // Check if iOS to verify if we should show the hint
-            if (/iPhone|iPad|iPod/i.test(navigator.userAgent)) {
-               triggerToast('לחץ לחיצה ארוכה על התמונה ושמור אותה.', 'success');
-            }
+            triggerToast('ההורדה נחסמה. אנא אפשר חלונות קופצים או נסה לחיצה ארוכה.', 'error');
+         } else if (/iPhone|iPad|iPod/i.test(navigator.userAgent)) {
+            triggerToast('לחץ לחיצה ארוכה על התמונה ושמור אותה.', 'success');
          }
       }
    };
@@ -807,12 +723,9 @@ const GalleryPage: React.FC<GalleryPageProps> = ({ mode: propMode }) => {
 
    const handleSavePhone = async () => {
       if (!photographer?.phone) return;
-
       const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
 
       if (isMobile) {
-         // Create vCard for mobile
-         // Create vCard for mobile - Remove indentation to ensure valid format
          const vCardData = `BEGIN:VCARD
 VERSION:3.0
 FN:${photographer.name}
@@ -829,7 +742,6 @@ END:VCARD`;
          document.body.removeChild(link);
          window.URL.revokeObjectURL(url);
       } else {
-         // Copy to clipboard for desktop
          try {
             await navigator.clipboard.writeText(photographer.phone);
             triggerToast(`המספר ${photographer.phone} הועתק ללוח`);
@@ -838,17 +750,12 @@ END:VCARD`;
          }
       }
 
-      if (id) {
-         await BackendService.trackContactSaved(id);
-      }
+      if (id) await BackendService.trackContactSaved(id);
    };
 
    const handleSocialClick = async (url: string, source: string) => {
       if (!url) return;
-
-      if (id) {
-         await BackendService.trackTrafficSource(id, source);
-      }
+      if (id) await BackendService.trackTrafficSource(id, source);
       window.open(url, '_blank', 'noopener,noreferrer');
    };
 
@@ -887,161 +794,143 @@ END:VCARD`;
       return <div className="min-h-screen flex items-center justify-center text-[#8B7355]">אירוע לא נמצא</div>;
    }
 
-   const isScanning = viewState === 'scanning';
+   const theme = getThemeByColor(event.backgroundColor || '#FDFBF7');
+   const borderRadius = BORDER_RADIUS_MAP[theme.borderRadius];
 
    return (
-      <div className="min-h-screen bg-[#FDFBF7] font-sans text-[#5C4A3A] flex flex-col" dir="rtl">
-
-         {/* 1. Header & Branding - Full Width Darker Beige Background */}
-         <div className="w-full bg-[#EEE9E1] pt-8 pb-8 text-center shadow-sm relative z-10">
+      <div
+         className="min-h-screen font-sans flex flex-col transition-all duration-700"
+         dir="rtl"
+         style={{
+            backgroundColor: theme.backgroundColor,
+            color: theme.textPrimary,
+            fontFamily: theme.fontFamily
+         }}
+      >
+         {/* 1. Header & Branding */}
+         <div
+            className="w-full pt-8 pb-8 text-center shadow-sm relative z-10 transition-all duration-700"
+            style={{ backgroundColor: theme.headerBackground }}
+         >
             <div className="mb-4">
                {photographer?.profileImageUrl ? (
                   <img
                      src={photographer.profileImageUrl}
                      alt="Logo"
-                     className="w-20 h-20 mx-auto rounded-lg object-contain bg-transparent"
+                     className="w-20 h-20 mx-auto object-contain bg-transparent"
                      onError={(e) => {
-                        // Fallback if image fails
                         e.currentTarget.style.display = 'none';
                         e.currentTarget.nextElementSibling?.classList.remove('hidden');
                      }}
                   />
                ) : null}
-               {!photographer?.profileImageUrl && (
-                  <div className="w-20 h-20 mx-auto rounded-full bg-[#F5F1EB] flex items-center justify-center border border-[#E8DFD3]">
-                     <Camera className="w-8 h-8 text-[#C4A882]" />
-                  </div>
-               )}
+               <div
+                  className={`${photographer?.profileImageUrl ? 'hidden' : ''} w-20 h-20 mx-auto flex items-center justify-center transition-all duration-300`}
+               >
+                  <Camera className="w-8 h-8" style={{ color: theme.accentColor }} />
+               </div>
             </div>
 
-            <h1 className="text-3xl font-bold text-[#4A3B2C] mb-1">
+            <h1 className="text-3xl font-bold mb-1" style={{ color: theme.primaryColor }}>
                {photographer?.name || 'שם הצלם'}
             </h1>
-            <p className="text-xs tracking-[0.2em] text-[#A89680] uppercase mb-4">
+            <p className="text-xs tracking-[0.2em] uppercase mb-4" style={{ color: theme.secondaryColor }}>
                PHOTOGRAPHY STUDIO
             </p>
 
-            <div className="flex items-center justify-center gap-4">
+            <div className="flex items-center justify-center gap-5">
                {photographer?.tiktokUrl && (
-                  <button
-                     onClick={() => handleSocialClick(photographer.tiktokUrl!, 'tiktok')}
-                     className="text-[#8B7355] hover:text-black transition-colors"
-                     title="TikTok"
-                  >
-                     <svg className="w-5 h-5" viewBox="0 0 24 24" fill="currentColor">
+                  <button onClick={() => handleSocialClick(photographer.tiktokUrl!, 'tiktok')} className="transition-all hover:scale-110 active:scale-95" style={{ color: theme.accentColor }} title="TikTok">
+                     <svg className="w-6 h-6" viewBox="0 0 24 24" fill="currentColor">
                         <path d="M19.59 6.69a4.83 4.83 0 0 1-3.77-4.25V2h-3.45v13.67a2.89 2.89 0 0 1-5.2 1.74 2.89 2.89 0 0 1 2.31-4.64 2.93 2.93 0 0 1 .88.13V9.4a6.84 6.84 0 0 0-1-.05A6.33 6.33 0 0 0 5 20.1a6.34 6.34 0 0 0 10.86-4.43v-7a8.16 8.16 0 0 0 4.77 1.52v-3.4a4.85 4.85 0 0 1-1-.1z" />
                      </svg>
                   </button>
                )}
                {photographer?.facebookUrl && (
-                  <button
-                     onClick={() => handleSocialClick(photographer.facebookUrl!, 'facebook')}
-                     className="text-[#8B7355] hover:text-blue-600 transition-colors"
-                     title="Facebook"
-                  >
-                     <Facebook className="w-5 h-5" />
+                  <button onClick={() => handleSocialClick(photographer.facebookUrl!, 'facebook')} className="transition-all hover:scale-110 active:scale-95" style={{ color: theme.accentColor }} title="Facebook">
+                     <Facebook className="w-6 h-6" />
                   </button>
                )}
                {photographer?.instagramUrl && (
-                  <button
-                     onClick={() => handleSocialClick(photographer.instagramUrl!, 'instagram')}
-                     className="text-[#8B7355] hover:text-pink-600 transition-colors"
-                     title="Instagram"
-                  >
-                     <Instagram className="w-5 h-5" />
+                  <button onClick={() => handleSocialClick(photographer.instagramUrl!, 'instagram')} className="transition-all hover:scale-110 active:scale-95" style={{ color: theme.accentColor }} title="Instagram">
+                     <Instagram className="w-6 h-6" />
                   </button>
                )}
             </div>
          </div>
 
-         {/* Spacer / Background for Main Content - Lighter Cream */}
-         <div className="bg-[#FDFBF7] flex-grow w-full flex flex-col items-center py-12">
+         {/* Main Content Area */}
+         <div className="flex-grow w-full flex flex-col items-center py-12" style={{ backgroundColor: theme.backgroundColor }}>
 
             {/* 2. Main Content Card */}
             {viewState !== 'results' && (
                <div className="w-full max-w-5xl mx-auto px-4">
-                  <div className="bg-white rounded-3xl shadow-xl overflow-hidden border border-[#E8DFD3]">
-                     {/* Card Header (Event Details) */}
-                     <div className="text-center py-8 px-6 border-b border-[#E8DFD3]">
-                        <h2 className="text-3xl font-bold text-[#4A3B2C] mb-4">
+                  <div
+                     className="rounded-3xl shadow-xl overflow-hidden transition-all duration-700"
+                     style={{
+                        backgroundColor: theme.cardBackground,
+                        border: `1px solid ${theme.cardBorder}`,
+                        borderRadius: borderRadius
+                     }}
+                  >
+                     <div className="text-center py-8 px-6 transition-all duration-700" style={{ borderBottom: `1px solid ${theme.cardBorder}` }}>
+                        <h2 className="text-3xl font-bold mb-4" style={{ color: theme.primaryColor }}>
                            {mode === 'full' ? 'הגלריה של האירוע' : 'הגלריה שלך מהאירוע'}
                         </h2>
-
-                        <div className="flex flex-wrap items-center justify-center gap-4 text-[#8B7355] text-lg font-medium max-w-2xl mx-auto">
+                        <div className="flex flex-wrap items-center justify-center gap-4 text-lg font-medium max-w-2xl mx-auto" style={{ color: theme.secondaryColor }}>
                            <div className="flex items-center gap-1.5">
-                              <Heart className="w-4 h-4 text-[#C4A882]" />
+                              <Heart className="w-4 h-4" style={{ color: theme.accentColor }} />
                               <span>{event.name}</span>
                            </div>
-                           <span className="hidden md:inline w-px h-4 bg-[#E8DFD3]"></span>
+                           <span className="hidden md:inline w-px h-4" style={{ backgroundColor: theme.cardBorder }}></span>
                            <div className="flex items-center gap-2">
-                              <Calendar className="w-4 h-4 text-[#C4A882]" />
+                              <Calendar className="w-4 h-4" style={{ color: theme.accentColor }} />
                               <span>{new Date(event.date).toLocaleDateString('he-IL', { day: 'numeric', month: 'long', year: 'numeric' })}</span>
                            </div>
-                           <span className="hidden md:inline w-px h-4 bg-[#E8DFD3]"></span>
+                           <span className="hidden md:inline w-px h-4" style={{ backgroundColor: theme.cardBorder }}></span>
                            <div className="flex items-center gap-2">
-                              <MapPin className="w-4 h-4 text-[#C4A882]" />
+                              <MapPin className="w-4 h-4" style={{ color: theme.accentColor }} />
                               <span>{event.location}</span>
                            </div>
                         </div>
                      </div>
 
-                     {/* Split Layout */}
                      <div className="flex flex-col md:flex-row h-auto md:h-[500px]">
-
-                        {/* Left Side (Desktop) / Bottom (Mobile) - Content & Action */}
-                        <div className="w-full md:w-1/2 p-8 md:p-12 flex flex-col justify-center items-center text-center bg-[#FAF9F6] order-2 md:order-1">
-
-                           {isScanning ? (
+                        <div className="w-full md:w-1/2 p-8 md:p-12 flex flex-col justify-center items-center text-center order-2 md:order-1 transition-all duration-700" style={{ backgroundColor: `${theme.cardBackground}dd` }}>
+                           {viewState === 'scanning' ? (
                               <div className="flex flex-col items-center animate-pulse">
                                  <div className="relative w-32 h-32 mb-6">
-                                    {selectedImage && (
-                                       <img
-                                          src={URL.createObjectURL(selectedImage)}
-                                          alt="Selfie"
-                                          className="w-full h-full object-cover rounded-full border-4 border-white shadow-lg"
-                                       />
-                                    )}
-                                    <div className="absolute inset-0 rounded-full border-4 border-[#C4A882] border-t-transparent animate-spin"></div>
+                                    {selectedImage && <img src={URL.createObjectURL(selectedImage)} alt="Selfie" className="w-full h-full object-cover rounded-full border-4 border-white shadow-lg" />}
+                                    <div className="absolute inset-0 rounded-full border-4 border-t-transparent animate-spin" style={{ borderColor: theme.accentColor }}></div>
                                  </div>
-                                 <h3 className="text-2xl font-bold text-[#4A3B2C] mb-2">מחפש אותך...</h3>
-                                 <p className="text-[#8B7355]">סורק את התמונות באמצעות AI</p>
+                                 <h3 className="text-2xl font-bold mb-2" style={{ color: theme.primaryColor }}>מחפש אותך...</h3>
+                                 <p style={{ color: theme.secondaryColor }}>סורק את התמונות באמצעות AI</p>
                               </div>
                            ) : (
                               <>
-                                 <div className="w-16 h-16 bg-[#F0EBE3] rounded-full flex items-center justify-center mb-6">
-                                    <Camera className="w-8 h-8 text-[#C4A882]" />
+                                 <div className="w-16 h-16 rounded-full flex items-center justify-center mb-6" style={{ backgroundColor: `${theme.accentColor}20`, borderRadius }}>
+                                    <Camera className="w-8 h-8" style={{ color: theme.accentColor }} />
                                  </div>
-
-                                 <h3 className="text-2xl font-bold text-[#4A3B2C] mb-3">מצאו את התמונות שלכם מהאירוע</h3>
-
-                                 <p className="text-[#8B7355] mb-8 max-w-sm leading-relaxed text-sm">
+                                 <h3 className="text-2xl font-bold mb-3" style={{ color: theme.primaryColor }}>מצאו את התמונות שלכם מהאירוע</h3>
+                                 <p className="mb-8 max-w-sm leading-relaxed text-sm" style={{ color: theme.secondaryColor }}>
                                     העלו סלפי ברור של עצמכם — והמערכת שלנו תזהה אוטומטית ותציג לכם רק את התמונות המדהימות שבהן הופעתם באירוע.
                                  </p>
-
-                                 <label className="bg-[#C4A882] hover:bg-[#B39872] text-white px-8 py-4 rounded-full font-bold shadow-md hover:shadow-lg transition-all cursor-pointer flex items-center gap-3 transform hover:-translate-y-1 w-full max-w-xs justify-center group">
+                                 <label className="text-white px-8 py-4 font-bold shadow-md hover:shadow-lg transition-all cursor-pointer flex items-center gap-3 transform hover:-translate-y-1 w-full max-w-xs justify-center group" style={{ backgroundColor: theme.accentColor, borderRadius }}>
                                     <Camera className="w-5 h-5 group-hover:scale-110 transition-transform" />
                                     <span>העלה סלפי למציאת התמונות</span>
                                     <input type="file" accept="image/*" className="hidden" onChange={handleImageUpload} />
                                  </label>
-
                                  <div className="mt-4 flex items-center gap-2 text-[10px] text-[#A89680]">
-                                    <span className="w-3 h-3 text-[#C4A882]"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></svg></span>
+                                    <span className="w-3 h-3" style={{ color: theme.accentColor }}><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></svg></span>
                                     <span>התמונה נמחקת אוטומטית מיד לאחר תהליך הזיהוי.</span>
                                  </div>
                               </>
                            )}
                         </div>
-
-                        {/* Right Side (Desktop) / Top (Mobile) - Cover Image */}
                         <div className="w-full md:w-1/2 h-64 md:h-full relative order-1 md:order-2">
-                           <img
-                              src={event.coverImage}
-                              alt="Cover"
-                              className="w-full h-full object-cover shadow-inner"
-                           />
+                           <img src={event.coverImage} alt="Cover" className="w-full h-full object-cover shadow-inner" />
                            <div className="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent md:hidden"></div>
                         </div>
-
                      </div>
                   </div>
                </div>
@@ -1050,13 +939,11 @@ END:VCARD`;
             {/* 3. Results View */}
             {viewState === 'results' && (
                <div ref={resultsRef} className="w-full max-w-6xl mx-auto px-4 mt-8 animate-fade-in-up">
-
-                  {/* Minimal Header for Results */}
                   <div className="text-center mb-10">
-                     <h2 className="text-3xl font-bold text-[#4A3B2C] mb-2">
+                     <h2 className="text-3xl font-bold mb-2" style={{ color: theme.primaryColor }}>
                         {mode === 'full' ? 'הגלריה של האירוע' : 'הגלריה שלך מהאירוע'}
                      </h2>
-                     <div className="flex items-center justify-center gap-2 text-[#8B7355] text-sm">
+                     <div className="flex items-center justify-center gap-2 text-sm" style={{ color: theme.secondaryColor }}>
                         <span>{event.name}</span>
                         <span>|</span>
                         <span>{new Date(event.date).toLocaleDateString('he-IL')}</span>
@@ -1066,116 +953,83 @@ END:VCARD`;
                   </div>
 
                   {/* Actions Bar */}
-                  <div className="flex flex-col md:flex-row md:items-center md:justify-between mb-6 gap-4 bg-white p-4 rounded-2xl shadow-sm border border-[#F0EBE3]">
+                  <div
+                     className="flex flex-col md:flex-row md:items-center md:justify-between mb-6 gap-4 p-4 rounded-2xl shadow-sm border transition-all duration-300"
+                     style={{ backgroundColor: theme.cardBackground, borderColor: theme.cardBorder }}
+                  >
                      <div className="flex flex-wrap items-center gap-4">
-                        <h3 className="font-bold text-[#4A3B2C] flex items-center gap-2">
-                           {mode === 'full' ? 'כל התמונות' : 'התמונות שנמצאו'}
-                           <span className="bg-[#F0EBE3] px-2 py-0.5 rounded-full text-xs text-[#8B7355]">
-                              {totalItems}
-                           </span>
-                        </h3>
-
-                        {/* Divider */}
-                        <div className="h-6 w-px bg-[#F0EBE3]"></div>
-
+                        <div className="flex bg-slate-100/50 p-1.5 rounded-xl">
+                           <div className="px-6 py-1.5 rounded-lg text-sm font-bold transition-all shadow-sm" style={{ backgroundColor: theme.accentColor, color: '#FFFFFF' }}>
+                              {mode === 'full' ? 'כל התמונות' : 'התמונות שנמצאו'}
+                           </div>
+                        </div>
+                        <div className="h-6 w-px" style={{ backgroundColor: theme.cardBorder }}></div>
                         {mode !== 'full' && (
-                           <button
-                              onClick={clearSearch}
-                              className="text-sm font-bold flex items-center gap-2 transition-all duration-300 text-[#8B7355] hover:text-[#4A3B2C]"
-                           >
-                              <div className="flex items-center gap-2 px-3 py-1.5 rounded-full transition-all bg-[#F0EBE3] hover:bg-[#E8DFD3]">
-                                 <RefreshCw className="w-4 h-4" />
+                           <button onClick={clearSearch} className="text-sm font-bold flex items-center gap-2 transition-all duration-300" style={{ color: theme.textSecondary }}>
+                              <div
+                                 className="flex items-center gap-2 px-4 py-2 rounded-full transition-all"
+                                 style={{ backgroundColor: `${theme.accentColor}10` }}
+                                 onMouseEnter={(e) => e.currentTarget.style.backgroundColor = `${theme.accentColor}20`}
+                                 onMouseLeave={(e) => e.currentTarget.style.backgroundColor = `${theme.accentColor}10`}
+                              >
+                                 <RefreshCw className="w-4 h-4" style={{ color: theme.accentColor }} />
                                  <span>סלפי חדש</span>
                               </div>
                            </button>
                         )}
                      </div>
 
-                     {/* Action Buttons - Left on Desktop */}
-                     <div className="flex flex-wrap items-center gap-3">
-                        <button
-                           onClick={selectedPhotos.size === photos.length ? deselectAllPhotos : selectAllPhotos}
-                           className="text-sm font-medium text-[#8B7355] hover:text-[#C4A882]"
-                        >
+                     <div className="flex flex-wrap items-center gap-4">
+                        <button onClick={selectedPhotos.size === photos.length ? deselectAllPhotos : selectAllPhotos} className="text-sm font-bold transition-all hover:opacity-80" style={{ color: theme.accentColor }}>
                            {selectedPhotos.size === photos.length ? 'נקה בחירה' : 'בחר הכל'}
                         </button>
-
                         <button
                            onClick={handleShareSelection}
                            disabled={selectedPhotos.size === 0}
-                           className={`px-5 py-2.5 rounded-full text-sm font-bold shadow-sm transition-all flex items-center gap-2 ${selectedPhotos.size > 0 ? 'bg-white text-[#C4A882] border border-[#C4A882] hover:bg-[#FDFBF7]' : 'bg-gray-100 text-gray-400 cursor-not-allowed'}`}
+                           className="px-6 py-2.5 rounded-full text-sm font-bold shadow-sm transition-all flex items-center gap-2 border"
+                           style={selectedPhotos.size > 0 ? { backgroundColor: `${theme.accentColor}08`, color: theme.accentColor, borderColor: theme.accentColor } : { backgroundColor: '#F8FAFC', color: '#94A3B8', borderColor: '#E2E8F0', cursor: 'not-allowed' }}
                         >
                            <Share2 className="w-4 h-4" />
                            {selectedPhotos.size > 0 ? `שתף (${selectedPhotos.size})` : 'שתף'}
                         </button>
-                        <button
-                           onClick={handleDownloadAll}
-                           className="bg-[#C4A882] text-white px-5 py-2.5 rounded-full text-sm font-bold shadow-sm hover:bg-[#B39872] transition-all flex items-center gap-2"
-                        >
+                        <button onClick={handleDownloadAll} className="text-white px-6 py-2.5 rounded-full text-sm font-bold shadow-md transition-all flex items-center gap-2 hover:scale-[1.02] active:scale-[0.98]" style={{ backgroundColor: theme.accentColor }}>
                            <Download className="w-4 h-4" />
                            {selectedPhotos.size > 0 ? `הורד (${selectedPhotos.size})` : 'הורד הכל'}
                         </button>
                      </div>
                   </div>
 
-                  {/* Sorting Control - Standalone Row */}
                   {viewState === 'results' && mode !== 'full' && (
                      <div className="flex justify-start mb-2 px-1">
-                        <SortingControl
-                           currentSort={sortBy}
-                           onSortChange={setSortBy}
-                        />
+                        <SortingControl currentSort={sortBy} onSortChange={setSortBy} />
                      </div>
                   )}
 
-                  {/* Grid */}
                   <div className="flex flex-wrap justify-center pb-8" dir="rtl">
                      {photos.map((photo) => {
                         const isSelected = selectedPhotos.has(photo.id);
                         return (
                            <div
                               key={photo.id}
-                              className={`group relative aspect-[2/3] rounded-xl overflow-hidden bg-[#F0EBE3] cursor-pointer w-[calc(50%-1rem)] md:w-[calc(33.33%-1rem)] lg:w-[calc(25%-1rem)] m-2 ${isSelected ? 'ring-4 ring-[#C4A882] ring-offset-2' : ''}`}
+                              className="group relative aspect-[2/3] rounded-xl overflow-hidden bg-[#F0EBE3] cursor-pointer w-[calc(50%-1rem)] md:w-[calc(33.33%-1rem)] lg:w-[calc(25%-1rem)] m-2 transition-all duration-300"
+                              style={isSelected ? { boxShadow: `0 0 0 2px white, 0 0 0 6px ${theme.accentColor}` } : {}}
                               onClick={() => setLightboxPhoto(photo)}
                            >
-                              <img
-                                 src={photo.url}
-                                 alt="Gallery Item"
-                                 className="w-full h-full object-cover transition-transform duration-500 md:group-hover:scale-105"
-                                 loading="lazy"
-                              />
-
-                              {/* Overlay Gradient */}
+                              <img src={photo.url} alt="Gallery Item" className="w-full h-full object-cover transition-transform duration-500 md:group-hover:scale-105" loading="lazy" />
                               <div className="absolute inset-x-0 bottom-0 h-1/2 bg-gradient-to-t from-black/50 to-transparent opacity-0 md:group-hover:opacity-100 transition-opacity duration-300 pointer-events-none"></div>
-
-                              {/* Top Right - Select */}
                               <button
                                  type="button"
-                                 onClick={(e) => {
-                                    e.preventDefault();
-                                    e.stopPropagation();
-                                    togglePhotoSelection(photo.id);
-                                 }}
-                                 className={`absolute top-3 right-3 w-10 h-10 z-20 rounded-full flex items-center justify-center transition-all ${isSelected ? 'bg-[#C4A882] text-white shadow-md' : 'bg-white/20 md:hover:bg-white active:bg-white text-white md:hover:text-[#C4A882] active:text-[#C4A882] backdrop-blur-sm'
-                                    }`}
+                                 onClick={(e) => { e.preventDefault(); e.stopPropagation(); togglePhotoSelection(photo.id); }}
+                                 className="absolute top-3 right-3 w-10 h-10 z-20 rounded-full flex items-center justify-center transition-all"
+                                 style={isSelected ? { backgroundColor: theme.accentColor, color: 'white' } : { backgroundColor: 'rgba(255,255,255,0.2)', color: 'white' }}
                               >
-                                 <CheckCircle2 className="w-5 h-5" />
+                                 <CheckCircle2 className="w-5 h-5 shadow-sm" />
                               </button>
-
-                              {/* Bottom Actions - Always visible on mobile, hover on desktop */}
                               <div className="absolute bottom-3 right-3 left-3 flex justify-end gap-2 opacity-100 md:opacity-0 md:group-hover:opacity-100 transition-all md:translate-y-2 md:group-hover:translate-y-0">
-                                 <button
-                                    onClick={(e) => handleDownload(photo, e)}
-                                    className="w-9 h-9 rounded-full bg-white/90 text-[#4A3B2C] flex items-center justify-center hover:bg-white hover:scale-110 transition-all shadow-lg"
-                                    title="הורד תמונה"
-                                 >
+                                 <button onClick={(e) => handleDownload(photo, e)} className="w-9 h-9 rounded-full bg-white/90 text-[#4A3B2C] flex items-center justify-center hover:bg-white hover:scale-110 transition-all shadow-lg">
                                     <Download className="w-4 h-4" />
                                  </button>
-                                 <button
-                                    onClick={(e) => handleShare(photo, e)}
-                                    className="w-9 h-9 rounded-full bg-white/90 text-[#4A3B2C] flex items-center justify-center hover:bg-white hover:scale-110 transition-all shadow-lg"
-                                    title="שתף תמונה"
-                                 >
+                                 <button onClick={(e) => handleShare(photo, e)} className="w-9 h-9 rounded-full bg-white/90 text-[#4A3B2C] flex items-center justify-center hover:bg-white hover:scale-110 transition-all shadow-lg">
                                     <Share2 className="w-4 h-4" />
                                  </button>
                               </div>
@@ -1184,89 +1038,28 @@ END:VCARD`;
                      })}
                   </div>
 
-                  {/* Pagination Controls */}
                   {totalPages > 1 && (
                      <div className="flex flex-col items-center gap-4 mt-12 mb-8" dir="rtl">
                         <div className="flex justify-center items-center gap-3">
-                           {/* First Button */}
-                           <button
-                              onClick={() => handlePageChange(1)}
-                              disabled={page === 1}
-                              className="w-10 h-10 rounded-full bg-white shadow-sm border border-[#F0EBE3] flex items-center justify-center text-[#8B7355] hover:bg-[#FAF9F6] disabled:opacity-40 disabled:cursor-not-allowed transition-all"
-                              title="לעמוד הראשון"
-                           >
+                           <button onClick={() => handlePageChange(1)} disabled={page === 1} className="w-10 h-10 rounded-full bg-white shadow-sm border border-[#F0EBE3] flex items-center justify-center text-[#8B7355] hover:bg-[#FAF9F6] disabled:opacity-40 disabled:cursor-not-allowed transition-all" title="לעמוד הראשון">
                               <ChevronsRight className="w-5 h-5" />
                            </button>
-
-                           {/* Previous Button */}
-                           <button
-                              onClick={() => handlePageChange(page - 1)}
-                              disabled={page === 1}
-                              className="w-12 h-12 rounded-full bg-white shadow-md border border-[#F0EBE3] flex items-center justify-center text-[#8B7355] hover:bg-[#FAF9F6] disabled:opacity-40 disabled:cursor-not-allowed transition-all transform hover:-translate-y-0.5 active:translate-y-0"
-                              title="הקודם"
-                           >
+                           <button onClick={() => handlePageChange(page - 1)} disabled={page === 1} className="w-12 h-12 rounded-full bg-white shadow-md border border-[#F0EBE3] flex items-center justify-center text-[#8B7355] hover:bg-[#FAF9F6] disabled:opacity-40 disabled:cursor-not-allowed transition-all transform hover:-translate-y-0.5 active:translate-y-0" title="הקודם">
                               <ChevronRight className="w-6 h-6" />
                            </button>
-
                            <div className="flex items-center gap-3 text-[#8B7355] font-medium text-xl mx-2">
-                              {/* <span>עמוד</span> */}
-
-                              <div className="w-12 h-12 rounded-full bg-[#C4A882] text-white font-bold flex items-center justify-center shadow-md overflow-hidden relative group cursor-text">
-                                 <input
-                                    type="text"
-                                    inputMode="numeric"
-                                    pattern="[0-9]*"
-                                    defaultValue={page}
-                                    key={page} // Force re-render on page change to update value
-                                    className="w-full h-full bg-transparent text-center text-white font-bold text-lg focus:outline-none placeholder-white/50"
-                                    onKeyDown={(e) => {
-                                       if (e.key === 'Enter') {
-                                          const val = parseInt(e.currentTarget.value);
-                                          if (!isNaN(val) && val >= 1 && val <= totalPages) {
-                                             handlePageChange(val);
-                                             e.currentTarget.blur();
-                                          } else {
-                                             // Reset if invalid
-                                             e.currentTarget.value = page.toString();
-                                          }
-                                       }
-                                    }}
-                                    onBlur={(e) => {
-                                       const val = parseInt(e.currentTarget.value);
-                                       if (!isNaN(val) && val >= 1 && val <= totalPages) {
-                                          if (val !== page) handlePageChange(val);
-                                       } else {
-                                          e.currentTarget.value = page.toString();
-                                       }
-                                    }}
-                                    onClick={(e) => e.currentTarget.select()}
-                                    aria-label="עבור לעמוד"
-                                 />
+                              <div className="w-12 h-12 rounded-full text-white font-bold flex items-center justify-center shadow-md overflow-hidden relative group cursor-text" style={{ backgroundColor: theme.accentColor }}>
+                                 <input type="text" inputMode="numeric" pattern="[0-9]*" defaultValue={page} key={page} className="w-full h-full bg-transparent text-center text-white font-bold text-lg focus:outline-none placeholder-white/50" onKeyDown={(e) => { if (e.key === 'Enter') { const val = parseInt(e.currentTarget.value); if (!isNaN(val) && val >= 1 && val <= totalPages) { handlePageChange(val); e.currentTarget.blur(); } else { e.currentTarget.value = page.toString(); } } }} onBlur={(e) => { const val = parseInt(e.currentTarget.value); if (!isNaN(val) && val >= 1 && val <= totalPages) { if (val !== page) handlePageChange(val); } else { e.currentTarget.value = page.toString(); } }} onClick={(e) => e.currentTarget.select()} aria-label="עבור לעמוד" />
                               </div>
-
                               <div className="flex items-center gap-1 text-base">
                                  <span>מתוך</span>
                                  <span>{totalPages}</span>
                               </div>
                            </div>
-
-                           {/* Next Button */}
-                           <button
-                              onClick={() => handlePageChange(page + 1)}
-                              disabled={page === totalPages}
-                              className="w-12 h-12 rounded-full bg-white shadow-md border border-[#F0EBE3] flex items-center justify-center text-[#8B7355] hover:bg-[#FAF9F6] disabled:opacity-40 disabled:cursor-not-allowed transition-all transform hover:-translate-y-0.5 active:translate-y-0"
-                              title="הבא"
-                           >
+                           <button onClick={() => handlePageChange(page + 1)} disabled={page === totalPages} className="w-12 h-12 rounded-full bg-white shadow-md border border-[#F0EBE3] flex items-center justify-center text-[#8B7355] hover:bg-[#FAF9F6] disabled:opacity-40 disabled:cursor-not-allowed transition-all transform hover:-translate-y-0.5 active:translate-y-0" title="הבא">
                               <ChevronLeft className="w-6 h-6" />
                            </button>
-
-                           {/* Last Button */}
-                           <button
-                              onClick={() => handlePageChange(totalPages)}
-                              disabled={page === totalPages}
-                              className="w-10 h-10 rounded-full bg-white shadow-sm border border-[#F0EBE3] flex items-center justify-center text-[#8B7355] hover:bg-[#FAF9F6] disabled:opacity-40 disabled:cursor-not-allowed transition-all"
-                              title="לעמוד האחרון"
-                           >
+                           <button onClick={() => handlePageChange(totalPages)} disabled={page === totalPages} className="w-10 h-10 rounded-full bg-white shadow-sm border border-[#F0EBE3] flex items-center justify-center text-[#8B7355] hover:bg-[#FAF9F6] disabled:opacity-40 disabled:cursor-not-allowed transition-all" title="לעמוד האחרון">
                               <ChevronsLeft className="w-5 h-5" />
                            </button>
                         </div>
@@ -1276,90 +1069,54 @@ END:VCARD`;
                   {photos.length === 0 && (
                      <div className="text-center py-20 bg-white rounded-3xl border border-[#F0EBE3] mt-8">
                         <p className="text-[#8B7355] text-lg">לא נמצאו תמונות. נסה סלפי אחר.</p>
-                        <button
-                           onClick={clearSearch}
-                           className="mt-4 text-[#C4A882] font-bold underline"
-                        >
-                           נסה שוב
-                        </button>
+                        <button onClick={clearSearch} className="mt-4 font-bold underline" style={{ color: theme.accentColor }}>נסה שוב</button>
                      </div>
                   )}
                </div>
             )}
-
-            {/* End of Main Content Wrapper */}
          </div>
 
-         {/* 4. Footer & Contact */}
-         <footer className="mt-0"> {/* Removed margin-top since wrapper handles spacing */}
-            {/* Top Section - Darker */}
-            <div className="bg-[#EEE9E1] py-10 px-6 relative overflow-hidden">
-               {/* Decorative top border */}
+         <footer className="mt-0">
+            <div className="py-10 px-6 relative overflow-hidden transition-all duration-700" style={{ backgroundColor: theme.headerBackground }}>
                <div className="absolute top-0 left-0 right-0 h-px bg-[#D4C4B0]/50"></div>
-
                <div className="max-w-2xl mx-auto text-center relative z-10">
-
                   {viewState === 'results' ? (
                      <div className="animate-fade-in">
-                        <h2 className="text-2xl font-bold text-[#4A3B2C] mb-3 leading-tight">
-                           אהבתם את התמונות?
-                           <br />
-                           חכו שתראו איך נצלם את האירוע שלכם (:
-                        </h2>
-                        <p className="text-[#8B7355] mb-6 text-base">
-                           שמרו את הפרטים שלנו או עברו לאתר שלנו לפרטים נוספים
-                        </p>
+                        <h2 className="text-2xl font-bold mb-3 leading-tight" style={{ color: theme.primaryColor }}>אהבתם את התמונות?<br />חכו שתראו איך נצלם את האירוע שלכם (:</h2>
+                        <p className="mb-6 text-base" style={{ color: theme.secondaryColor }}>שמרו את הפרטים שלנו או עברו לאתר שלנו לפרטים נוספים</p>
                      </div>
                   ) : (
                      <div className="animate-fade-in">
-                        <h2 className="text-2xl font-bold text-[#4A3B2C] mb-3 leading-tight">
-                           היום אתם אורחים -<br />מחר אתם בעלי האירוע!
-                        </h2>
-                        <p className="text-[#8B7355] mb-6 text-base">
-                           שמרו את הפרטים שלנו או עברו לאתר שלנו לפרטים נוספים
-                        </p>
+                        <h2 className="text-2xl font-bold mb-3 leading-tight" style={{ color: theme.primaryColor }}>היום אתם אורחים -<br />מחר אתם בעלי האירוע!</h2>
+                        <p className="mb-6 text-base" style={{ color: theme.secondaryColor }}>שמרו את הפרטים שלנו או עברו לאתר שלנו לפרטים נוספים</p>
                      </div>
                   )}
-
                   <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-4 justify-center">
-
-                     {/* Save Phone */}
-                     <button
-                        onClick={handleSavePhone}
-                        className="group relative overflow-hidden bg-[#C4A882] text-white py-4 px-8 rounded-full font-bold shadow-lg hover:shadow-xl hover:bg-[#B39872] transition-all transform hover:-translate-y-0.5 active:translate-y-0"
-                     >
+                     <button onClick={handleSavePhone} className="group relative overflow-hidden text-white py-4 px-10 rounded-full font-bold shadow-lg hover:shadow-xl transition-all transform hover:-translate-y-0.5 active:translate-y-0" style={{ backgroundColor: theme.accentColor }}>
                         <div className="flex items-center justify-center gap-3 relative z-10">
-                           <span>שמור מספר טלפון</span>
-                           <Phone className="w-4 h-4 fill-current group-hover:rotate-12 transition-transform" />
+                           <span className="text-lg">שמור מספר טלפון</span>
+                           <Phone className="w-5 h-5 fill-current group-hover:rotate-12 transition-transform" />
                         </div>
                      </button>
-
-                     {/* Website Link */}
                      {photographer?.websiteUrl && (
-                        <button
-                           onClick={() => handleSocialClick(photographer.websiteUrl!, 'website')}
-                           className="group relative overflow-hidden bg-white text-[#4A3B2C] py-4 px-8 rounded-full font-bold shadow-md border border-[#E8DFD3] hover:border-[#C4A882] hover:bg-gray-50 transition-all transform hover:-translate-y-0.5 active:translate-y-0"
-                        >
+                        <button onClick={() => handleSocialClick(photographer.websiteUrl!, 'website')} className="group relative overflow-hidden bg-white py-4 px-10 rounded-full font-bold shadow-md border transition-all transform hover:-translate-y-0.5 active:translate-y-0" style={{ color: theme.primaryColor, borderColor: theme.cardBorder }}>
                            <div className="flex items-center justify-center gap-3 relative z-10">
-                              <Globe className="w-4 h-4 text-[#C4A882] group-hover:scale-110 transition-transform" />
-                              <span>מעבר לאתר הצלם</span>
+                              <Globe className="w-5 h-5 group-hover:scale-110 transition-transform" style={{ color: theme.accentColor }} />
+                              <span className="text-lg">מעבר לאתר הצלם</span>
                            </div>
                         </button>
                      )}
                   </div>
                </div>
             </div>
-
-            {/* Bottom Section - Lighter */}
-            <div className="bg-[#EEE9E1] py-4 text-center border-t border-[#D4C4B0]/20">
-               <div className="flex flex-col items-center gap-1">
-                  <p className="text-[10px] uppercase tracking-[0.2em] text-[#A89680]">Powered by</p>
-                  <span className="font-bold text-[#C4A882] text-sm">Click2Pic</span>
-               </div>
+            <div className="py-6 text-center transition-all duration-700" style={{ backgroundColor: theme.headerBackground, borderTop: `1px solid ${theme.cardBorder}` }}>
+               <a href="https://click2pic.co.il" target="_blank" rel="noopener noreferrer" className="inline-block hover:opacity-70 transition-opacity">
+                  <p className="text-[10px] uppercase tracking-[0.2em] mb-1" style={{ color: `${theme.secondaryColor}80` }}>Powered by</p>
+                  <span className="font-bold text-lg" style={{ color: theme.accentColor }}>Click2Pic</span>
+               </a>
             </div>
          </footer>
 
-         {/* Lightbox */}
          {lightboxPhoto && (
             <LightboxOverlay
                photo={lightboxPhoto}
@@ -1379,14 +1136,7 @@ END:VCARD`;
             />
          )}
 
-         {/* Toast Notification */}
-         <Toast
-            show={showToast}
-            message={toastMessage}
-            type={toastType}
-            onClose={() => setShowToast(false)}
-         />
-
+         <Toast show={showToast} message={toastMessage} type={toastType} onClose={() => setShowToast(false)} />
       </div>
    );
 };

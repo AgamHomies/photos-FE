@@ -256,6 +256,7 @@ export const RealEventAPI = {
             initialProcessingDone: event.initial_processing_done,
             createdAt: event.created_at,
             packageType: event.package_type || 'basic',
+            backgroundColor: event.background_color,
         }));
 
         return {
@@ -288,6 +289,7 @@ export const RealEventAPI = {
                 initialProcessingDone: data.initial_processing_done,
                 createdAt: data.created_at,
                 packageType: data.package_type || 'basic',
+                backgroundColor: data.background_color,
             };
         } catch (error) {
             console.error('Failed to get event:', error);
@@ -301,8 +303,9 @@ export const RealEventAPI = {
             description: '',
             event_date: `${eventData.date}T00:00:00`,
             location: eventData.location || '',
-            expiry_date: eventData.expiryDate,
+            expiration_date: eventData.expiryDate,
             package_type: eventData.packageType || 'basic',
+            background_color: eventData.backgroundColor,
         };
 
         const data = await apiRequest('/events/', {
@@ -321,12 +324,13 @@ export const RealEventAPI = {
             guestVisits: 0,
             downloads: 0,
             uniqueLink: `${CONFIG.API_BASE_URL}/public/e/${data.guest_slug || data.id}`,
-            expiryDate: data.expiry_date || '',
-            status: 'active',
+            expiryDate: data.expiration_date || '',
+            status: mapEventStatus(data.status),
             slug: data.guest_slug,
             coupleSlug: data.couple_slug,
             createdAt: data.created_at,
             packageType: data.package_type || 'basic',
+            backgroundColor: data.background_color,
         };
     },
 
@@ -336,7 +340,8 @@ export const RealEventAPI = {
         if (updates.name) payload.title = updates.name;
         if (updates.date) payload.event_date = `${updates.date}T00:00:00`;
         if (updates.location) payload.location = updates.location;
-        if (updates.expiryDate) payload.expiry_date = updates.expiryDate;
+        if (updates.expiryDate) payload.expiration_date = updates.expiryDate;
+        if (updates.backgroundColor) payload.background_color = updates.backgroundColor;
 
         const data = await apiRequest(`/events/${id}`, {
             method: 'PATCH',
@@ -355,12 +360,15 @@ export const RealEventAPI = {
             downloads: data.stats?.downloads_count || 0,
             phoneSaves: data.stats?.contact_saved_count || 0,
             uniqueLink: `${CONFIG.API_BASE_URL}/public/e/${data.guest_slug || data.id}`,
-            expiryDate: data.expiry_date || '',
+            expiryDate: data.expiration_date || '',
             status: mapEventStatus(data.status),
             slug: data.guest_slug,
             coupleSlug: data.couple_slug,
+            isPublished: data.is_published,
+            initialProcessingDone: data.initial_processing_done,
             createdAt: data.created_at,
             packageType: data.package_type || 'basic',
+            backgroundColor: data.background_color,
         };
     },
 
@@ -400,7 +408,7 @@ export const RealEventAPI = {
             downloads: data.stats?.downloads_count || 0,
             phoneSaves: data.stats?.contact_saved_count || 0,
             uniqueLink: `${CONFIG.API_BASE_URL}/public/e/${data.guest_slug || data.id}`,
-            expiryDate: data.expiry_date || '',
+            expiryDate: data.expiration_date || '',
             status: mapEventStatus(data.status),
             slug: data.guest_slug,
             coupleSlug: data.couple_slug,
@@ -408,6 +416,7 @@ export const RealEventAPI = {
             initialProcessingDone: data.initial_processing_done,
             createdAt: data.created_at,
             packageType: data.package_type || 'basic',
+            backgroundColor: data.background_color,
         };
     },
 
@@ -588,6 +597,7 @@ export const RealGalleryAPI = {
                 slug: eventData.guest_slug,
                 coupleSlug: eventData.couple_slug,
                 mode: data.mode, // Map mode
+                backgroundColor: eventData.background_color,
             };
         } catch (error) {
             console.error('Failed to get event by slug:', error);

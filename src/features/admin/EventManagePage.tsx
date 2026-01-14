@@ -22,10 +22,13 @@ import {
     X,
     FolderUp,
     Eye,
-    Share2
+    Share2,
+    Check,
+    Plus
 } from 'lucide-react';
 import EventPreviewModal from './components/EventPreviewModal';
 import { useUpload } from '../../context/UploadContext';
+import { GALLERY_THEMES, getThemeByColor } from '../../utils/galleryThemes';
 import EventShareModal from './components/EventShareModal';
 import { unsecuredCopyToClipboard } from '../../utils/clipboard';
 
@@ -53,12 +56,14 @@ const EventManagePage: React.FC = () => {
     const initialTab = (queryParams.get('tab') as 'photos' | 'details') || 'photos';
     const [activeTab, setActiveTab] = useState<'photos' | 'details'>(initialTab);
 
-    // Edit form state
     const [editForm, setEditForm] = useState({
         name: '',
         date: '',
-        location: ''
+        location: '',
+        backgroundColor: '#FDFBF7'
     });
+    const [colorMenuOpen, setColorMenuOpen] = useState(false);
+    const [isPreviewOpen, setIsPreviewOpen] = useState(false);
 
     const [page, setPage] = useState(1);
     const [hasMore, setHasMore] = useState(true);
@@ -261,7 +266,8 @@ const EventManagePage: React.FC = () => {
                 setEditForm({
                     name: eventData.name,
                     date: eventData.date,
-                    location: eventData.location
+                    location: eventData.location,
+                    backgroundColor: eventData.backgroundColor || '#FDFBF7'
                 });
                 setPhotos(photosData);
                 setBatches(batchesData);
@@ -722,14 +728,63 @@ const EventManagePage: React.FC = () => {
                                         </div>
                                         עריכת פרטי אירוע
                                     </h2>
-                                    <button
-                                        type="button"
-                                        onClick={() => setLinkModal(prev => ({ ...prev, isOpen: true, type: 'preview' }))}
-                                        className="bg-cyan-50 text-cyan-600 px-6 py-2 rounded-xl font-bold hover:bg-cyan-100 transition-colors flex items-center gap-2 shadow-sm text-sm border border-cyan-100"
-                                    >
-                                        <Eye className="w-4 h-4" />
-                                        <span>תצוגה מקדימה</span>
-                                    </button>
+                                    <div className="flex items-center gap-3">
+                                        {/* Color Theme Selector */}
+                                        <div className="relative">
+                                            <button
+                                                type="button"
+                                                onClick={() => setColorMenuOpen(!colorMenuOpen)}
+                                                className="bg-white text-slate-700 px-4 py-2 rounded-xl font-bold hover:bg-slate-50 transition-all flex items-center gap-2 shadow-sm text-sm border border-slate-200"
+                                            >
+                                                <div
+                                                    className="w-4 h-4 rounded-full border border-slate-300"
+                                                    style={{ backgroundColor: getThemeByColor(editForm.backgroundColor).accentColor }}
+                                                ></div>
+                                                <span>צבע גלריה</span>
+                                                <svg className={`w-4 h-4 transition-transform ${colorMenuOpen ? 'rotate-180' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                                                </svg>
+                                            </button>
+
+                                            {/* Dropdown Menu */}
+                                            {colorMenuOpen && (
+                                                <div className="absolute top-full left-0 mt-2 bg-white rounded-xl shadow-xl border border-slate-200 p-3 z-50 min-w-[200px]">
+                                                    <div className="space-y-2">
+                                                        {GALLERY_THEMES.map((theme) => (
+                                                            <button
+                                                                key={theme.id}
+                                                                type="button"
+                                                                onClick={() => {
+                                                                    setEditForm(prev => ({ ...prev, backgroundColor: theme.backgroundColor }));
+                                                                    setColorMenuOpen(false);
+                                                                }}
+                                                                className={`w-full flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-slate-50 transition-colors ${editForm.backgroundColor === theme.backgroundColor ? 'bg-cyan-50 border border-cyan-200' : ''
+                                                                    }`}
+                                                            >
+                                                                <div
+                                                                    className="w-6 h-6 rounded-full border-2 border-slate-300 flex-shrink-0"
+                                                                    style={{ backgroundColor: theme.accentColor }}
+                                                                ></div>
+                                                                <span className="text-sm font-medium text-slate-700">{theme.name}</span>
+                                                                {editForm.backgroundColor === theme.backgroundColor && (
+                                                                    <Check className="w-4 h-4 text-cyan-600 mr-auto" />
+                                                                )}
+                                                            </button>
+                                                        ))}
+                                                    </div>
+                                                </div>
+                                            )}
+                                        </div>
+
+                                        <button
+                                            type="button"
+                                            onClick={() => setLinkModal(prev => ({ ...prev, isOpen: true, type: 'preview' }))}
+                                            className="bg-cyan-50 text-cyan-600 px-6 py-2 rounded-xl font-bold hover:bg-cyan-100 transition-colors flex items-center gap-2 shadow-sm text-sm border border-cyan-100"
+                                        >
+                                            <Eye className="w-4 h-4" />
+                                            <span>תצוגה מקדימה</span>
+                                        </button>
+                                    </div>
                                 </div>
 
                                 <div className="p-8">
@@ -808,7 +863,7 @@ const EventManagePage: React.FC = () => {
                                         </div>
                                     </div>
 
-                                    {/* Preview Button (Full Width Bottom) */}
+                                    {/* Save Button (Full Width Bottom) */}
                                     <div className="mt-4 pt-4 border-t border-slate-100">
                                         <button
                                             type="submit"
@@ -820,8 +875,6 @@ const EventManagePage: React.FC = () => {
                                     </div>
                                 </div>
                             </div>
-
-
                         </form>
 
                         <div id="delete-section" className="mt-8 bg-red-50 rounded-3xl border border-red-100 p-8">
@@ -844,6 +897,7 @@ const EventManagePage: React.FC = () => {
                     </div>
                 )}
             </div>
+
             {/* Link Modal */}
             {linkModal.isOpen && (
                 <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4 animate-fade-in">
@@ -900,7 +954,10 @@ const EventManagePage: React.FC = () => {
                     name: editForm.name,
                     date: editForm.date,
                     location: editForm.location,
-                    coverImage: event.coverImage
+                    coverImage: event.coverImage,
+                    backgroundColor: editForm.backgroundColor,
+                    photographerName: localStorage.getItem('photographerName') || 'שם הצלם',
+                    photographerImage: localStorage.getItem('photographerImage') || ''
                 }}
             />
 
