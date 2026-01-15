@@ -1,5 +1,5 @@
 import React, { useEffect, useState, useRef } from 'react';
-import { useParams } from 'react-router-dom';
+import { useParams, useNavigate } from 'react-router-dom';
 import { BackendService } from '../../services/backendService';
 import { CONFIG } from '../../config';
 import { Event, Photo, PhotographerProfile } from '../../types';
@@ -120,6 +120,7 @@ interface GalleryPageProps {
 
 const GalleryPage: React.FC<GalleryPageProps> = ({ mode: propMode }) => {
    const { id } = useParams<{ id: string }>();
+   const navigate = useNavigate();
    const [event, setEvent] = useState<Event | null>(null);
    const eventRef = useRef<Event | null>(null); // Ref to access event inside closures without dependencies
 
@@ -731,25 +732,8 @@ const GalleryPage: React.FC<GalleryPageProps> = ({ mode: propMode }) => {
          const isIOS = /iPhone|iPad|iPod/i.test(navigator.userAgent);
          const isMobile = /Android/i.test(navigator.userAgent) || isIOS;
 
-         if (isMobile && isIOS) {
-            // iOS doesn't support programmatic file downloads well (blocked by security)
-            // Best UX is to open in new tab and tell user to long-press save
-            const win = window.open(data.url, '_blank');
-            if (!win) {
-               triggerToast('חלון ההורדה נחסם. על מנת לבצע את הפעולה יש לאפשר חלונות קופצים.', 'error');
-            } else {
-               triggerToast('לחץ לחיצה ארוכה על התמונה ושמור אותה.', 'success');
-            }
-         } else {
-            // For Desktop & Android: Create a temporary link and click it
-            // We rely on the backend sending 'Content-Disposition: attachment'
-            const link = document.createElement('a');
-            link.href = data.url;
-            link.setAttribute('download', `photo-${photo.id}.jpg`);
-            document.body.appendChild(link);
-            link.click();
-            document.body.removeChild(link);
-         }
+         // Navigate to download page in same tab (allows back button)
+         window.location.href = `/gallery/${id}/download?photoId=${photo.id}`;
 
       } catch (error) {
          console.error('Download error:', error);
