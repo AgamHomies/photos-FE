@@ -187,7 +187,7 @@ const GalleryPage: React.FC<GalleryPageProps> = ({ mode: propMode }) => {
             // Handle NaN
             const valA = isNaN(timeA) ? 0 : timeA;
             const valB = isNaN(timeB) ? 0 : timeB;
-            return valB - valA;
+            return valA - valB;
          });
       }
       return sorted;

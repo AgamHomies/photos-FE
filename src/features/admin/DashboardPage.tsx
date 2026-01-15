@@ -702,7 +702,12 @@ const DashboardPage: React.FC = () => {
                                         <td className="px-6 py-4 text-slate-600 text-sm font-medium">{event.guestVisits}</td>
                                         <td className="px-6 py-4 text-slate-600 text-sm font-medium">{event.downloads}</td>
                                         <td className="px-6 py-4">
-                                            {event.isPublished || event.initialProcessingDone ? (
+                                            {event.status === 'expired' ? (
+                                                <div className="px-3 py-1.5 text-xs font-bold text-slate-500 bg-slate-100 rounded-lg flex items-center gap-1.5 border border-slate-200 justify-center cursor-not-allowed">
+                                                    <X className="w-3 h-3" />
+                                                    <span>לא זמין</span>
+                                                </div>
+                                            ) : (event.isPublished || event.initialProcessingDone) ? (
                                                 <div className="flex gap-2 justify-center">
                                                     <button
                                                         onClick={(e) => openLinkModal(e, 'guest', `/gallery/${event.slug || event.id}`)}
