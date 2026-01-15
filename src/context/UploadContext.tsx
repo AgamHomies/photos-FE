@@ -46,7 +46,15 @@ export const UploadProvider: React.FC<{ children: ReactNode }> = ({ children }) 
         }));
 
         try {
-            // A. Upload Gallery Files
+            // A. Upload Cover if exists
+            if (coverFile) {
+                updateUploadState(eventId, { stage: 'מעלה תמונת קאבר...' });
+                const coverInfo = await BackendService.getPresignedCoverUrl(eventId, coverFile.name, coverFile.type);
+                await BackendService.uploadToS3(coverInfo.uploadUrl, coverFile);
+                await BackendService.setCoverImage(eventId, coverInfo.photoId.toString());
+            }
+
+            // B. Upload Gallery Files
             if (files.length > 0) {
                 const BATCH_SIZE = 100;
                 const CONCURRENCY_LIMIT = 15;
@@ -100,14 +108,6 @@ export const UploadProvider: React.FC<{ children: ReactNode }> = ({ children }) 
 
                     updateUploadState(eventId, { progress: clientProgress });
                 }
-            }
-
-            // B. Upload Cover if exists
-            if (coverFile) {
-                updateUploadState(eventId, { stage: 'מעלה תמונת קאבר...' });
-                const coverInfo = await BackendService.getPresignedCoverUrl(eventId, coverFile.name, coverFile.type);
-                await BackendService.uploadToS3(coverInfo.uploadUrl, coverFile);
-                await BackendService.setCoverImage(eventId, coverInfo.photoId.toString());
             }
 
             // Finish client-side upload -> Set to 80% and let server polling take over
