@@ -987,7 +987,10 @@ END:VCARD`;
                            onClick={handleShareSelection}
                            disabled={selectedPhotos.size === 0}
                            className="px-6 py-2.5 rounded-full text-sm font-bold shadow-sm transition-all flex items-center gap-2 border"
-                           style={selectedPhotos.size > 0 ? { backgroundColor: `${theme.accentColor}08`, color: theme.accentColor, borderColor: theme.accentColor } : { backgroundColor: '#F8FAFC', color: '#94A3B8', borderColor: '#E2E8F0', cursor: 'not-allowed' }}
+                           style={selectedPhotos.size > 0
+                              ? { backgroundColor: `${theme.accentColor}12`, color: theme.accentColor, borderColor: theme.accentColor, boxShadow: `0 2px 8px ${theme.accentColor}10` }
+                              : { backgroundColor: 'transparent', color: `${theme.secondaryColor}60`, borderColor: theme.cardBorder, cursor: 'not-allowed' }
+                           }
                         >
                            <Share2 className="w-4 h-4" />
                            {selectedPhotos.size > 0 ? `שתף (${selectedPhotos.size})` : 'שתף'}
