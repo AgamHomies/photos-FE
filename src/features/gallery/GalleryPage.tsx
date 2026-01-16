@@ -753,39 +753,25 @@ const GalleryPage: React.FC<GalleryPageProps> = ({ mode: propMode }) => {
    const handleDownloadAll = async () => {
       if (photos.length === 0) return;
 
-      const photosToDownload = selectedPhotos.size > 0
-         ? photos.filter(p => selectedPhotos.has(p.id))
-         : photos;
-
-      if (mode === 'full' && selectedPhotos.size === 0) {
-         window.location.href = `${CONFIG.API_BASE_URL}/public/events/${id}/download-all`;
-      } else {
-         const imageIds = photosToDownload.map(p => parseInt(p.id));
-
-         try {
-            const response = await fetch(`${CONFIG.API_BASE_URL}/public/events/${id}/download-zip`, {
-               method: 'POST',
-               headers: { 'Content-Type': 'application/json' },
-               body: JSON.stringify({ image_ids: imageIds })
-            });
-
-            if (response.ok) {
-               const blob = await response.blob();
-               const url = window.URL.createObjectURL(blob);
-               const link = document.createElement('a');
-               link.href = url;
-               link.download = 'photos.zip';
-               document.body.appendChild(link);
-               link.click();
-               document.body.removeChild(link);
-               window.URL.revokeObjectURL(url);
-            } else {
-               triggerToast('שגיאה ביצירת קובץ ההורדה', 'error');
+      // If photos are selected, redirect to download page for review
+      if (selectedPhotos.size > 0) {
+         // Track downloads when user clicks download button (not when they click ZIP)
+         if (id) {
+            try {
+               await BackendService.trackDownloads(id, selectedPhotos.size);
+            } catch (error) {
+               console.error('Failed to track downloads:', error);
             }
-         } catch (e) {
-            console.error(e);
-            triggerToast('שגיאה בהורדה', 'error');
          }
+
+         const photoIds = Array.from(selectedPhotos).join(',');
+         navigate(`/gallery/${id}/download?photoIds=${photoIds}`);
+         return;
+      }
+
+      // Download all photos immediately (full mode only)
+      if (mode === 'full') {
+         window.location.href = `${CONFIG.API_BASE_URL}/public/events/${id}/download-all`;
       }
    };
 
@@ -1094,7 +1080,8 @@ END:VCARD`;
                         </button>
                         <button
                            onClick={handleDownloadAll}
-                           className="bg-[#C4A882] text-white px-5 py-2.5 rounded-full text-sm font-bold shadow-sm hover:bg-[#B39872] transition-all flex items-center gap-2"
+                           disabled={selectedPhotos.size === 0}
+                           className={`px-5 py-2.5 rounded-full text-sm font-bold shadow-sm transition-all flex items-center gap-2 ${selectedPhotos.size > 0 ? 'bg-[#C4A882] text-white hover:bg-[#B39872]' : 'bg-gray-100 text-gray-400 cursor-not-allowed'}`}
                         >
                            <Download className="w-4 h-4" />
                            {selectedPhotos.size > 0 ? `הורד (${selectedPhotos.size})` : 'הורד הכל'}

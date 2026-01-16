@@ -2,18 +2,19 @@ import React, { useEffect, useState } from 'react';
 import { useParams, useSearchParams } from 'react-router-dom';
 import { BackendService } from '../../services/backendService';
 import { Photo } from '../../types';
-import { Loader2, ArrowRight, Download, Heart, Smartphone, Monitor, Share2, Check, Camera, Instagram, Globe, Phone, HeartHandshake, Facebook, ChevronRight } from 'lucide-react';
+import { Loader2, ArrowRight, Download, Heart, Smartphone, Monitor, Share2, Check, Camera, Instagram, Globe, Phone, HeartHandshake, Facebook, ChevronRight, ChevronLeft } from 'lucide-react';
 import { FaTiktok } from 'react-icons/fa';
 import { Toast } from '../../components';
+import { CONFIG } from '../../config';
 
 const PhotoDownloadPage: React.FC = () => {
     const { id: eventId } = useParams<{ id: string }>(); // Use 'id' to match route /gallery/:id
     const [searchParams] = useSearchParams();
     const photoId = searchParams.get('photoId');
+    const photoIds = searchParams.get('photoIds'); // New: support multiple photos
 
-
-
-    const [photo, setPhoto] = useState<Photo | null>(null);
+    const [photos, setPhotos] = useState<Photo[]>([]); // Changed from single photo to array
+    const [currentPhotoIndex, setCurrentPhotoIndex] = useState(0); // For carousel navigation
     const [photographer, setPhotographer] = useState<any | null>(null); // Ideally use PhotographerProfile type
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
@@ -45,7 +46,7 @@ const PhotoDownloadPage: React.FC = () => {
     }, []);
 
     useEffect(() => {
-        if (!photoId || !eventId) {
+        if ((!photoId && !photoIds) || !eventId) {
             setError('Photo ID or Event ID missing');
             setLoading(false);
             return;
@@ -53,12 +54,22 @@ const PhotoDownloadPage: React.FC = () => {
 
         const loadData = async () => {
             try {
-                // 1. Fetch Photo
-                const photoData = await BackendService.getPublicPhoto(photoId);
-                if (photoData) {
-                    setPhoto(photoData);
-                } else {
-                    throw new Error('Photo not found');
+                // 1. Fetch Photos (single or multiple)
+                if (photoIds) {
+                    // Multiple photos - fetch each one
+                    const ids = photoIds.split(',');
+                    const fetchedPhotos = await Promise.all(
+                        ids.map(id => BackendService.getPublicPhoto(id.trim()))
+                    );
+                    setPhotos(fetchedPhotos.filter(p => p !== null) as Photo[]);
+                } else if (photoId) {
+                    // Single photo - backward compatibility
+                    const photoData = await BackendService.getPublicPhoto(photoId);
+                    if (photoData) {
+                        setPhotos([photoData]);
+                    } else {
+                        throw new Error('Photo not found');
+                    }
                 }
 
                 // 2. Fetch Event to get Photographer ID
@@ -81,7 +92,7 @@ const PhotoDownloadPage: React.FC = () => {
         };
 
         loadData();
-    }, [photoId, eventId]);
+    }, [photoId, photoIds, eventId]);
 
 
 
@@ -93,11 +104,39 @@ const PhotoDownloadPage: React.FC = () => {
         };
     }, []);
 
+    // Carousel navigation
+    const handleNextPhoto = () => {
+        if (currentPhotoIndex < photos.length - 1) {
+            setCurrentPhotoIndex(currentPhotoIndex + 1);
+        }
+    };
+
+    const handlePrevPhoto = () => {
+        if (currentPhotoIndex > 0) {
+            setCurrentPhotoIndex(currentPhotoIndex - 1);
+        }
+    };
+
+    // Keyboard navigation
+    useEffect(() => {
+        const handleKeyDown = (e: KeyboardEvent) => {
+            if (e.key === 'ArrowLeft') {
+                handleNextPhoto(); // Next in RTL
+            } else if (e.key === 'ArrowRight') {
+                handlePrevPhoto(); // Prev in RTL
+            }
+        };
+
+        window.addEventListener('keydown', handleKeyDown);
+        return () => window.removeEventListener('keydown', handleKeyDown);
+    }, [currentPhotoIndex, photos.length]);
+
     const toggleLike = async () => {
-        if (!eventId || !photoId || isLiked) return; // Prevent duplicate likes
+        const currentPhoto = photos[currentPhotoIndex];
+        if (!eventId || !currentPhoto || isLiked) return; // Prevent duplicate likes
 
         try {
-            const result = await BackendService.togglePhotoLike(eventId, photoId);
+            const result = await BackendService.togglePhotoLike(eventId, currentPhoto.id);
             setIsLiked(true);
             triggerToast(result.message, 'success');
         } catch (error) {
@@ -187,6 +226,39 @@ END:VCARD`;
         document.body.removeChild(link);
     };
 
+    // Download all selected photos as ZIP
+    const handleDownloadZip = async () => {
+        if (!eventId || photos.length === 0) return;
+
+        const imageIds = photos.map(p => parseInt(p.id));
+
+        try {
+            const response = await fetch(`${CONFIG.API_BASE_URL}/public/events/${eventId}/download-zip`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ image_ids: imageIds })
+            });
+
+            if (response.ok) {
+                const blob = await response.blob();
+                const url = window.URL.createObjectURL(blob);
+                const link = document.createElement('a');
+                link.href = url;
+                link.download = 'photos.zip';
+                document.body.appendChild(link);
+                link.click();
+                document.body.removeChild(link);
+                window.URL.revokeObjectURL(url);
+                triggerToast('הקובץ הורד בהצלחה', 'success');
+            } else {
+                triggerToast('שגיאה ביצירת קובץ ההורדה', 'error');
+            }
+        } catch (e) {
+            console.error(e);
+            triggerToast('שגיאה בהורדה', 'error');
+        }
+    };
+
     if (loading) {
         return (
             <div className="min-h-screen bg-slate-50 flex items-center justify-center">
@@ -195,14 +267,16 @@ END:VCARD`;
         );
     }
 
-    if (error || !photo) {
+    if (error || photos.length === 0) {
         return (
             <div className="min-h-screen bg-slate-950 flex flex-col items-center justify-center text-white p-4 text-center">
                 <p className="text-xl mb-4 text-red-400">{error || 'התמונה לא נמצאה'}</p>
-                {/* Back button removed as per request for new tab/window without back ability */}
             </div>
         );
     }
+
+    const currentPhoto = photos[currentPhotoIndex];
+    const isMultiplePhotos = photos.length > 1;
 
     return (
         <div dir="rtl" className="min-h-screen h-auto bg-[#FDFBF7] text-[#5C4A3A] pb-32 flex flex-col pt-safe-top overflow-y-auto">
@@ -215,19 +289,54 @@ END:VCARD`;
                 >
                     <ChevronRight className="w-6 h-6" />
                 </button>
-                <h1 className="font-bold text-lg text-[#5C4A3A]">שמירת תמונה</h1>
+                <h1 className="font-bold text-lg text-[#5C4A3A]">
+                    {isMultiplePhotos ? 'התמונות שבחרת' : 'שמירת תמונה'}
+                </h1>
                 <div className="w-10"></div> {/* Spacer for centering */}
             </div>
 
             <div className="flex-1 flex flex-col items-center p-4 space-y-6 max-w-md mx-auto w-full">
 
-                {/* 1. PHOTO - Centered Card (Reverted Layout) */}
+                {/* Position Indicator for Multiple Photos */}
+                {isMultiplePhotos && (
+                    <div className="text-center">
+                        <p className="text-[#8B7355] font-bold text-lg">
+                            {currentPhotoIndex + 1} מתוך {photos.length}
+                        </p>
+                    </div>
+                )}
+
+                {/* 1. PHOTO - Centered Card with Navigation */}
                 <div className="w-full bg-slate-200 rounded-3xl overflow-hidden shadow-xl relative group">
                     <img
-                        src={photo.url}
+                        src={currentPhoto.url}
                         alt="Preview"
                         className="w-full h-auto max-h-[60vh] object-contain bg-slate-100"
                     />
+
+                    {/* Navigation Arrows for Multiple Photos */}
+                    {isMultiplePhotos && (
+                        <>
+                            <button
+                                onClick={handlePrevPhoto}
+                                disabled={currentPhotoIndex === 0}
+                                className={`absolute right-4 top-1/2 transform -translate-y-1/2 p-3 rounded-full bg-white/80 hover:bg-white text-[#5C4A3A] transition-all shadow-lg z-10 ${currentPhotoIndex === 0 ? 'opacity-30 cursor-not-allowed' : 'hover:scale-110'
+                                    }`}
+                                aria-label="תמונה קודמת"
+                            >
+                                <ChevronRight className="w-6 h-6" />
+                            </button>
+                            <button
+                                onClick={handleNextPhoto}
+                                disabled={currentPhotoIndex === photos.length - 1}
+                                className={`absolute left-4 top-1/2 transform -translate-y-1/2 p-3 rounded-full bg-white/80 hover:bg-white text-[#5C4A3A] transition-all shadow-lg z-10 ${currentPhotoIndex === photos.length - 1 ? 'opacity-30 cursor-not-allowed' : 'hover:scale-110'
+                                    }`}
+                                aria-label="תמונה הבאה"
+                            >
+                                <ChevronLeft className="w-6 h-6" />
+                            </button>
+                        </>
+                    )}
                 </div>
 
                 {/* 2. Instructions & Actions */}
@@ -264,6 +373,20 @@ END:VCARD`;
                             )}
                         </div>
                     </div>
+
+                    {/* Download All as ZIP Button - Only for Multiple Photos */}
+                    {isMultiplePhotos && (
+                        <div className="w-full">
+                            <button
+                                onClick={handleDownloadZip}
+                                className="w-full px-6 py-4 bg-gradient-to-r from-[#C4A882] to-[#B39872] text-white text-base font-bold rounded-2xl hover:from-[#B39872] hover:to-[#A38762] active:scale-95 transition-all duration-200 shadow-xl shadow-[#C4A882]/30 hover:shadow-2xl hover:shadow-[#C4A882]/40 flex items-center justify-center gap-3"
+                                aria-label="הורד את כל התמונות כקובץ ZIP"
+                            >
+                                <Download className="w-6 h-6" />
+                                <span>הורד הכל כקובץ ZIP ({photos.length} תמונות)</span>
+                            </button>
+                        </div>
+                    )}
 
 
                     {/* Credit Section */}

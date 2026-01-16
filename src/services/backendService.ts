@@ -317,6 +317,24 @@ export const BackendService = {
         }
     },
 
+    trackDownloads: async (slug: string, count: number): Promise<void> => {
+        if (USE_MOCK) {
+            console.log('Mock: tracking downloads', count);
+            return;
+        }
+        try {
+            await fetch(`${CONFIG.API_BASE_URL}/public/events/${slug}/track-downloads`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ count }),
+            });
+        } catch (error) {
+            console.error('Failed to track downloads', error);
+        }
+    },
+
     // ============================================
     // Payments
     // ============================================
