@@ -1,11 +1,12 @@
 import React, { useEffect, useState } from 'react';
 import { useParams, useSearchParams } from 'react-router-dom';
 import { BackendService } from '../../services/backendService';
-import { Photo } from '../../types';
+import { Photo, PhotographerProfile } from '../../types';
 import { Loader2, ArrowRight, Download, Heart, Smartphone, Monitor, Share2, Check, Camera, Instagram, Globe, Phone, HeartHandshake, Facebook, ChevronRight, ChevronLeft } from 'lucide-react';
 import { FaTiktok } from 'react-icons/fa';
 import { Toast } from '../../components';
 import { CONFIG } from '../../config';
+import { useClipboard } from '../../hooks/useClipboard';
 
 const PhotoDownloadPage: React.FC = () => {
     const { id: eventId } = useParams<{ id: string }>(); // Use 'id' to match route /gallery/:id
@@ -15,7 +16,7 @@ const PhotoDownloadPage: React.FC = () => {
 
     const [photos, setPhotos] = useState<Photo[]>([]); // Changed from single photo to array
     const [currentPhotoIndex, setCurrentPhotoIndex] = useState(0); // For carousel navigation
-    const [photographer, setPhotographer] = useState<any | null>(null); // Ideally use PhotographerProfile type
+    const [photographer, setPhotographer] = useState<PhotographerProfile | null>(null);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
     const [isLiked, setIsLiked] = useState(false);
@@ -31,12 +32,14 @@ const PhotoDownloadPage: React.FC = () => {
         setShowToast(true);
     };
 
+    const { copyToClipboard } = useClipboard();
+
     // Device detection
     const [deviceType, setDeviceType] = useState<'ios' | 'android' | 'desktop'>('desktop');
 
     useEffect(() => {
-        const userAgent = navigator.userAgent || navigator.vendor || (window as any).opera;
-        if (/iPad|iPhone|iPod/.test(userAgent) && !(window as any).MSStream) {
+        const userAgent = navigator.userAgent || navigator.vendor || (window as unknown as { opera?: string }).opera || '';
+        if (/iPad|iPhone|iPod/.test(userAgent) && !(window as unknown as { MSStream?: string }).MSStream) {
             setDeviceType('ios');
         } else if (/android/i.test(userAgent)) {
             setDeviceType('android');
@@ -53,6 +56,7 @@ const PhotoDownloadPage: React.FC = () => {
         }
 
         const loadData = async () => {
+            if (!eventId) return;
             try {
                 // 1. Fetch Photos (single or multiple)
                 if (photoIds) {
@@ -166,44 +170,9 @@ const PhotoDownloadPage: React.FC = () => {
             const phoneNumber = photographer.phone || '';
             if (!phoneNumber) return;
 
-            // Copy to clipboard
-            if (navigator.clipboard && navigator.clipboard.writeText) {
-                navigator.clipboard.writeText(phoneNumber)
-                    .then(() => {
-                        alert('מספר הטלפון הועתק ללוח');
-                    })
-                    .catch(() => {
-                        // Fallback for older browsers
-                        const textArea = document.createElement('textarea');
-                        textArea.value = phoneNumber;
-                        textArea.style.position = 'fixed';
-                        textArea.style.left = '-9999px';
-                        document.body.appendChild(textArea);
-                        textArea.select();
-                        try {
-                            document.execCommand('copy');
-                            alert('מספר הטלפון הועתק ללוח');
-                        } catch (err) {
-                            console.error('Failed to copy', err);
-                        }
-                        document.body.removeChild(textArea);
-                    });
-            } else {
-                // Fallback for browsers without clipboard API
-                const textArea = document.createElement('textarea');
-                textArea.value = phoneNumber;
-                textArea.style.position = 'fixed';
-                textArea.style.left = '-9999px';
-                document.body.appendChild(textArea);
-                textArea.select();
-                try {
-                    document.execCommand('copy');
-                    alert('מספר הטלפון הועתק ללוח');
-                } catch (err) {
-                    console.error('Failed to copy', err);
-                }
-                document.body.removeChild(textArea);
-            }
+            copyToClipboard(phoneNumber).then(() => {
+                triggerToast('מספר הטלפון הועתק ללוח', 'success');
+            });
             return;
         }
 
