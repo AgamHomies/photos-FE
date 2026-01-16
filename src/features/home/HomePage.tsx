@@ -88,7 +88,7 @@ const HomePage: React.FC = () => {
       icon: <CheckCircle2 className="w-6 h-6 text-white" />,
       bg: "bg-amber-500",
       title: "תמחור פשוט ונגיש",
-      description: "אירוע ראשון עלינו! ולאחר מכן משלמים לפי התמחור שמופיע למטה, פר אירוע בלבד. בלי מנוי חודשי, בלי התחייבות!"
+      description: "אירוע ראשון עלינו! ולאחר מכן משלמים לפי התמחור שמופיע למטה, לאירוע בלבד. בלי מנוי חודשי, בלי התחייבות!"
     }
   ];
 
@@ -289,7 +289,7 @@ const HomePage: React.FC = () => {
         <div className="container mx-auto px-4">
           <div className="text-center mb-16">
             <h2 className="text-3xl lg:text-5xl font-bold text-slate-900 mb-6">תמחור גמיש ופשוט</h2>
-            <p className="text-lg text-slate-600 max-w-2xl mx-auto">תשלום פר אירוע, ללא דמי מנוי חודשיים וללא התחייבות.</p>
+            <p className="text-lg text-slate-600 max-w-2xl mx-auto">תשלום לאירוע, ללא דמי מנוי חודשיים וללא התחייבות.</p>
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-8 items-center max-w-6xl mx-auto">

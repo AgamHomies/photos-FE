@@ -235,24 +235,7 @@ export const BackendService = {
         return await RealGalleryAPI.searchFaces(slug, selfieFile);
     },
 
-    // ============================================
-    // Tracking
-    // ============================================
-    trackContactSaved: async (slug: string): Promise<void> => {
-        if (USE_MOCK) {
-            console.log('Mock: tracking contact saved');
-            return;
-        }
-        return await RealGalleryAPI.trackContactSaved(slug);
-    },
 
-    trackTrafficSource: async (slug: string, source: string): Promise<void> => {
-        if (USE_MOCK) {
-            console.log('Mock: tracking traffic source:', source);
-            return;
-        }
-        return await RealGalleryAPI.trackTrafficSource(slug, source);
-    },
     // ============================================
     // Share Extensions
     // ============================================
@@ -270,6 +253,68 @@ export const BackendService = {
             return [];
         }
         return await RealGalleryAPI.getSelection(slug, selectionHash);
+    },
+
+    // ============================================
+    // Likes
+    // ============================================
+    togglePhotoLike: async (eventId: string, photoId: string): Promise<{ likesCount: number; message: string }> => {
+        if (USE_MOCK) {
+            console.log('Mock: toggling like for photo', photoId);
+            return { likesCount: Math.floor(Math.random() * 100), message: 'תודה על הפרגון! ❤️' };
+        }
+
+        const response = await fetch(`${CONFIG.API_BASE_URL}/public/events/${eventId}/images/${photoId}/like`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+        });
+
+        if (!response.ok) {
+            throw new Error('Failed to toggle like');
+        }
+
+        const data = await response.json();
+        return {
+            likesCount: data.likes_count,
+            message: data.message
+        };
+    },
+
+    // ============================================
+    // Tracking
+    // ============================================
+    trackContactSaved: async (slug: string): Promise<void> => {
+        if (USE_MOCK) {
+            console.log('Mock: tracking contact saved');
+            return;
+        }
+        try {
+            await fetch(`${CONFIG.API_BASE_URL}/public/events/${slug}/track-contact-saved`, {
+                method: 'POST',
+            });
+        } catch (error) {
+            console.error('Failed to track contact save', error);
+        }
+    },
+
+    trackTrafficSource: async (slug: string, source: string): Promise<void> => {
+        if (USE_MOCK) {
+            console.log('Mock: tracking source', source);
+            return;
+        }
+        try {
+            await fetch(`${CONFIG.API_BASE_URL}/public/events/${slug}/track-source`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ source }),
+            });
+        } catch (error) {
+            console.error('Failed to track source', error);
+        }
     },
 
     // ============================================

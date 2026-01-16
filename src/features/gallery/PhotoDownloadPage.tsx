@@ -19,6 +19,17 @@ const PhotoDownloadPage: React.FC = () => {
     const [error, setError] = useState<string | null>(null);
     const [isLiked, setIsLiked] = useState(false);
 
+    // Toast state
+    const [showToast, setShowToast] = useState(false);
+    const [toastMessage, setToastMessage] = useState('');
+    const [toastType, setToastType] = useState<'success' | 'error'>('success');
+
+    const triggerToast = (message: string, type: 'success' | 'error' = 'success') => {
+        setToastMessage(message);
+        setToastType(type);
+        setShowToast(true);
+    };
+
     // Device detection
     const [deviceType, setDeviceType] = useState<'ios' | 'android' | 'desktop'>('desktop');
 
@@ -82,12 +93,34 @@ const PhotoDownloadPage: React.FC = () => {
         };
     }, []);
 
-    const toggleLike = () => {
-        setIsLiked(!isLiked);
+    const toggleLike = async () => {
+        if (!eventId || !photoId || isLiked) return; // Prevent duplicate likes
+
+        try {
+            const result = await BackendService.togglePhotoLike(eventId, photoId);
+            setIsLiked(true);
+            triggerToast(result.message, 'success');
+        } catch (error) {
+            console.error('Failed to toggle like:', error);
+            triggerToast('שגיאה בשליחת הפרגון', 'error');
+        }
+    };
+
+
+
+    const handleSocialClick = (source: string) => {
+        if (eventId) {
+            BackendService.trackTrafficSource(eventId, source);
+        }
     };
 
     const handleSaveContact = () => {
         if (!photographer) return;
+
+        // Track the save action
+        if (eventId) {
+            BackendService.trackContactSaved(eventId);
+        }
 
         // On desktop, copy phone number to clipboard
         if (deviceType === 'desktop') {
@@ -295,6 +328,7 @@ END:VCARD`;
                                                     target="_blank"
                                                     rel="noreferrer"
                                                     aria-label="אינסטגרם"
+                                                    onClick={() => handleSocialClick('instagram')}
                                                     className="w-7 h-7 min-w-[1.75rem] min-h-[1.75rem] flex items-center justify-center text-[#8B7355] hover:text-[#5C4A3A] active:text-[#4A3B2C] transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-[#C4A882] focus:ring-offset-2 focus:ring-offset-[#F0EBE3]"
                                                 >
                                                     <Instagram className="w-4 h-4" strokeWidth={2.5} />
@@ -306,6 +340,7 @@ END:VCARD`;
                                                     target="_blank"
                                                     rel="noreferrer"
                                                     aria-label="פייסבוק"
+                                                    onClick={() => handleSocialClick('facebook')}
                                                     className="w-7 h-7 min-w-[1.75rem] min-h-[1.75rem] flex items-center justify-center text-[#8B7355] hover:text-[#5C4A3A] active:text-[#4A3B2C] transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-[#C4A882] focus:ring-offset-2 focus:ring-offset-[#F0EBE3]"
                                                 >
                                                     <Facebook className="w-4 h-4" strokeWidth={2.5} />
@@ -317,6 +352,7 @@ END:VCARD`;
                                                     target="_blank"
                                                     rel="noreferrer"
                                                     aria-label="טיקטוק"
+                                                    onClick={() => handleSocialClick('tiktok')}
                                                     className="w-7 h-7 min-w-[1.75rem] min-h-[1.75rem] flex items-center justify-center text-[#8B7355] hover:text-[#5C4A3A] active:text-[#4A3B2C] transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-[#C4A882] focus:ring-offset-2 focus:ring-offset-[#F0EBE3]"
                                                 >
                                                     <FaTiktok className="w-4 h-4" />
@@ -328,6 +364,7 @@ END:VCARD`;
                                                     target="_blank"
                                                     rel="noreferrer"
                                                     aria-label="אתר אינטרנט"
+                                                    onClick={() => handleSocialClick('website')}
                                                     className="w-7 h-7 min-w-[1.75rem] min-h-[1.75rem] flex items-center justify-center text-[#8B7355] hover:text-[#5C4A3A] active:text-[#4A3B2C] transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-[#C4A882] focus:ring-offset-2 focus:ring-offset-[#F0EBE3]"
                                                 >
                                                     <Globe className="w-4 h-4" strokeWidth={2.5} />
@@ -353,6 +390,13 @@ END:VCARD`;
 
                 </div>
             </div>
+
+            <Toast
+                show={showToast}
+                message={toastMessage}
+                type={toastType}
+                onClose={() => setShowToast(false)}
+            />
         </div>
     );
 };
