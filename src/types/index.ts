@@ -106,14 +106,22 @@ export interface DashboardStats {
   trafficFacebook: number;
   trafficInstagram: number;
   trafficTiktok: number;
+  trafficWebsite: number;
   avgDownloadsPerEvent: number;
   avgPageVisitsPerEvent: number;
   avgPhoneSavesPerEvent: number;
   avgImagesPerEvent: number;
+  avgSocialTrafficPerEvent: number;
   maxDownloadsPerEvent: number;
   maxPageVisitsPerEvent: number;
   maxPhoneSavesPerEvent: number;
   maxImagesPerEvent: number;
+  maxSocialTrafficPerEvent: number;
+
+  // Likes statistics
+  totalLikes: number;
+  avgLikesPerEvent: number;
+  maxLikesPerEvent: number;
 
   statsBasic?: {
     total: number;

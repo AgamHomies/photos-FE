@@ -11,7 +11,8 @@ import {
     LogOut,
     TrendingUp,
     Share2,
-    Camera
+    Camera,
+    Heart
 } from 'lucide-react';
 import SuperAdminService, { PlatformStats, PhotographerStats } from '../../services/superAdminService';
 
@@ -310,6 +311,31 @@ const SuperAdminDashboard: React.FC = () => {
                                         <div>
                                             <span className="text-xs text-gray-400 block">מקסימום לצלם</span>
                                             <span className="text-sm font-semibold text-gray-700">{stats.max_social_traffic_per_photographer.toLocaleString()}</span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            {/* Likes (Paragonim) */}
+                            <div className="bg-white rounded-2xl p-6 shadow-lg border border-blue-100 flex flex-col justify-between h-full">
+                                <div>
+                                    <div className="flex items-center justify-between mb-4">
+                                        <div className="p-3 bg-rose-50 rounded-xl"><Heart className="w-6 h-6 text-rose-600" /></div>
+                                    </div>
+                                    <h3 className="text-3xl font-bold text-gray-900 mb-1">
+                                        {(stats.total_likes || 0).toLocaleString()}
+                                    </h3>
+                                    <p className="text-sm text-gray-600 mb-1">פרגונים</p>
+                                    <p className="text-xs text-gray-400 mb-4">פרגונים על התמונות</p>
+
+                                    <div className="border-t border-gray-100 pt-3 grid grid-cols-2 gap-4">
+                                        <div>
+                                            <span className="text-xs text-gray-400 block">ממוצע לאירוע</span>
+                                            <span className="text-sm font-semibold text-gray-700">{stats.avg_likes_per_event}</span>
+                                        </div>
+                                        <div>
+                                            <span className="text-xs text-gray-400 block">מקסימום לאירוע</span>
+                                            <span className="text-sm font-semibold text-gray-700">{(stats.max_likes_per_event || 0).toLocaleString()}</span>
                                         </div>
                                     </div>
                                 </div>

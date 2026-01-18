@@ -5,10 +5,20 @@
 @tailwind components;
 @tailwind utilities;
 
+/* Import responsive utilities */
+@import './styles/responsive.css';
+
 @layer base {
+  html {
+    overflow-x: hidden;
+    scroll-behavior: smooth;
+  }
+
   body {
     font-family: 'Heebo', sans-serif;
     @apply bg-slate-50 text-slate-900;
+    overflow-x: hidden;
+    max-width: 100vw;
   }
 }
 
