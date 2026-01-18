@@ -1,11 +1,13 @@
 import React, { useState, useRef } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
-import { Upload, Image as ImageIcon, Check, Calendar, MapPin, Camera, ScanFace, Send, Star, FolderUp, Eye, Trash2, Award, Crown, Plus } from 'lucide-react';
+import { Upload, Image as ImageIcon, Check, Calendar, MapPin, Star, FolderUp, Eye, Trash2, Crown, Plus, Award } from 'lucide-react';
 import { BackendService } from '../../services/backendService';
 import Layout from '../../components/Layout';
 import { Toast } from '../../components';
 import EventPreviewModal from './components/EventPreviewModal';
-import { GALLERY_THEMES, getThemeByColor } from '../../utils/galleryThemes';
+import { GALLERY_LAYOUTS, COLOR_PALETTES, getThemeByColor, findClosestPalette } from '../../utils/galleryThemes';
+
+import { GalleryLayout } from '../../types';
 
 const CreateEventPage: React.FC = () => {
     const navigate = useNavigate();
@@ -15,12 +17,20 @@ const CreateEventPage: React.FC = () => {
     );
 
     const [step, setStep] = useState<'details' | 'upload' | 'processing' | 'done'>('details');
-    const [formData, setFormData] = useState({
+    const [formData, setFormData] = useState<{
+        name: string;
+        description: string;
+        date: string;
+        location: string;
+        backgroundColor: string;
+        layout: GalleryLayout;
+    }>({
         name: '',
         description: '',
         date: '',
         location: '',
-        backgroundColor: '#FDFBF7'
+        backgroundColor: '#F8FAFC',
+        layout: 'ai'
     });
     const [coverImageFile, setCoverImageFile] = useState<File | null>(null);
     const [coverPreview, setCoverPreview] = useState<string | null>(null);
@@ -30,6 +40,9 @@ const CreateEventPage: React.FC = () => {
     const [createdEventLink, setCreatedEventLink] = useState('');
     const [isPreviewOpen, setIsPreviewOpen] = useState(false);
     const [colorMenuOpen, setColorMenuOpen] = useState(false);
+    const [layoutMenuOpen, setLayoutMenuOpen] = useState(false);
+    const [isManualLayout, setIsManualLayout] = useState(false);
+    const [isManualColor, setIsManualColor] = useState(false);
     const folderInputRef = useRef<HTMLInputElement>(null);
 
     const [showToast, setShowToast] = useState(false);
@@ -62,8 +75,43 @@ const CreateEventPage: React.FC = () => {
     const handleCoverImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         if (e.target.files && e.target.files[0]) {
             const file = e.target.files[0];
-            setCoverPreview(URL.createObjectURL(file));
+            const objectUrl = URL.createObjectURL(file);
+            setCoverPreview(objectUrl);
             setCoverImageFile(file);
+
+            // Auto-select layout and color based on image
+            const img = new Image();
+            img.onload = () => {
+                // 1. Analyze Dimensions for Layout
+                const isVertical = img.height > img.width;
+                const isUltraWide = img.width > img.height * 1.5;
+                const bestLayout = isVertical ? 'stack' : (isUltraWide ? 'hero' : 'side-by-side');
+
+                // 2. Analyze Color for Palette
+                const canvas = document.createElement('canvas');
+                const context = canvas.getContext('2d');
+                if (context) {
+                    canvas.width = 1;
+                    canvas.height = 1;
+                    context.drawImage(img, 0, 0, 1, 1);
+                    const data = context.getImageData(0, 0, 1, 1).data;
+                    const r = data[0];
+                    const g = data[1];
+                    const b = data[2];
+                    const hexColor = "#" + ((1 << 24) + (r << 16) + (g << 8) + b).toString(16).slice(1);
+                    const matchingPalette = findClosestPalette(hexColor);
+
+                    if (!isManualLayout || !isManualColor) {
+                        setFormData(prev => ({
+                            ...prev,
+                            layout: !isManualLayout ? bestLayout : prev.layout,
+                            backgroundColor: !isManualColor ? matchingPalette.backgroundColor : prev.backgroundColor
+                        }));
+                        triggerToast('התאמנו את המבנה והצבעים אוטומטית ✨');
+                    }
+                }
+            };
+            img.src = objectUrl;
         }
     };
 
@@ -237,7 +285,8 @@ const CreateEventPage: React.FC = () => {
                 coverImage: '',
                 expiryDate: new Date(new Date().setFullYear(new Date().getFullYear() + 1)).toISOString().split('T')[0],
                 packageType: packageType,
-                backgroundColor: formData.backgroundColor || '#FDFBF7'
+                backgroundColor: formData.backgroundColor || '#FDFBF7',
+                layout: formData.layout
             };
 
             // Create event directly
@@ -314,46 +363,85 @@ const CreateEventPage: React.FC = () => {
                                         <h2>פרטי האירוע</h2>
                                     </div>
                                     <div className="flex items-center gap-3">
-                                        {/* Color Theme Selector */}
+                                        {/* Color Palette Selector */}
                                         <div className="relative">
                                             <button
                                                 type="button"
-                                                onClick={() => setColorMenuOpen(!colorMenuOpen)}
+                                                onClick={() => {
+                                                    setColorMenuOpen(!colorMenuOpen);
+                                                    setLayoutMenuOpen(false);
+                                                }}
                                                 className="bg-white text-slate-700 px-4 py-2 rounded-xl font-bold hover:bg-slate-50 transition-all flex items-center gap-2 shadow-sm text-sm border border-slate-200"
                                             >
                                                 <div
                                                     className="w-4 h-4 rounded-full border border-slate-300"
                                                     style={{ backgroundColor: getThemeByColor(formData.backgroundColor).accentColor }}
                                                 ></div>
-                                                <span>צבע גלריה</span>
+                                                <span>צבע: {COLOR_PALETTES.find(p => p.backgroundColor === formData.backgroundColor)?.name || 'גלריה'}</span>
                                                 <svg className={`w-4 h-4 transition-transform ${colorMenuOpen ? 'rotate-180' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
                                                 </svg>
                                             </button>
 
-                                            {/* Dropdown Menu */}
                                             {colorMenuOpen && (
-                                                <div className="absolute top-full left-0 mt-2 bg-white rounded-xl shadow-xl border border-slate-200 p-3 z-50 min-w-[200px]">
-                                                    <div className="space-y-2">
-                                                        {GALLERY_THEMES.map((theme) => (
+                                                <div className="absolute top-full left-0 mt-2 bg-white rounded-xl shadow-xl border border-slate-200 p-3 z-50 min-w-[180px]">
+                                                    <div className="space-y-1">
+                                                        {COLOR_PALETTES.map((theme) => (
                                                             <button
                                                                 key={theme.id}
                                                                 type="button"
                                                                 onClick={() => {
                                                                     setFormData(prev => ({ ...prev, backgroundColor: theme.backgroundColor }));
+                                                                    setIsManualColor(theme.id !== 'ai-auto');
                                                                     setColorMenuOpen(false);
                                                                 }}
-                                                                className={`w-full flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-slate-50 transition-colors ${formData.backgroundColor === theme.backgroundColor ? 'bg-cyan-50 border border-cyan-200' : ''
-                                                                    }`}
+                                                                className={`w-full flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-slate-50 transition-colors ${formData.backgroundColor === theme.backgroundColor ? 'bg-cyan-50 border border-cyan-200' : ''}`}
                                                             >
                                                                 <div
-                                                                    className="w-6 h-6 rounded-full border-2 border-slate-300 flex-shrink-0"
+                                                                    className="w-5 h-5 rounded-full border border-slate-300"
                                                                     style={{ backgroundColor: theme.accentColor }}
                                                                 ></div>
                                                                 <span className="text-sm font-medium text-slate-700">{theme.name}</span>
-                                                                {formData.backgroundColor === theme.backgroundColor && (
-                                                                    <Check className="w-4 h-4 text-cyan-600 mr-auto" />
-                                                                )}
+                                                            </button>
+                                                        ))}
+                                                    </div>
+                                                </div>
+                                            )}
+                                        </div>
+
+                                        {/* Layout Selector */}
+                                        <div className="relative">
+                                            <button
+                                                type="button"
+                                                onClick={() => {
+                                                    setLayoutMenuOpen(!layoutMenuOpen);
+                                                    setColorMenuOpen(false);
+                                                }}
+                                                className="bg-white text-slate-700 px-4 py-2 rounded-xl font-bold hover:bg-slate-50 transition-all flex items-center gap-2 shadow-sm text-sm border border-slate-200"
+                                            >
+                                                <Plus className="w-4 h-4 text-slate-400" />
+                                                <span>מבנה: {GALLERY_LAYOUTS.find(l => l.id === formData.layout)?.name || 'רגיל'}</span>
+                                                <svg className={`w-4 h-4 transition-transform ${layoutMenuOpen ? 'rotate-180' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                                                </svg>
+                                            </button>
+
+                                            {layoutMenuOpen && (
+                                                <div className="absolute top-full left-0 mt-2 bg-white rounded-xl shadow-xl border border-slate-200 p-3 z-50 min-w-[220px]">
+                                                    <div className="space-y-1">
+                                                        {GALLERY_LAYOUTS.map((l) => (
+                                                            <button
+                                                                key={l.id}
+                                                                type="button"
+                                                                onClick={() => {
+                                                                    setFormData(prev => ({ ...prev, layout: l.id }));
+                                                                    setIsManualLayout(l.id !== 'ai');
+                                                                    setLayoutMenuOpen(false);
+                                                                }}
+                                                                className={`w-full text-right px-3 py-2 rounded-lg hover:bg-slate-50 transition-colors ${formData.layout === l.id ? 'bg-cyan-50 border border-cyan-200' : ''}`}
+                                                            >
+                                                                <div className="text-sm font-bold text-slate-800">{l.name}</div>
+                                                                <div className="text-[10px] text-slate-500">{l.description}</div>
                                                             </button>
                                                         ))}
                                                     </div>
@@ -737,6 +825,7 @@ const CreateEventPage: React.FC = () => {
                     location: formData.location,
                     coverImage: coverPreview,
                     backgroundColor: formData.backgroundColor,
+                    layout: formData.layout,
                     photographerName: localStorage.getItem('photographerName') || 'שם הצלם',
                     photographerImage: localStorage.getItem('photographerImage') || ''
                 }}

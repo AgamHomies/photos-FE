@@ -257,6 +257,7 @@ export const RealEventAPI = {
             createdAt: event.created_at,
             packageType: event.package_type || 'basic',
             backgroundColor: event.background_color,
+            layout: event.layout,
         }));
 
         return {
@@ -290,6 +291,7 @@ export const RealEventAPI = {
                 createdAt: data.created_at,
                 packageType: data.package_type || 'basic',
                 backgroundColor: data.background_color,
+                layout: data.layout,
             };
         } catch (error) {
             console.error('Failed to get event:', error);
@@ -306,6 +308,7 @@ export const RealEventAPI = {
             expiration_date: eventData.expiryDate,
             package_type: eventData.packageType || 'basic',
             background_color: eventData.backgroundColor,
+            layout: eventData.layout,
         };
 
         const data = await apiRequest('/events/', {
@@ -331,6 +334,7 @@ export const RealEventAPI = {
             createdAt: data.created_at,
             packageType: data.package_type || 'basic',
             backgroundColor: data.background_color,
+            layout: data.layout,
         };
     },
 
@@ -342,6 +346,7 @@ export const RealEventAPI = {
         if (updates.location) payload.location = updates.location;
         if (updates.expiryDate) payload.expiration_date = updates.expiryDate;
         if (updates.backgroundColor) payload.background_color = updates.backgroundColor;
+        if (updates.layout) payload.layout = updates.layout;
 
         const data = await apiRequest(`/events/${id}`, {
             method: 'PATCH',
@@ -369,6 +374,7 @@ export const RealEventAPI = {
             createdAt: data.created_at,
             packageType: data.package_type || 'basic',
             backgroundColor: data.background_color,
+            layout: data.layout,
         };
     },
 
@@ -417,6 +423,7 @@ export const RealEventAPI = {
             createdAt: data.created_at,
             packageType: data.package_type || 'basic',
             backgroundColor: data.background_color,
+            layout: data.layout,
         };
     },
 
@@ -598,6 +605,7 @@ export const RealGalleryAPI = {
                 coupleSlug: eventData.couple_slug,
                 mode: data.mode, // Map mode
                 backgroundColor: eventData.background_color,
+                layout: eventData.layout,
             };
         } catch (error) {
             console.error('Failed to get event by slug:', error);

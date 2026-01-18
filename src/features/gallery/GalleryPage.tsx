@@ -863,78 +863,244 @@ END:VCARD`;
          <div className="flex-grow w-full flex flex-col items-center py-12" style={{ backgroundColor: theme.backgroundColor }}>
 
             {/* 2. Main Content Card */}
-            {viewState !== 'results' && (
-               <div className="w-full max-w-5xl mx-auto px-4">
-                  <div
-                     className="rounded-3xl shadow-xl overflow-hidden transition-all duration-700"
-                     style={{
-                        backgroundColor: theme.cardBackground,
-                        border: `1px solid ${theme.cardBorder}`,
-                        borderRadius: borderRadius
-                     }}
-                  >
-                     <div className="text-center py-8 px-6 transition-all duration-700" style={{ borderBottom: `1px solid ${theme.cardBorder}` }}>
-                        <h2 className="text-3xl font-bold mb-4" style={{ color: theme.primaryColor }}>
-                           {mode === 'full' ? 'הגלריה של האירוע' : 'הגלריה שלך מהאירוע'}
-                        </h2>
-                        <div className="flex flex-wrap items-center justify-center gap-4 text-lg font-medium max-w-2xl mx-auto" style={{ color: theme.secondaryColor }}>
-                           <div className="flex items-center gap-1.5">
-                              <Heart className="w-4 h-4" style={{ color: theme.accentColor }} />
-                              <span>{event.name}</span>
-                           </div>
-                           <span className="hidden md:inline w-px h-4" style={{ backgroundColor: theme.cardBorder }}></span>
-                           <div className="flex items-center gap-2">
-                              <Calendar className="w-4 h-4" style={{ color: theme.accentColor }} />
-                              <span>{new Date(event.date).toLocaleDateString('he-IL', { day: 'numeric', month: 'long', year: 'numeric' })}</span>
-                           </div>
-                           <span className="hidden md:inline w-px h-4" style={{ backgroundColor: theme.cardBorder }}></span>
-                           <div className="flex items-center gap-2">
-                              <MapPin className="w-4 h-4" style={{ color: theme.accentColor }} />
-                              <span>{event.location}</span>
-                           </div>
-                        </div>
-                     </div>
+            {viewState !== 'results' && (() => {
+               const layout = event.layout === 'ai' ? 'split' : (event.layout || 'split');
 
-                     <div className="flex flex-col md:flex-row h-auto md:h-[500px]">
-                        <div className="w-full md:w-1/2 p-8 md:p-12 flex flex-col justify-center items-center text-center order-2 md:order-1 transition-all duration-700" style={{ backgroundColor: `${theme.cardBackground}dd` }}>
-                           {viewState === 'scanning' ? (
-                              <div className="flex flex-col items-center animate-pulse">
-                                 <div className="relative w-32 h-32 mb-6">
-                                    {selectedImage && <img src={URL.createObjectURL(selectedImage)} alt="Selfie" className="w-full h-full object-cover rounded-full border-4 border-white shadow-lg" />}
-                                    <div className="absolute inset-0 rounded-full border-4 border-t-transparent animate-spin" style={{ borderColor: theme.accentColor }}></div>
-                                 </div>
-                                 <h3 className="text-2xl font-bold mb-2" style={{ color: theme.primaryColor }}>מחפש אותך...</h3>
-                                 <p style={{ color: theme.secondaryColor }}>סורק את התמונות באמצעות AI</p>
-                              </div>
-                           ) : (
-                              <>
-                                 <div className="w-16 h-16 rounded-full flex items-center justify-center mb-6" style={{ backgroundColor: `${theme.accentColor}20`, borderRadius }}>
-                                    <Camera className="w-8 h-8" style={{ color: theme.accentColor }} />
-                                 </div>
-                                 <h3 className="text-2xl font-bold mb-3" style={{ color: theme.primaryColor }}>מצאו את התמונות שלכם מהאירוע</h3>
-                                 <p className="mb-8 max-w-sm leading-relaxed text-sm" style={{ color: theme.secondaryColor }}>
-                                    העלו סלפי ברור של עצמכם — והמערכת שלנו תזהה אוטומטית ותציג לכם רק את התמונות המדהימות שבהן הופעתם באירוע.
-                                 </p>
-                                 <label className="text-white px-8 py-4 font-bold shadow-md hover:shadow-lg transition-all cursor-pointer flex items-center gap-3 transform hover:-translate-y-1 w-full max-w-xs justify-center group" style={{ backgroundColor: theme.accentColor, borderRadius }}>
-                                    <Camera className="w-5 h-5 group-hover:scale-110 transition-transform" />
-                                    <span>העלה סלפי למציאת התמונות</span>
-                                    <input type="file" accept="image/*" className="hidden" onChange={handleImageUpload} />
-                                 </label>
-                                 <div className="mt-4 flex items-center gap-2 text-[10px] text-[#A89680]">
-                                    <span className="w-3 h-3" style={{ color: theme.accentColor }}><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></svg></span>
-                                    <span>התמונה נמחקת אוטומטית מיד לאחר תהליך הזיהוי.</span>
-                                 </div>
-                              </>
-                           )}
+               const LandingPanel = () => (
+                  <div className={`flex flex-col justify-center items-center text-center transition-all duration-700 w-full ${layout === 'split' || layout === 'portrait' ? 'md:w-1/2 p-8 md:p-12' : 'p-8 md:p-16'}`} style={{ backgroundColor: layout === 'glass' ? 'transparent' : `${theme.cardBackground}dd` }}>
+                     {viewState === 'scanning' ? (
+                        <div className="flex flex-col items-center animate-pulse">
+                           <div className="relative w-32 h-32 mb-6">
+                              {selectedImage && <img src={URL.createObjectURL(selectedImage)} alt="Selfie" className="w-full h-full object-cover rounded-full border-4 border-white shadow-lg" />}
+                              <div className="absolute inset-0 rounded-full border-4 border-t-transparent animate-spin" style={{ borderColor: theme.accentColor }}></div>
+                           </div>
+                           <h3 className="text-2xl font-bold mb-2" style={{ color: theme.primaryColor }}>מחפש אותך...</h3>
+                           <p style={{ color: theme.secondaryColor }}>סורק את התמונות באמצעות AI</p>
                         </div>
-                        <div className="w-full md:w-1/2 h-64 md:h-full relative order-1 md:order-2">
-                           <img src={event.coverImage} alt="Cover" className="w-full h-full object-cover shadow-inner" />
-                           <div className="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent md:hidden"></div>
+                     ) : (
+                        <>
+                           <div className="w-16 h-16 rounded-full flex items-center justify-center mb-6" style={{ backgroundColor: `${theme.accentColor}20`, borderRadius }}>
+                              <Camera className="w-8 h-8" style={{ color: theme.accentColor }} />
+                           </div>
+                           <h3 className="text-2xl font-bold mb-3" style={{ color: theme.primaryColor }}>מצאו את התמונות שלכם מהאירוע</h3>
+                           <p className="mb-8 max-w-sm leading-relaxed text-sm" style={{ color: theme.secondaryColor }}>
+                              העלו סלפי ברור של עצמכם — והמערכת שלנו תזהה אוטומטית ותציג לכם רק את התמונות המדהימות שבהן הופעתם באירוע.
+                           </p>
+                           <label className="text-white px-8 py-4 font-bold shadow-md hover:shadow-lg transition-all cursor-pointer flex items-center gap-3 transform hover:-translate-y-1 w-full max-w-xs justify-center group" style={{ backgroundColor: theme.accentColor, borderRadius }}>
+                              <Camera className="w-5 h-5 group-hover:scale-110 transition-transform" />
+                              <span>העלה סלפי למציאת התמונות</span>
+                              <input type="file" accept="image/*" className="hidden" onChange={handleImageUpload} />
+                           </label>
+                           <div className="mt-4 flex items-center gap-2 text-[10px] text-[#A89680]">
+                              <span className="w-3 h-3" style={{ color: theme.accentColor }}><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></svg></span>
+                              <span>התמונה נמחקת אוטומטית מיד לאחר תהליך הזיהוי.</span>
+                           </div>
+                        </>
+                     )}
+                  </div>
+               );
+
+               const EventDetails = () => (
+                  <div className="text-center py-8 px-6 transition-all duration-700" style={{ borderBottom: layout === 'hero' ? 'none' : `1px solid ${theme.cardBorder}` }}>
+                     <h2 className="text-3xl font-bold mb-4" style={{ color: theme.primaryColor }}>
+                        {mode === 'full' ? 'הגלריה של האירוע' : 'הגלריה שלך מהאירוע'}
+                     </h2>
+                     <div className="flex flex-wrap items-center justify-center gap-4 text-lg font-medium max-w-2xl mx-auto" style={{ color: theme.secondaryColor }}>
+                        <div className="flex items-center gap-1.5">
+                           <Heart className="w-4 h-4" style={{ color: theme.accentColor }} />
+                           <span>{event.name}</span>
+                        </div>
+                        <span className="hidden md:inline w-px h-4" style={{ backgroundColor: theme.cardBorder }}></span>
+                        <div className="flex items-center gap-2">
+                           <Calendar className="w-4 h-4" style={{ color: theme.accentColor }} />
+                           <span>{new Date(event.date).toLocaleDateString('he-IL', { day: 'numeric', month: 'long', year: 'numeric' })}</span>
+                        </div>
+                        <span className="hidden md:inline w-px h-4" style={{ backgroundColor: theme.cardBorder }}></span>
+                        <div className="flex items-center gap-2">
+                           <MapPin className="w-4 h-4" style={{ color: theme.accentColor }} />
+                           <span>{event.location}</span>
                         </div>
                      </div>
                   </div>
-               </div>
-            )}
+               );
+
+               const CoverImage = ({ className = "" }) => (
+                  <div className={`relative overflow-hidden ${className}`}>
+                     <img src={event.coverImage} alt="Cover" className="w-full h-full object-cover shadow-inner transition-transform duration-700 hover:scale-105" />
+                     <div className="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent"></div>
+                  </div>
+               );
+
+               return (
+                  <div className="w-full max-w-5xl mx-auto px-4">
+                     <div
+                        className="rounded-3xl shadow-xl overflow-hidden transition-all duration-700 relative"
+                        style={{
+                           backgroundColor: theme.cardBackground,
+                           border: layout === 'glass' ? 'none' : `1px solid ${theme.cardBorder}`,
+                           borderRadius: borderRadius
+                        }}
+                     >
+                        {layout === 'glass' && (
+                           <div className="absolute inset-0 z-0">
+                              <img src={event.coverImage} className="w-full h-full object-cover blur-sm scale-110 opacity-40" />
+                              <div className="absolute inset-0" style={{ backgroundColor: `${theme.backgroundColor}66` }}></div>
+                           </div>
+                        )}
+
+                        <div className="relative z-10">
+                           {layout === 'split' && (
+                              <>
+                                 <EventDetails />
+                                 <div className="flex flex-col md:flex-row h-auto md:h-[500px]">
+                                    <LandingPanel />
+                                    <CoverImage className="w-full md:w-1/2 h-64 md:h-full order-1 md:order-2" />
+                                 </div>
+                              </>
+                           )}
+
+                           {layout === 'hero' && (
+                              <>
+                                 <CoverImage className="w-full h-72 md:h-96" />
+                                 <EventDetails />
+                                 <div className="p-4 md:pb-12">
+                                    <LandingPanel />
+                                 </div>
+                              </>
+                           )}
+
+                           {layout === 'portrait' && (
+                              <>
+                                 <EventDetails />
+                                 <div className="flex flex-col md:flex-row h-auto md:h-[600px]">
+                                    <CoverImage className="w-full md:w-2/5 h-80 md:h-full order-1 md:order-2" />
+                                    <LandingPanel />
+                                 </div>
+                              </>
+                           )}
+
+                           {layout === 'glass' && (
+                              <div className="py-16 md:py-24 px-4 flex flex-col items-center">
+                                 <div className="bg-white/40 backdrop-blur-xl p-8 md:p-12 rounded-3xl border border-white/40 shadow-2xl max-w-2xl w-full">
+                                    <EventDetails />
+                                    <LandingPanel />
+                                 </div>
+                              </div>
+                           )}
+
+                           {layout === 'minimal' && (
+                              <div className="py-12 flex flex-col items-center">
+                                 <CoverImage className="w-32 h-32 md:w-48 md:h-48 rounded-full mb-8 border-4 border-white shadow-xl" />
+                                 <EventDetails />
+                                 <div className="max-w-xl w-full">
+                                    <LandingPanel />
+                                 </div>
+                              </div>
+                           )}
+
+                           {layout === 'magazine' && (
+                              <div className="flex flex-col md:flex-row min-h-[600px]">
+                                 <div className="w-full md:w-1/2 p-12 flex flex-col justify-center order-2 md:order-1">
+                                    <div className="border-r-4 pr-6 mb-8" style={{ borderColor: theme.accentColor }}>
+                                       <EventDetails />
+                                    </div>
+                                    <LandingPanel />
+                                 </div>
+                                 <div className="w-full md:w-1/2 relative min-h-[400px] order-1 md:order-2">
+                                    <div className="absolute inset-4 md:inset-12 z-10 shadow-2xl overflow-hidden rounded-lg">
+                                       <img src={event.coverImage} className="w-full h-full object-cover" />
+                                    </div>
+                                    <div className="absolute top-0 right-0 w-2/3 h-2/3 opacity-20" style={{ backgroundColor: theme.accentColor }}></div>
+                                 </div>
+                              </div>
+                           )}
+
+                           {layout === 'full-screen' && (
+                              <div className="relative min-h-[700px] flex items-center justify-center overflow-hidden">
+                                 <div className="absolute inset-0 z-0">
+                                    <img src={event.coverImage} className="w-full h-full object-cover" />
+                                    <div className="absolute inset-0 bg-black/40"></div>
+                                 </div>
+                                 <div className="relative z-10 bg-white/10 backdrop-blur-md p-8 md:p-16 rounded-[40px] border border-white/20 shadow-2xl text-white max-w-3xl mx-4 text-center">
+                                    <h2 className="text-4xl md:text-6xl font-black mb-6 drop-shadow-lg">{event.name}</h2>
+                                    <div className="flex flex-col gap-4 mb-12 text-xl font-medium">
+                                       <div className="flex items-center justify-center gap-3">
+                                          <Calendar className="w-6 h-6" />
+                                          <span>{new Date(event.date).toLocaleDateString('he-IL')}</span>
+                                       </div>
+                                       <div className="flex items-center justify-center gap-3">
+                                          <MapPin className="w-6 h-6" />
+                                          <span>{event.location}</span>
+                                       </div>
+                                    </div>
+                                    <div className="max-w-md mx-auto">
+                                       <LandingPanel />
+                                    </div>
+                                 </div>
+                              </div>
+                           )}
+
+                           {layout === 'side-by-side' && (
+                              <div className="flex flex-col md:flex-row min-h-[600px] gap-8 p-6 md:p-12">
+                                 <div className="w-full md:w-2/5 flex flex-col justify-center text-right">
+                                    <div className="mb-12">
+                                       <span className="text-sm font-bold uppercase tracking-widest opacity-50 block mb-2" style={{ color: theme.secondaryColor }}>הגלריה הרשמית</span>
+                                       <h2 className="text-4xl md:text-5xl font-black mb-6" style={{ color: theme.primaryColor }}>{event.name}</h2>
+                                       <div className="space-y-4" style={{ color: theme.secondaryColor }}>
+                                          <div className="flex items-center justify-end gap-3">
+                                             <span>{new Date(event.date).toLocaleDateString('he-IL')}</span>
+                                             <Calendar className="w-5 h-5" style={{ color: theme.accentColor }} />
+                                          </div>
+                                          <div className="flex items-center justify-end gap-3">
+                                             <span>{event.location}</span>
+                                             <MapPin className="w-5 h-5" style={{ color: theme.accentColor }} />
+                                          </div>
+                                       </div>
+                                    </div>
+                                    <LandingPanel />
+                                 </div>
+                                 <div className="w-full md:w-3/5 min-h-[500px] relative">
+                                    <div className="absolute inset-0 bg-slate-200 rounded-3xl overflow-hidden shadow-2xl">
+                                       <img src={event.coverImage} className="w-full h-full object-cover transition-transform duration-700 hover:scale-110" />
+                                    </div>
+                                    <div className="absolute -bottom-6 -left-6 w-32 h-32 rounded-3xl border-8 border-white shadow-xl z-20 overflow-hidden hidden md:block" style={{ backgroundColor: theme.backgroundColor }}>
+                                       <img src={event.coverImage} className="w-full h-full object-cover opacity-50" />
+                                    </div>
+                                 </div>
+                              </div>
+                           )}
+
+                           {layout === 'stack' && (
+                              <div className="flex flex-col items-center py-16 px-4">
+                                 <div className="relative max-w-2xl w-full mb-20">
+                                    <div className="aspect-[4/5] rounded-[2rem] overflow-hidden shadow-2xl relative z-0">
+                                       <img src={event.coverImage} className="w-full h-full object-cover" />
+                                    </div>
+                                    <div className="absolute -bottom-12 -right-4 md:-right-16 z-10 bg-white p-8 md:p-12 rounded-[2rem] shadow-2xl max-w-lg border border-slate-100">
+                                       <h2 className="text-3xl md:text-5xl font-black mb-6 leading-tight text-right" style={{ color: theme.primaryColor }}>{event.name}</h2>
+                                       <div className="flex items-center justify-end gap-6 text-sm font-bold uppercase tracking-wider" style={{ color: theme.secondaryColor }}>
+                                          <div className="flex items-center gap-2">
+                                             <span>{new Date(event.date).toLocaleDateString('he-IL')}</span>
+                                             <Calendar className="w-4 h-4" />
+                                          </div>
+                                          <div className="flex items-center gap-2">
+                                             <span>{event.location}</span>
+                                             <MapPin className="w-4 h-4" />
+                                          </div>
+                                       </div>
+                                    </div>
+                                 </div>
+                                 <div className="mt-12 max-w-md w-full">
+                                    <LandingPanel />
+                                 </div>
+                              </div>
+                           )}
+
+                        </div>
+                     </div>
+                  </div>
+               );
+            })()}
 
             {/* 3. Results View */}
             {viewState === 'results' && (
