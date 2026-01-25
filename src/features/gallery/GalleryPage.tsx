@@ -181,14 +181,11 @@ const GalleryPage: React.FC<GalleryPageProps> = ({ mode: propMode }) => {
       if (sortBy === 'matchScore') {
          sorted.sort((a, b) => (b.matchScore || 0) - (a.matchScore || 0));
       } else {
-         // Sort by time (takenAt)
+         // Sort by Title (filename) with natural sort (1, 2, 10)
          sorted.sort((a, b) => {
-            const timeA = a.takenAt ? new Date(a.takenAt).getTime() : 0;
-            const timeB = b.takenAt ? new Date(b.takenAt).getTime() : 0;
-            // Handle NaN
-            const valA = isNaN(timeA) ? 0 : timeA;
-            const valB = isNaN(timeB) ? 0 : timeB;
-            return valA - valB;
+            const titleA = a.title || '';
+            const titleB = b.title || '';
+            return titleA.localeCompare(titleB, undefined, { numeric: true, sensitivity: 'base' });
          });
       }
       return sorted;
