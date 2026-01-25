@@ -179,6 +179,9 @@ const DashboardPage: React.FC = () => {
                 if (profile?.name) {
                     localStorage.setItem('photographerName', profile.name);
                 }
+                if (profile?.profileImageUrl) {
+                    localStorage.setItem('photographerImage', profile.profileImageUrl);
+                }
             } catch (error) {
                 console.error('Failed to load profile', error);
             }

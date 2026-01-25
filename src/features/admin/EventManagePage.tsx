@@ -1,7 +1,7 @@
 import React, { useEffect, useState, useRef } from 'react';
 import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import { BackendService } from '../../services/backendService';
-import { Event, Photo } from '../../types';
+import { Event, Photo, GalleryLayout } from '../../types';
 import { CONFIG } from '../../config';
 import Layout from '../../components/Layout';
 import {
@@ -22,10 +22,13 @@ import {
     X,
     FolderUp,
     Eye,
-    Share2
+    Share2,
+    Check,
+    Plus
 } from 'lucide-react';
 import EventPreviewModal from './components/EventPreviewModal';
 import { useUpload } from '../../context/UploadContext';
+import { GALLERY_LAYOUTS, COLOR_PALETTES, getThemeByColor, findClosestPalette } from '../../utils/galleryThemes';
 import EventShareModal from './components/EventShareModal';
 import { unsecuredCopyToClipboard } from '../../utils/clipboard';
 
@@ -53,12 +56,24 @@ const EventManagePage: React.FC = () => {
     const initialTab = (queryParams.get('tab') as 'photos' | 'details') || 'photos';
     const [activeTab, setActiveTab] = useState<'photos' | 'details'>(initialTab);
 
-    // Edit form state
-    const [editForm, setEditForm] = useState({
+    const [editForm, setEditForm] = useState<{
+        name: string;
+        date: string;
+        location: string;
+        backgroundColor: string;
+        layout: GalleryLayout;
+    }>({
         name: '',
         date: '',
-        location: ''
+        location: '',
+        backgroundColor: '#F8FAFC',
+        layout: 'ai'
     });
+    const [colorMenuOpen, setColorMenuOpen] = useState(false);
+    const [layoutMenuOpen, setLayoutMenuOpen] = useState(false);
+    const [isManualLayout, setIsManualLayout] = useState(false);
+    const [isManualColor, setIsManualColor] = useState(false);
+    const [isPreviewOpen, setIsPreviewOpen] = useState(false);
 
     const [page, setPage] = useState(1);
     const [hasMore, setHasMore] = useState(true);
@@ -258,11 +273,18 @@ const EventManagePage: React.FC = () => {
 
             if (eventData) {
                 setEvent(eventData);
+                const layout = eventData.layout || 'ai';
+                const bgColor = eventData.backgroundColor || '#F8FAFC';
+
                 setEditForm({
                     name: eventData.name,
                     date: eventData.date,
-                    location: eventData.location
+                    location: eventData.location,
+                    backgroundColor: bgColor,
+                    layout: layout as GalleryLayout
                 });
+                setIsManualLayout(layout !== 'ai');
+                setIsManualColor(bgColor !== '#F8FAFC');
                 setPhotos(photosData);
                 setBatches(batchesData);
                 setPage(1);
@@ -722,14 +744,102 @@ const EventManagePage: React.FC = () => {
                                         </div>
                                         עריכת פרטי אירוע
                                     </h2>
-                                    <button
-                                        type="button"
-                                        onClick={() => setLinkModal(prev => ({ ...prev, isOpen: true, type: 'preview' }))}
-                                        className="bg-cyan-50 text-cyan-600 px-6 py-2 rounded-xl font-bold hover:bg-cyan-100 transition-colors flex items-center gap-2 shadow-sm text-sm border border-cyan-100"
-                                    >
-                                        <Eye className="w-4 h-4" />
-                                        <span>תצוגה מקדימה</span>
-                                    </button>
+                                    <div className="flex items-center gap-3">
+                                        {/* Color Palette Selector */}
+                                        <div className="relative">
+                                            <button
+                                                type="button"
+                                                onClick={() => {
+                                                    setColorMenuOpen(!colorMenuOpen);
+                                                    setLayoutMenuOpen(false);
+                                                }}
+                                                className="bg-white text-slate-700 px-4 py-2 rounded-xl font-bold hover:bg-slate-50 transition-all flex items-center gap-2 shadow-sm text-sm border border-slate-200"
+                                            >
+                                                <div
+                                                    className="w-4 h-4 rounded-full border border-slate-300"
+                                                    style={{ backgroundColor: getThemeByColor(editForm.backgroundColor).accentColor }}
+                                                ></div>
+                                                <span>צבע: {COLOR_PALETTES.find(theme => theme.backgroundColor === editForm.backgroundColor)?.name || 'גלריה'}</span>
+                                                <svg className={`w-4 h-4 transition-transform ${colorMenuOpen ? 'rotate-180' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                                                </svg>
+                                            </button>
+
+                                            {colorMenuOpen && (
+                                                <div className="absolute top-full left-0 mt-2 bg-white rounded-xl shadow-xl border border-slate-200 p-3 z-50 min-w-[180px]">
+                                                    <div className="space-y-1">
+                                                        {COLOR_PALETTES.map((theme) => (
+                                                            <button
+                                                                key={theme.id}
+                                                                type="button"
+                                                                onClick={() => {
+                                                                    setEditForm(prev => ({ ...prev, backgroundColor: theme.backgroundColor }));
+                                                                    setIsManualColor(theme.id !== 'ai-auto');
+                                                                    setColorMenuOpen(false);
+                                                                }}
+                                                                className={`w-full flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-slate-50 transition-colors ${editForm.backgroundColor === theme.backgroundColor ? 'bg-cyan-50 border border-cyan-200' : ''}`}
+                                                            >
+                                                                <div
+                                                                    className="w-5 h-5 rounded-full border border-slate-300"
+                                                                    style={{ backgroundColor: theme.accentColor }}
+                                                                ></div>
+                                                                <span className="text-sm font-medium text-slate-700">{theme.name}</span>
+                                                            </button>
+                                                        ))}
+                                                    </div>
+                                                </div>
+                                            )}
+                                        </div>
+
+                                        {/* Layout Selector */}
+                                        <div className="relative">
+                                            <button
+                                                type="button"
+                                                onClick={() => {
+                                                    setLayoutMenuOpen(!layoutMenuOpen);
+                                                    setColorMenuOpen(false);
+                                                }}
+                                                className="bg-white text-slate-700 px-4 py-2 rounded-xl font-bold hover:bg-slate-50 transition-all flex items-center gap-2 shadow-sm text-sm border border-slate-200"
+                                            >
+                                                <Plus className="w-4 h-4 text-slate-400" />
+                                                <span>מבנה: {GALLERY_LAYOUTS.find(l => l.id === editForm.layout)?.name || 'רגיל'}</span>
+                                                <svg className={`w-4 h-4 transition-transform ${layoutMenuOpen ? 'rotate-180' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                                                </svg>
+                                            </button>
+
+                                            {layoutMenuOpen && (
+                                                <div className="absolute top-full left-0 mt-2 bg-white rounded-xl shadow-xl border border-slate-200 p-3 z-50 min-w-[220px]">
+                                                    <div className="space-y-1">
+                                                        {GALLERY_LAYOUTS.map((l) => (
+                                                            <button
+                                                                key={l.id}
+                                                                type="button"
+                                                                onClick={() => {
+                                                                    setEditForm(prev => ({ ...prev, layout: l.id }));
+                                                                    setIsManualLayout(l.id !== 'ai');
+                                                                    setLayoutMenuOpen(false);
+                                                                }}
+                                                                className={`w-full text-right px-3 py-2 rounded-lg hover:bg-slate-50 transition-colors ${editForm.layout === l.id ? 'bg-cyan-50 border border-cyan-200' : ''}`}
+                                                            >
+                                                                <div className="text-sm font-bold text-slate-800">{l.name}</div>
+                                                                <div className="text-[10px] text-slate-500">{l.description}</div>
+                                                            </button>
+                                                        ))}
+                                                    </div>
+                                                </div>
+                                            )}
+                                        </div>
+
+                                        <button
+                                            type="button"
+                                            onClick={() => setLinkModal(prev => ({ ...prev, isOpen: true, type: 'preview' }))}
+                                            className="bg-cyan-50 text-cyan-600 px-6 py-2 rounded-xl font-bold hover:bg-cyan-100 transition-colors flex items-center gap-2 shadow-sm text-sm border border-cyan-100"
+                                        >
+                                            <Eye className="w-4 h-4" />
+                                            <span>תצוגה מקדימה</span>
+                                        </button>
+                                    </div>
                                 </div>
 
                                 <div className="p-8">
@@ -778,6 +888,41 @@ const EventManagePage: React.FC = () => {
                                                     onChange={async (e) => {
                                                         if (e.target.files && e.target.files[0] && id) {
                                                             const file = e.target.files[0];
+
+                                                            // Auto-select layout and color based on image dimensions
+                                                            const img = new Image();
+                                                            img.onload = () => {
+                                                                // 1. Analyze Dimensions
+                                                                const isVertical = img.height > img.width;
+                                                                const isUltraWide = img.width > img.height * 1.5;
+                                                                const bestLayout = isVertical ? 'stack' : (isUltraWide ? 'hero' : 'side-by-side');
+
+                                                                // 2. Analyze Color
+                                                                const canvas = document.createElement('canvas');
+                                                                const context = canvas.getContext('2d');
+                                                                if (context) {
+                                                                    canvas.width = 1;
+                                                                    canvas.height = 1;
+                                                                    context.drawImage(img, 0, 0, 1, 1);
+                                                                    const data = context.getImageData(0, 0, 1, 1).data;
+                                                                    const r = data[0];
+                                                                    const g = data[1];
+                                                                    const b = data[2];
+                                                                    const hexColor = "#" + ((1 << 24) + (r << 16) + (g << 8) + b).toString(16).slice(1);
+                                                                    const matchingPalette = findClosestPalette(hexColor);
+
+                                                                    if (!isManualLayout || !isManualColor) {
+                                                                        setEditForm(prev => ({
+                                                                            ...prev,
+                                                                            layout: !isManualLayout ? bestLayout : prev.layout,
+                                                                            backgroundColor: !isManualColor ? matchingPalette.backgroundColor : prev.backgroundColor
+                                                                        }));
+                                                                        showNotification('התאמנו את המבנה והצבעים אוטומטית ✨');
+                                                                    }
+                                                                }
+                                                            };
+                                                            img.src = URL.createObjectURL(file);
+
                                                             // Simple single cover upload
                                                             if (id) startUpload(id, [], file);
                                                         }
@@ -808,7 +953,7 @@ const EventManagePage: React.FC = () => {
                                         </div>
                                     </div>
 
-                                    {/* Preview Button (Full Width Bottom) */}
+                                    {/* Save Button (Full Width Bottom) */}
                                     <div className="mt-4 pt-4 border-t border-slate-100">
                                         <button
                                             type="submit"
@@ -820,8 +965,6 @@ const EventManagePage: React.FC = () => {
                                     </div>
                                 </div>
                             </div>
-
-
                         </form>
 
                         <div id="delete-section" className="mt-8 bg-red-50 rounded-3xl border border-red-100 p-8">
@@ -844,6 +987,7 @@ const EventManagePage: React.FC = () => {
                     </div>
                 )}
             </div>
+
             {/* Link Modal */}
             {linkModal.isOpen && (
                 <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4 animate-fade-in">
@@ -900,7 +1044,11 @@ const EventManagePage: React.FC = () => {
                     name: editForm.name,
                     date: editForm.date,
                     location: editForm.location,
-                    coverImage: event.coverImage
+                    coverImage: event.coverImage,
+                    backgroundColor: editForm.backgroundColor,
+                    layout: editForm.layout,
+                    photographerName: localStorage.getItem('photographerName') || 'שם הצלם',
+                    photographerImage: localStorage.getItem('photographerImage') || ''
                 }}
             />
 

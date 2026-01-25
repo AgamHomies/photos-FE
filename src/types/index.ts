@@ -42,6 +42,18 @@ export interface PhotographerRegistration {
   termsAccepted: boolean;
 }
 
+export type GalleryLayout =
+  | 'split'
+  | 'hero'
+  | 'portrait'
+  | 'glass'
+  | 'minimal'
+  | 'magazine'
+  | 'full-screen'
+  | 'side-by-side'
+  | 'stack'
+  | 'ai';
+
 export interface Event {
   id: string;
   photographerId?: string;
@@ -66,6 +78,8 @@ export interface Event {
   isPublished?: boolean;
   initialProcessingDone?: boolean; // Frontend property (camelCase)
   createdAt?: string;
+  backgroundColor?: string;
+  layout?: GalleryLayout;
 }
 
 export interface Batch {
