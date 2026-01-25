@@ -14,7 +14,8 @@ import {
     Crown,
     Award,
     Star,
-    MapPin
+    MapPin,
+    Heart
 } from 'lucide-react';
 import SuperAdminService, { PhotographerDetail, EventSummary } from '../../services/superAdminService';
 
@@ -243,6 +244,21 @@ const PhotographerDetailPage: React.FC = () => {
                                     </div>
                                     <div className="text-xs text-gray-900/60 mt-1">
                                         פייסבוק • אינסטגרם • טיקטוק
+                                    </div>
+                                </div>
+
+                                <div className="bg-white p-4 rounded-2xl border border-blue-100 shadow-sm">
+                                    <div className="flex items-center gap-2 mb-2">
+                                        <div className="p-2 bg-rose-50 rounded-lg">
+                                            <Heart className="w-4 h-4 text-rose-600" />
+                                        </div>
+                                        <div className="text-xs text-gray-900/60">פרגונים</div>
+                                    </div>
+                                    <div className="text-2xl font-bold text-gray-900">
+                                        {(photographer.stats.total_likes || 0).toLocaleString()}
+                                    </div>
+                                    <div className="text-xs text-gray-900/60 mt-1">
+                                        על כל התמונות
                                     </div>
                                 </div>
                             </div>

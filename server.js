@@ -128,13 +128,31 @@ app.get('/gallery/:id', async (req, res) => {
 <html lang="he" dir="rtl">
 <head>
     <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    
+    <!-- Primary Meta Tags -->
     <title>${ogTitle}</title>
+    <meta name="title" content="${ogTitle}" />
+    <meta name="description" content="${ogDesc}" />
+    
+    <!-- Open Graph / Facebook -->
     <meta property="og:type" content="website" />
+    <meta property="og:url" content="${req.protocol}://${req.get('host')}${req.originalUrl}" />
     <meta property="og:title" content="${ogTitle}" />
     <meta property="og:description" content="${ogDesc}" />
     <meta property="og:image" content="${ogImage}" />
-    <meta property="og:url" content="${req.protocol}://${req.get('host')}${req.originalUrl}" />
+    <meta property="og:image:secure_url" content="${ogImage}" />
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="630" />
+    <meta property="og:site_name" content="Click2Pic" />
+    
+    <!-- Twitter -->
     <meta property="twitter:card" content="summary_large_image" />
+    <meta property="twitter:url" content="${req.protocol}://${req.get('host')}${req.originalUrl}" />
+    <meta property="twitter:title" content="${ogTitle}" />
+    <meta property="twitter:description" content="${ogDesc}" />
+    <meta property="twitter:image" content="${ogImage}" />
+    
     <meta http-equiv="refresh" content="0;url=/gallery/${id}" />
 </head>
 <body>
