@@ -138,9 +138,25 @@ const CreateEventPage: React.FC = () => {
             return;
         }
 
+        // Local duplicate check
+        const existingKeys = new Set(galleryFiles.map(f => `${f.name}-${f.size}`));
+        const uniqueNewFiles = imageFiles.filter(f => {
+            const key = `${f.name}-${f.size}`;
+            if (existingKeys.has(key)) return false;
+            existingKeys.add(key);
+            return true;
+        });
+
+        const skippedCount = imageFiles.length - uniqueNewFiles.length;
+        if (skippedCount > 0) {
+            triggerToast(`דלגנו על ${skippedCount} תמונות כפולות שנגררו`, 'success');
+        }
+
+        if (uniqueNewFiles.length === 0) return;
+
         // Check photo limit based on selected package
         const photoLimit = PACKAGE_LIMITS[packageType];
-        const totalPhotos = galleryFiles.length + imageFiles.length;
+        const totalPhotos = galleryFiles.length + uniqueNewFiles.length;
 
         if (totalPhotos > photoLimit) {
             if (packageType === 'gold') {
@@ -160,7 +176,7 @@ const CreateEventPage: React.FC = () => {
             return;
         }
 
-        setGalleryFiles(prev => [...prev, ...imageFiles]);
+        setGalleryFiles(prev => [...prev, ...uniqueNewFiles]);
     };
 
     const handleGalleryFilesChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -173,9 +189,25 @@ const CreateEventPage: React.FC = () => {
                 return;
             }
 
+            // Local duplicate check
+            const existingKeys = new Set(galleryFiles.map(f => `${f.name}-${f.size}`));
+            const uniqueNewFiles = imageFiles.filter(f => {
+                const key = `${f.name}-${f.size}`;
+                if (existingKeys.has(key)) return false;
+                existingKeys.add(key);
+                return true;
+            });
+
+            const skippedCount = imageFiles.length - uniqueNewFiles.length;
+            if (skippedCount > 0) {
+                triggerToast(`דלגנו על ${skippedCount} תמונות כפולות שנבחרו`, 'success');
+            }
+
+            if (uniqueNewFiles.length === 0) return;
+
             // Check photo limit based on selected package
             const photoLimit = PACKAGE_LIMITS[packageType];
-            const totalPhotos = galleryFiles.length + imageFiles.length;
+            const totalPhotos = galleryFiles.length + uniqueNewFiles.length;
 
             if (totalPhotos > photoLimit) {
                 if (packageType === 'gold') {
@@ -197,7 +229,7 @@ const CreateEventPage: React.FC = () => {
                 return;
             }
 
-            setGalleryFiles(prev => [...prev, ...imageFiles]);
+            setGalleryFiles(prev => [...prev, ...uniqueNewFiles]);
         }
     };
 

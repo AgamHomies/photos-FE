@@ -28,6 +28,7 @@ import EventPreviewModal from './components/EventPreviewModal';
 import { useUpload } from '../../context/UploadContext';
 import EventShareModal from './components/EventShareModal';
 import { unsecuredCopyToClipboard } from '../../utils/clipboard';
+import DuplicateModal from './components/DuplicateModal';
 
 const EventManagePage: React.FC = () => {
     const { id } = useParams<{ id: string }>();
@@ -78,6 +79,16 @@ const EventManagePage: React.FC = () => {
     }>({ isOpen: false, type: 'guest', url: '', title: '' });
 
     const [shareModalOpen, setShareModalOpen] = useState(false);
+
+    // Duplicate detection state
+    const [duplicateModal, setDuplicateModal] = useState<{
+        isOpen: boolean;
+        duplicates: any[];
+        totalFiles: number;
+        files: File[];
+    }>({ isOpen: false, duplicates: [], totalFiles: 0, files: [] });
+
+    const [isCheckingDuplicates, setIsCheckingDuplicates] = useState(false);
 
     const handleLinkClick = (type: 'guest' | 'couple') => {
         if (!event) return;
@@ -161,7 +172,7 @@ const EventManagePage: React.FC = () => {
                     window.history.replaceState({}, document.title);
 
                     if (id) {
-                        startUpload(id, state.filesToUpload, state.coverFile);
+                        handleBulkUpload(state.filesToUpload, state.coverFile);
                     }
                 }
             });
@@ -291,8 +302,71 @@ const EventManagePage: React.FC = () => {
 
     const handleBulkUpload = async (files: File[], coverFile?: File) => {
         if (!id) return;
+
         try {
+            setIsCheckingDuplicates(true);
+
+            // 1. Check for duplicates
+            const fileCheckItems = files.map(f => ({
+                filename: f.name,
+                fileSize: f.size
+                // We could add hash here if we compute it, but let's stick to name+size for speed
+            }));
+
+            const response = await BackendService.checkDuplicates(id, fileCheckItems);
+            const duplicates = response.results.filter((res: any) => res.isDuplicate);
+
+            if (duplicates.length > 0) {
+                setDuplicateModal({
+                    isOpen: true,
+                    duplicates,
+                    totalFiles: files.length,
+                    files
+                });
+                return;
+            }
+
+            // No duplicates, proceed normally
             await startUpload(id, files, coverFile);
+            showNotification('העלאה התחילה ברקע...');
+        } catch (e) {
+            console.error(e);
+            showNotification('שגיאה בבדיקת כפילויות/העלאה', 'error');
+        } finally {
+            setIsCheckingDuplicates(false);
+        }
+    };
+
+    const handleDuplicateOption = async (option: 'skip' | 'replace' | 'both') => {
+        const { files, duplicates } = duplicateModal;
+        setDuplicateModal(prev => ({ ...prev, isOpen: false }));
+
+        if (!id) return;
+
+        let filesToUpload = [...files];
+
+        if (option === 'skip') {
+            const duplicateFilenames = new Set(duplicates.map(d => d.filename));
+            filesToUpload = files.filter(f => !duplicateFilenames.has(f.name));
+
+            if (filesToUpload.length === 0) {
+                showNotification('כל התמונות שבחרת כבר קיימות באירוע');
+                return;
+            }
+        } else if (option === 'replace') {
+            // Delete existing ones
+            const photoIdsToDelete = duplicates.map(d => d.existingPhotoId);
+            try {
+                showNotification('מוחק גרסאות ישנות...', 'success');
+                await Promise.all(photoIdsToDelete.map(pid => BackendService.deleteEventPhoto(id, pid.toString())));
+            } catch (err) {
+                console.error("Failed to delete some existing photos", err);
+                showNotification('שגיאה במחיקת גרסאות קיימות, ממשיך בהעלאה בכל זאת', 'error');
+            }
+        }
+
+        try {
+            await startUpload(id, filesToUpload);
             showNotification('העלאה התחילה ברקע...');
         } catch (e) {
             console.error(e);
@@ -925,9 +999,29 @@ const EventManagePage: React.FC = () => {
             <EventShareModal
                 isOpen={shareModalOpen}
                 onClose={() => setShareModalOpen(false)}
-                event={event}
+                eventSlug={event.slug || event.id}
                 photographerName={photographerName}
+                eventName={event.name}
             />
+
+            {/* Duplicate Check Modal */}
+            <DuplicateModal
+                isOpen={duplicateModal.isOpen}
+                duplicates={duplicateModal.duplicates}
+                totalFiles={duplicateModal.totalFiles}
+                onCancel={() => setDuplicateModal(prev => ({ ...prev, isOpen: false }))}
+                onOptionSelected={handleDuplicateOption}
+            />
+
+            {/* Global Check Loading */}
+            {isCheckingDuplicates && (
+                <div className="fixed inset-0 z-[110] bg-slate-900/40 backdrop-blur-[2px] flex items-center justify-center">
+                    <div className="bg-white p-8 rounded-3xl shadow-xl flex flex-col items-center gap-4">
+                        <Loader2 className="w-10 h-10 text-cyan-600 animate-spin" />
+                        <p className="font-bold text-slate-700">בודק כפילויות...</p>
+                    </div>
+                </div>
+            )}
         </Layout>
     );
 };

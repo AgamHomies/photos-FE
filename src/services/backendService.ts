@@ -173,7 +173,12 @@ export const BackendService = {
             : await RealPhotoAPI.deleteEventPhoto(eventId, photoId);
     },
 
-    getPresignedUrls: async (eventId: string, files: { filename: string; contentType: string }[]): Promise<{ urls: { photoId: string; uploadUrl: string }[] }> => {
+    checkDuplicates: async (eventId: string, files: { filename: string; fileSize: number; fileHash?: string }[]): Promise<any> => {
+        if (USE_MOCK) return { results: files.map(f => ({ filename: f.filename, isDuplicate: false })) };
+        return await RealPhotoAPI.checkDuplicates(eventId, files);
+    },
+
+    getPresignedUrls: async (eventId: string, files: { filename: string; contentType: string; fileSize: number; fileHash?: string }[]): Promise<{ urls: { photoId: string; uploadUrl: string }[] }> => {
         if (USE_MOCK) throw new Error('Not implemented for mock');
         return await RealPhotoAPI.getPresignedUrls(eventId, files);
     },

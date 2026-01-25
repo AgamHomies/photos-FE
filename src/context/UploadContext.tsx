@@ -86,8 +86,17 @@ export const UploadProvider: React.FC<{ children: ReactNode }> = ({ children }) 
                         stage: `מעלה חלק ${currentBatchNum} מתוך ${totalBatches}...`
                     });
 
-                    // 1. Presign
-                    const fileInfos = chunk.map(f => ({ filename: f.name, contentType: f.type }));
+                    // 1. Presign with metadata
+                    const fileInfos = await Promise.all(chunk.map(async f => {
+                        // Quick hash would be helpful, but let's at least send size
+                        return {
+                            filename: f.name,
+                            contentType: f.type,
+                            fileSize: f.size
+                            // fileHash: await computeHash(f) // Optional: add hashing here
+                        };
+                    }));
+
                     const { urls } = await BackendService.getPresignedUrls(eventId, fileInfos);
 
                     // 2. Upload to S3

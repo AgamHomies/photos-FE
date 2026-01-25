@@ -523,12 +523,19 @@ export const RealPhotoAPI = {
     },
 
     deleteEventPhoto: async (eventId: string, photoId: string): Promise<void> => {
-        await apiRequest(`/events/${eventId}/images/${photoId}`, {
+        await apiRequest(`/events/${eventId}/photos/${photoId}`, {
             method: 'DELETE',
         });
     },
 
-    getPresignedUrls: async (eventId: string, files: { filename: string; contentType: string }[]): Promise<{ urls: { photoId: string; uploadUrl: string }[] }> => {
+    checkDuplicates: async (eventId: string, files: { filename: string; fileSize: number; fileHash?: string }[]): Promise<any> => {
+        return await apiRequest(`/events/${eventId}/photos/check-duplicates`, {
+            method: 'POST',
+            body: JSON.stringify({ files }),
+        });
+    },
+
+    getPresignedUrls: async (eventId: string, files: { filename: string; contentType: string; fileSize: number; fileHash?: string }[]): Promise<{ urls: { photoId: string; uploadUrl: string }[] }> => {
         return await apiRequest(`/events/${eventId}/photos/presign`, {
             method: 'POST',
             body: JSON.stringify({ files }),
