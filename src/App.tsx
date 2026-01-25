@@ -1,6 +1,7 @@
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import HomePage from './features/home/HomePage';
 import GalleryPage from './features/gallery/GalleryPage';
+import PhotoDownloadPage from './features/gallery/PhotoDownloadPage';
 import DashboardPage from './features/admin/DashboardPage';
 import CreateEventPage from './features/admin/CreateEventPage';
 import EventManagePage from './features/admin/EventManagePage';
@@ -38,6 +39,7 @@ function App() {
           <Route path="/" element={<HomePage />} />
           <Route path="/contact" element={<ContactPage />} />
           <Route path="gallery/:id" element={<GalleryPage mode="guest" />} />
+          <Route path="gallery/:id/download" element={<PhotoDownloadPage />} />
 
           <Route path="auth" element={<AuthPage />} />
           <Route path="auth/callback" element={<AuthCallbackPage />} />

@@ -506,7 +506,7 @@ const EventManagePage: React.FC = () => {
     const currentProgress = isClientUploading ? activeUpload!.progress : serverProgress;
     const currentStage = isClientUploading ? activeUpload!.stage : serverProgressStage;
 
-    const showLinks = !showProgressBar && (event.isPublished || event.initialProcessingDone);
+    const showLinks = !showProgressBar && (event.isPublished || event.initialProcessingDone) && event.status !== 'expired';
 
     return (
         <Layout>

@@ -286,9 +286,22 @@ export const MockS3Service = {
             totalEvents,
             totalImages,
             totalSocialTraffic: 0,
-            trafficFacebook: 0,
-            trafficInstagram: 0,
-            trafficTiktok: 0,
+            trafficFacebook: 120,
+            trafficInstagram: 85,
+            trafficTiktok: 45,
+            trafficWebsite: 30,
+            // Likes stats (Mock)
+            totalLikes: 450,
+            avgLikesPerEvent: 12.5,
+            maxLikesPerEvent: 45,
+
+            avgSocialTrafficPerEvent: 3.5,
+            maxSocialTrafficPerEvent: 15,
+
+            statsBasic: {
+                total: 10,
+                active: 8
+            },
             avgDownloadsPerEvent: totalEvents > 0 ? Number((totalDownloads / totalEvents).toFixed(1)) : 0,
             avgPageVisitsPerEvent: totalEvents > 0 ? Number((totalPageVisits / totalEvents).toFixed(1)) : 0,
             avgPhoneSavesPerEvent: totalEvents > 0 ? Number((phoneSaves / totalEvents).toFixed(1)) : 0,

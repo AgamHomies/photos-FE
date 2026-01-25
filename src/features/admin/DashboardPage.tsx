@@ -351,10 +351,10 @@ const DashboardPage: React.FC = () => {
                     </div>
                 </div>
 
-                {/* Stats Grid - 6 Columns on Desktop */}
+                {/* Stats Grid - 7 Columns on Desktop */}
                 {stats && (
 
-                    <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4 mb-8">
+                    <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-7 gap-4 mb-8">
                         {/* 1. אירועים */}
                         <div className="col-span-2 md:col-span-1 bg-white p-5 rounded-2xl shadow-sm border border-slate-100 hover:shadow-md transition-all flex flex-col">
                             {/* Header - Icon */}
@@ -385,11 +385,7 @@ const DashboardPage: React.FC = () => {
                                                 <span>בסיס</span>
                                             </div>
                                             <div className="text-center font-bold text-slate-900">{stats.statsBasic?.total || 0}</div>
-                                            <div className="text-center">
-                                                <span className="bg-green-50 text-green-600 rounded-md py-0.5 px-2 font-bold text-[10px] inline-block min-w-[25px]">
-                                                    {stats.statsBasic?.active || 0}
-                                                </span>
-                                            </div>
+                                            <div className="text-center font-bold text-green-600">{stats.statsBasic?.active || 0}</div>
                                         </div>
                                         <div className="grid grid-cols-[1.5fr_0.7fr_0.8fr] gap-2 items-center text-xs">
                                             <div className="text-right font-bold text-cyan-600 flex items-center justify-start gap-1">
@@ -397,11 +393,7 @@ const DashboardPage: React.FC = () => {
                                                 <span>פרימיום</span>
                                             </div>
                                             <div className="text-center font-bold text-slate-900">{stats.statsPremium?.total || 0}</div>
-                                            <div className="text-center">
-                                                <span className="bg-green-50 text-green-600 rounded-md py-0.5 px-2 font-bold text-[10px] inline-block min-w-[25px]">
-                                                    {stats.statsPremium?.active || 0}
-                                                </span>
-                                            </div>
+                                            <div className="text-center font-bold text-green-600">{stats.statsPremium?.active || 0}</div>
                                         </div>
                                         <div className="grid grid-cols-[1.5fr_0.7fr_0.8fr] gap-2 items-center text-xs">
                                             <div className="text-right font-bold text-amber-500 flex items-center justify-start gap-1">
@@ -409,11 +401,7 @@ const DashboardPage: React.FC = () => {
                                                 <span>זהב</span>
                                             </div>
                                             <div className="text-center font-bold text-slate-900">{stats.statsGold?.total || 0}</div>
-                                            <div className="text-center">
-                                                <span className="bg-green-50 text-green-600 rounded-md py-0.5 px-2 font-bold text-[10px] inline-block min-w-[25px]">
-                                                    {stats.statsGold?.active || 0}
-                                                </span>
-                                            </div>
+                                            <div className="text-center font-bold text-green-600">{stats.statsGold?.active || 0}</div>
                                         </div>
                                     </div>
                                 </div>
@@ -421,7 +409,7 @@ const DashboardPage: React.FC = () => {
                         </div>
 
                         {/* 2. תמונות */}
-                        <div className="col-span-2 md:col-span-1 bg-white p-5 rounded-2xl shadow-sm border border-slate-100 hover:shadow-md transition-all relative group">
+                        <div className="md:col-span-1 bg-white p-5 rounded-2xl shadow-sm border border-slate-100 hover:shadow-md transition-all relative group">
                             <div className="flex flex-col items-start text-right h-full justify-between">
                                 <div>
                                     <div className="p-2.5 bg-cyan-50 text-cyan-500 rounded-xl mb-3 w-fit">
@@ -434,14 +422,17 @@ const DashboardPage: React.FC = () => {
                                         <p className="text-slate-500 font-semibold text-xs">תמונות</p>
                                     </div>
                                 </div>
-                                <div className="w-full pt-3 border-t border-slate-100 flex justify-between text-right mt-3">
-                                    <div>
-                                        <p className="text-slate-400 text-[10px] font-semibold">מקסימום</p>
-                                        <p className="text-slate-900 font-bold text-sm">{stats.maxImagesPerEvent || 0}</p>
-                                    </div>
-                                    <div>
-                                        <p className="text-slate-400 text-[10px] font-semibold">ממוצע</p>
-                                        <p className="text-slate-900 font-bold text-sm">{stats.avgImagesPerEvent || 0}</p>
+                                <div className="w-full pt-3 border-t border-slate-100 mt-3">
+                                    <p className="text-slate-400 text-[11px] font-semibold mb-2">לאירוע</p>
+                                    <div className="flex justify-between text-right">
+                                        <div>
+                                            <p className="text-slate-400 text-[10px] font-semibold">מקסימום</p>
+                                            <p className="text-slate-900 font-bold text-sm">{stats.maxImagesPerEvent || 0}</p>
+                                        </div>
+                                        <div>
+                                            <p className="text-slate-400 text-[10px] font-semibold">ממוצע</p>
+                                            <p className="text-slate-900 font-bold text-sm">{stats.avgImagesPerEvent || 0}</p>
+                                        </div>
                                     </div>
                                 </div>
                             </div>
@@ -457,14 +448,17 @@ const DashboardPage: React.FC = () => {
                                     <h3 className="text-3xl font-black text-slate-900 leading-none mb-1">{(stats.totalPageVisits || 0).toLocaleString()}</h3>
                                     <p className="text-slate-500 font-semibold text-xs">כניסות אורחים</p>
                                 </div>
-                                <div className="w-full pt-3 border-t border-slate-100 flex justify-between text-right mt-3">
-                                    <div>
-                                        <p className="text-slate-400 text-[10px] font-semibold">מקסימום</p>
-                                        <p className="text-slate-900 font-bold text-sm">{stats.maxPageVisitsPerEvent || 0}</p>
-                                    </div>
-                                    <div>
-                                        <p className="text-slate-400 text-[10px] font-semibold">ממוצע</p>
-                                        <p className="text-slate-900 font-bold text-sm">{stats.avgPageVisitsPerEvent || 0}</p>
+                                <div className="w-full pt-3 border-t border-slate-100 mt-3">
+                                    <p className="text-slate-400 text-[11px] font-semibold mb-2">לאירוע</p>
+                                    <div className="flex justify-between text-right">
+                                        <div>
+                                            <p className="text-slate-400 text-[10px] font-semibold">מקסימום</p>
+                                            <p className="text-slate-900 font-bold text-sm">{stats.maxPageVisitsPerEvent || 0}</p>
+                                        </div>
+                                        <div>
+                                            <p className="text-slate-400 text-[10px] font-semibold">ממוצע</p>
+                                            <p className="text-slate-900 font-bold text-sm">{stats.avgPageVisitsPerEvent || 0}</p>
+                                        </div>
                                     </div>
                                 </div>
                             </div>
@@ -490,14 +484,17 @@ const DashboardPage: React.FC = () => {
                                     <h3 className="text-3xl font-black text-slate-900 leading-none mb-1">{(stats.totalDownloads || 0).toLocaleString()}</h3>
                                     <p className="text-slate-500 font-semibold text-xs">הורדות</p>
                                 </div>
-                                <div className="w-full pt-3 border-t border-slate-100 flex justify-between text-right mt-3">
-                                    <div>
-                                        <p className="text-slate-400 text-[10px] font-semibold">מקסימום</p>
-                                        <p className="text-slate-900 font-bold text-sm">{stats.maxDownloadsPerEvent || 0}</p>
-                                    </div>
-                                    <div>
-                                        <p className="text-slate-400 text-[10px] font-semibold">ממוצע</p>
-                                        <p className="text-slate-900 font-bold text-sm">{stats.avgDownloadsPerEvent || 0}</p>
+                                <div className="w-full pt-3 border-t border-slate-100 mt-3">
+                                    <p className="text-slate-400 text-[11px] font-semibold mb-2">לאירוע</p>
+                                    <div className="flex justify-between text-right">
+                                        <div>
+                                            <p className="text-slate-400 text-[10px] font-semibold">מקסימום</p>
+                                            <p className="text-slate-900 font-bold text-sm">{stats.maxDownloadsPerEvent || 0}</p>
+                                        </div>
+                                        <div>
+                                            <p className="text-slate-400 text-[10px] font-semibold">ממוצע</p>
+                                            <p className="text-slate-900 font-bold text-sm">{stats.avgDownloadsPerEvent || 0}</p>
+                                        </div>
                                     </div>
                                 </div>
                             </div>
@@ -523,14 +520,17 @@ const DashboardPage: React.FC = () => {
                                     <h3 className="text-3xl font-black text-slate-900 leading-none mb-1">{(stats.phoneSaves || 0).toLocaleString()}</h3>
                                     <p className="text-slate-500 font-semibold text-xs">שמירות</p>
                                 </div>
-                                <div className="w-full pt-3 border-t border-slate-100 flex justify-between text-right mt-3">
-                                    <div>
-                                        <p className="text-slate-400 text-[10px] font-semibold">מקסימום</p>
-                                        <p className="text-slate-900 font-bold text-sm">{stats.maxPhoneSavesPerEvent || 0}</p>
-                                    </div>
-                                    <div>
-                                        <p className="text-slate-400 text-[10px] font-semibold">ממוצע</p>
-                                        <p className="text-slate-900 font-bold text-sm">{stats.avgPhoneSavesPerEvent || 0}</p>
+                                <div className="w-full pt-3 border-t border-slate-100 mt-3">
+                                    <p className="text-slate-400 text-[11px] font-semibold mb-2">לאירוע</p>
+                                    <div className="flex justify-between text-right">
+                                        <div>
+                                            <p className="text-slate-400 text-[10px] font-semibold">מקסימום</p>
+                                            <p className="text-slate-900 font-bold text-sm">{stats.maxPhoneSavesPerEvent || 0}</p>
+                                        </div>
+                                        <div>
+                                            <p className="text-slate-400 text-[10px] font-semibold">ממוצע</p>
+                                            <p className="text-slate-900 font-bold text-sm">{stats.avgPhoneSavesPerEvent || 0}</p>
+                                        </div>
                                     </div>
                                 </div>
                             </div>
@@ -555,16 +555,56 @@ const DashboardPage: React.FC = () => {
                                     </div>
                                     <h3 className="text-3xl font-black text-slate-900 leading-none mb-1">{(stats.totalSocialTraffic || 0).toLocaleString()}</h3>
                                     <p className="text-slate-500 font-semibold text-xs">כניסות לפרופיל</p>
-                                    <p className="text-slate-400 text-[10px] mt-1">פייסבוק • אינסטגרם • טיקטוק</p>
+                                    <p className="text-slate-400 text-[10px] mt-1">אתר • פייסבוק • אינסטגרם • טיקטוק</p>
                                 </div>
-                                <div className="w-full pt-3 border-t border-slate-100 flex justify-between text-right mt-3">
-                                    <div>
-                                        <p className="text-slate-400 text-[10px] font-semibold">מקסימום</p>
-                                        <p className="text-slate-900 font-bold text-sm">{stats.totalEvents > 0 ? Math.max(stats.trafficFacebook, stats.trafficInstagram, stats.trafficTiktok) : 0}</p>
+                                <div className="w-full pt-3 border-t border-slate-100 mt-3">
+                                    <p className="text-slate-400 text-[11px] font-semibold mb-2">לאירוע</p>
+                                    <div className="flex justify-between text-right">
+                                        <div>
+                                            <p className="text-slate-400 text-[10px] font-semibold">מקסימום</p>
+                                            <p className="text-slate-900 font-bold text-sm">{stats.maxSocialTrafficPerEvent || 0}</p>
+                                        </div>
+                                        <div>
+                                            <p className="text-slate-400 text-[10px] font-semibold">ממוצע</p>
+                                            <p className="text-slate-900 font-bold text-sm">{stats.avgSocialTrafficPerEvent || 0}</p>
+                                        </div>
                                     </div>
-                                    <div>
-                                        <p className="text-slate-400 text-[10px] font-semibold">ממוצע</p>
-                                        <p className="text-slate-900 font-bold text-sm">{stats.totalEvents > 0 ? (stats.totalSocialTraffic / stats.totalEvents).toFixed(1) : 0}</p>
+                                </div>
+                            </div>
+                        </div>
+
+                        {/* 7. פרגונים (Likes) */}
+                        <div className="bg-white p-5 rounded-2xl shadow-sm border border-slate-100 hover:shadow-md transition-all relative flex flex-col">
+                            <div className="absolute top-5 left-5">
+                                <div className="text-left group">
+                                    <span className="bg-rose-100 text-rose-600 px-2 py-0.5 rounded-full text-[10px] font-bold cursor-help">
+                                        {stats.totalPageVisits > 0 ? Math.round((stats.totalLikes / stats.totalPageVisits) * 100) : 0}%
+                                    </span>
+                                    <p className="text-slate-600 text-[10px] font-semibold mt-1 opacity-0 group-hover:opacity-100 transition-opacity leading-tight absolute left-0 w-20">
+                                        אחוז המרה מהכניסות אורחים
+                                    </p>
+                                </div>
+                            </div>
+                            <div className="flex flex-col items-start text-right h-full justify-between">
+                                <div>
+                                    <div className="p-2.5 bg-rose-50 text-rose-500 rounded-xl mb-3 w-fit">
+                                        <Heart className="w-5 h-5" />
+                                    </div>
+                                    <h3 className="text-3xl font-black text-slate-900 leading-none mb-1">{(stats.totalLikes || 0).toLocaleString()}</h3>
+                                    <p className="text-slate-500 font-semibold text-xs">פרגונים</p>
+                                    <p className="text-slate-400 text-[10px] mt-1">פרגונים על התמונות</p>
+                                </div>
+                                <div className="w-full pt-3 border-t border-slate-100 mt-3">
+                                    <p className="text-slate-400 text-[11px] font-semibold mb-2">לאירוע</p>
+                                    <div className="flex justify-between text-right">
+                                        <div>
+                                            <p className="text-slate-400 text-[10px] font-semibold">מקסימום</p>
+                                            <p className="text-slate-900 font-bold text-sm">{stats.maxLikesPerEvent || 0}</p>
+                                        </div>
+                                        <div>
+                                            <p className="text-slate-400 text-[10px] font-semibold">ממוצע</p>
+                                            <p className="text-slate-900 font-bold text-sm">{stats.avgLikesPerEvent || 0}</p>
+                                        </div>
                                     </div>
                                 </div>
                             </div>
@@ -705,7 +745,12 @@ const DashboardPage: React.FC = () => {
                                         <td className="px-6 py-4 text-slate-600 text-sm font-medium">{event.guestVisits}</td>
                                         <td className="px-6 py-4 text-slate-600 text-sm font-medium">{event.downloads}</td>
                                         <td className="px-6 py-4">
-                                            {event.isPublished || event.initialProcessingDone ? (
+                                            {event.status === 'expired' ? (
+                                                <div className="px-3 py-1.5 text-xs font-bold text-slate-500 bg-slate-100 rounded-lg flex items-center gap-1.5 border border-slate-200 justify-center cursor-not-allowed">
+                                                    <X className="w-3 h-3" />
+                                                    <span>לא זמין</span>
+                                                </div>
+                                            ) : (event.isPublished || event.initialProcessingDone) ? (
                                                 <div className="flex gap-2 justify-center">
                                                     <button
                                                         onClick={(e) => openLinkModal(e, 'guest', `/gallery/${event.slug || event.id}`)}

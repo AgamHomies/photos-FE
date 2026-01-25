@@ -15,6 +15,7 @@ export interface PlatformStats {
     total_contact_saves: number;
     total_views: number;
     total_social_traffic: number;
+    total_likes: number; // Added
     active_events: number;
     draft_events: number;
 
@@ -29,6 +30,7 @@ export interface PlatformStats {
     avg_contact_saves_per_event: number;
     avg_social_traffic_per_photographer: number;
     avg_events_per_photographer: number;
+    avg_likes_per_event: number; // Added
 
     max_images_per_event: number;
     max_views_per_event: number;
@@ -36,6 +38,7 @@ export interface PlatformStats {
     max_contact_saves_per_event: number;
     max_social_traffic_per_photographer: number;
     max_events_per_photographer: number;
+    max_likes_per_event: number; // Added
 
     download_rate_percent: number;
     contact_save_rate_percent: number;
@@ -65,6 +68,7 @@ export interface PhotographerStats {
     total_contact_saves: number;
     total_views: number;
     total_social_traffic: number;
+    total_likes: number;
     active_events: number;
 
     // Package Stats
@@ -96,6 +100,7 @@ export interface PhotographerDetail {
         active_events: number;
         draft_events: number;
         total_social_traffic: number;
+        total_likes: number;
         // Package Stats
         stats_basic?: PhotographerPackageStats;
         stats_premium?: PhotographerPackageStats;

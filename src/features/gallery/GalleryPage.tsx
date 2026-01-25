@@ -1,5 +1,5 @@
 import React, { useEffect, useState, useRef } from 'react';
-import { useParams } from 'react-router-dom';
+import { useParams, useNavigate } from 'react-router-dom';
 import { BackendService } from '../../services/backendService';
 import { CONFIG } from '../../config';
 import { Event, Photo, PhotographerProfile } from '../../types';
@@ -121,6 +121,7 @@ interface GalleryPageProps {
 
 const GalleryPage: React.FC<GalleryPageProps> = ({ mode: propMode }) => {
    const { id } = useParams<{ id: string }>();
+   const navigate = useNavigate();
    const [event, setEvent] = useState<Event | null>(null);
    const eventRef = useRef<Event | null>(null); // Ref to access event inside closures without dependencies
 
@@ -187,7 +188,7 @@ const GalleryPage: React.FC<GalleryPageProps> = ({ mode: propMode }) => {
             // Handle NaN
             const valA = isNaN(timeA) ? 0 : timeA;
             const valB = isNaN(timeB) ? 0 : timeB;
-            return valB - valA;
+            return valA - valB;
          });
       }
       return sorted;
@@ -656,21 +657,8 @@ const GalleryPage: React.FC<GalleryPageProps> = ({ mode: propMode }) => {
          const isIOS = /iPhone|iPad|iPod/i.test(navigator.userAgent);
          const isMobile = /Android/i.test(navigator.userAgent) || isIOS;
 
-         if (isMobile && isIOS) {
-            const win = window.open(data.url, '_blank');
-            if (!win) {
-               triggerToast('חלון ההורדה נחסם. יש לאפשר חלונות קופצים.', 'error');
-            } else {
-               triggerToast('לחץ לחיצה ארוכה על התמונה ושמור אותה.', 'success');
-            }
-         } else {
-            const link = document.createElement('a');
-            link.href = data.url;
-            link.setAttribute('download', `photo-${photo.id}.jpg`);
-            document.body.appendChild(link);
-            link.click();
-            document.body.removeChild(link);
-         }
+         // Navigate to download page in same tab (allows back button)
+         window.location.href = `/gallery/${id}/download?photoId=${photo.id}`;
       } catch (error) {
          console.error('Download error:', error);
          const win = window.open(photo.url, '_blank');
@@ -685,39 +673,25 @@ const GalleryPage: React.FC<GalleryPageProps> = ({ mode: propMode }) => {
    const handleDownloadAll = async () => {
       if (photos.length === 0) return;
 
-      const photosToDownload = selectedPhotos.size > 0
-         ? photos.filter(p => selectedPhotos.has(p.id))
-         : photos;
-
-      if (mode === 'full' && selectedPhotos.size === 0) {
-         window.location.href = `${CONFIG.API_BASE_URL}/public/events/${id}/download-all`;
-      } else {
-         const imageIds = photosToDownload.map(p => parseInt(p.id));
-
-         try {
-            const response = await fetch(`${CONFIG.API_BASE_URL}/public/events/${id}/download-zip`, {
-               method: 'POST',
-               headers: { 'Content-Type': 'application/json' },
-               body: JSON.stringify({ image_ids: imageIds })
-            });
-
-            if (response.ok) {
-               const blob = await response.blob();
-               const url = window.URL.createObjectURL(blob);
-               const link = document.createElement('a');
-               link.href = url;
-               link.download = 'photos.zip';
-               document.body.appendChild(link);
-               link.click();
-               document.body.removeChild(link);
-               window.URL.revokeObjectURL(url);
-            } else {
-               triggerToast('שגיאה ביצירת קובץ ההורדה', 'error');
+      // If photos are selected, redirect to download page for review
+      if (selectedPhotos.size > 0) {
+         // Track downloads when user clicks download button (not when they click ZIP)
+         if (id) {
+            try {
+               await BackendService.trackDownloads(id, selectedPhotos.size);
+            } catch (error) {
+               console.error('Failed to track downloads:', error);
             }
-         } catch (e) {
-            console.error(e);
-            triggerToast('שגיאה בהורדה', 'error');
          }
+
+         const photoIds = Array.from(selectedPhotos).join(',');
+         navigate(`/gallery/${id}/download?photoIds=${photoIds}`);
+         return;
+      }
+
+      // Download all photos immediately (full mode only)
+      if (mode === 'full') {
+         window.location.href = `${CONFIG.API_BASE_URL}/public/events/${id}/download-all`;
       }
    };
 
@@ -1161,7 +1135,12 @@ END:VCARD`;
                            <Share2 className="w-4 h-4" />
                            {selectedPhotos.size > 0 ? `שתף (${selectedPhotos.size})` : 'שתף'}
                         </button>
-                        <button onClick={handleDownloadAll} className="text-white px-6 py-2.5 rounded-full text-sm font-bold shadow-md transition-all flex items-center gap-2 hover:scale-[1.02] active:scale-[0.98]" style={{ backgroundColor: theme.accentColor }}>
+                        <button
+                           onClick={handleDownloadAll}
+                           disabled={selectedPhotos.size === 0}
+                           className={`px-6 py-2.5 rounded-full text-sm font-bold shadow-md transition-all flex items-center gap-2 ${selectedPhotos.size > 0 ? 'text-white hover:scale-[1.02] active:scale-[0.98]' : 'bg-gray-100 text-gray-400 cursor-not-allowed'}`}
+                           style={selectedPhotos.size > 0 ? { backgroundColor: theme.accentColor } : {}}
+                        >
                            <Download className="w-4 h-4" />
                            {selectedPhotos.size > 0 ? `הורד (${selectedPhotos.size})` : 'הורד הכל'}
                         </button>
