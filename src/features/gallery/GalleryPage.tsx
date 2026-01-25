@@ -181,14 +181,11 @@ const GalleryPage: React.FC<GalleryPageProps> = ({ mode: propMode }) => {
       if (sortBy === 'matchScore') {
          sorted.sort((a, b) => (b.matchScore || 0) - (a.matchScore || 0));
       } else {
-         // Sort by time (takenAt)
+         // Sort by Title (filename) with natural sort (1, 2, 10)
          sorted.sort((a, b) => {
-            const timeA = a.takenAt ? new Date(a.takenAt).getTime() : 0;
-            const timeB = b.takenAt ? new Date(b.takenAt).getTime() : 0;
-            // Handle NaN
-            const valA = isNaN(timeA) ? 0 : timeA;
-            const valB = isNaN(timeB) ? 0 : timeB;
-            return valA - valB;
+            const titleA = a.title || '';
+            const titleB = b.title || '';
+            return titleA.localeCompare(titleB, undefined, { numeric: true, sensitivity: 'base' });
          });
       }
       return sorted;
@@ -1103,6 +1100,25 @@ END:VCARD`;
                   <div className="flex flex-wrap justify-center pb-8" dir="rtl">
                      {photos.map((photo) => {
                         const isSelected = selectedPhotos.has(photo.id);
+
+                        // Calculate object-position based on face bounding box
+                        const calculateObjectPosition = (boundingBox?: { Width: number; Height: number; Left: number; Top: number }): string => {
+                           if (!boundingBox) return 'center center';
+
+                           // Bounding box values are normalized (0-1)
+                           // Calculate the center of the face
+                           const faceCenterX = boundingBox.Left + (boundingBox.Width / 2);
+                           const faceCenterY = boundingBox.Top + (boundingBox.Height / 2);
+
+                           // Convert to percentage for CSS object-position
+                           const xPercent = faceCenterX * 100;
+                           const yPercent = faceCenterY * 100;
+
+                           return `${xPercent}% ${yPercent}%`;
+                        };
+
+                        const objectPosition = calculateObjectPosition(photo.boundingBox);
+
                         return (
                            <div
                               key={photo.id}
@@ -1113,6 +1129,7 @@ END:VCARD`;
                                  src={photo.url}
                                  alt="Gallery Item"
                                  className="w-full h-full object-cover transition-transform duration-500 md:group-hover:scale-105"
+                                 style={{ objectPosition }}
                                  loading="lazy"
                               />
 

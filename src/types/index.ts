@@ -24,6 +24,12 @@ export interface Photo {
   shareLink?: string;
   matchScore?: number;
   takenAt?: string;
+  boundingBox?: {
+    Width: number;
+    Height: number;
+    Left: number;
+    Top: number;
+  };
 }
 
 export interface PhotographerRegistration {
