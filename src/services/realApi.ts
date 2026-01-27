@@ -551,6 +551,13 @@ export const RealPhotoAPI = {
             },
         });
     },
+
+    checkDuplicates: async (eventId: string, filenames: string[]): Promise<{ results: any[] }> => {
+        return await apiRequest(`/events/${eventId}/photos/check-duplicates`, {
+            method: 'POST',
+            body: JSON.stringify({ filenames }),
+        });
+    },
 };
 
 // ============================================

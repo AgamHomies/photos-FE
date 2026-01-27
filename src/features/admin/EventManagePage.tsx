@@ -28,6 +28,7 @@ import EventPreviewModal from './components/EventPreviewModal';
 import { useUpload } from '../../context/UploadContext';
 import EventShareModal from './components/EventShareModal';
 import { unsecuredCopyToClipboard } from '../../utils/clipboard';
+import DuplicateModal from './components/DuplicateModal';
 
 const EventManagePage: React.FC = () => {
     const { id } = useParams<{ id: string }>();
@@ -78,6 +79,14 @@ const EventManagePage: React.FC = () => {
     }>({ isOpen: false, type: 'guest', url: '', title: '' });
 
     const [shareModalOpen, setShareModalOpen] = useState(false);
+
+    // Duplicate detection state
+    const [duplicateModal, setDuplicateModal] = useState<{
+        isOpen: boolean;
+        duplicates: any[];
+        totalFiles: number;
+        files: File[];
+    }>({ isOpen: false, duplicates: [], totalFiles: 0, files: [] });
 
     const handleLinkClick = (type: 'guest' | 'couple') => {
         if (!event) return;
@@ -291,8 +300,97 @@ const EventManagePage: React.FC = () => {
 
     const handleBulkUpload = async (files: File[], coverFile?: File) => {
         if (!id) return;
+
         try {
+            // 1. Check for duplicates by name against the server
+            const filenames = files.map(f => f.name);
+            const response = await BackendService.checkDuplicates(id, filenames);
+            const serverDuplicates = response.results.filter((res: any) => res.isDuplicate);
+
+            // 2. Check for internal duplicates (within the selection itself)
+            const internalDuplicates: any[] = [];
+            const seenInSelection = new Set<string>();
+
+            files.forEach(f => {
+                if (seenInSelection.has(f.name)) {
+                    if (!internalDuplicates.find(d => d.filename === f.name)) {
+                        internalDuplicates.push({
+                            filename: f.name,
+                            isDuplicate: true,
+                            isInternal: true,
+                            existingThumbnailUrl: URL.createObjectURL(f) // Local preview
+                        });
+                    }
+                }
+                seenInSelection.add(f.name);
+            });
+
+            const allDuplicates = [...serverDuplicates, ...internalDuplicates];
+
+            if (allDuplicates.length > 0) {
+                setDuplicateModal({
+                    isOpen: true,
+                    duplicates: allDuplicates,
+                    totalFiles: files.length,
+                    files
+                });
+                return;
+            }
+
+            // No duplicates, proceed normally
             await startUpload(id, files, coverFile);
+            showNotification('העלאה התחילה ברקע...');
+        } catch (e) {
+            console.error(e);
+            showNotification('שגיאה בבדיקת כפילויות/העלאה', 'error');
+        }
+    };
+
+    const handleDuplicateOption = async (option: 'skip' | 'replace' | 'both') => {
+        setDuplicateModal(prev => ({ ...prev, isOpen: false }));
+        const { files, duplicates } = duplicateModal;
+
+        if (!id) return;
+
+        let filesToUpload = [...files];
+
+        if (option === 'skip') {
+            const duplicateNames = new Set(duplicates.map(d => d.filename));
+            filesToUpload = files.filter(f => !duplicateNames.has(f.name));
+
+            if (filesToUpload.length === 0) {
+                showNotification('כל התמונות כבר קיימות באירוע');
+                return;
+            }
+        } else if (option === 'replace') {
+            // Delete existing ones on server
+            const photoIdsToDelete = duplicates.filter(d => d.existingPhotoId).map(d => d.existingPhotoId);
+            try {
+                if (photoIdsToDelete.length > 0) {
+                    showNotification('מוחק גרסאות ישנות...', 'success');
+                    await Promise.all(photoIdsToDelete.map(pid => BackendService.deleteEventPhoto(id, pid.toString())));
+                }
+
+                // Keep only one copy of internal duplicates
+                const seen = new Set<string>();
+                filesToUpload = files.filter(f => {
+                    if (seen.has(f.name)) return false;
+                    seen.add(f.name);
+                    return true;
+                });
+            } catch (err) {
+                console.error("Failed to delete some existing photos", err);
+                showNotification('שגיאה במחיקת גרסאות קיימות, ממשיך בהעלאה בכל זאת', 'error');
+            }
+        } else if (option === 'both') {
+            // Unify internal selection but keep all as new (both implies keeping server ones too)
+            // Wait, both usually means "upload these and keep existing ones". 
+            // Internal duplicates should still probably be unified to 1 per upload chunk unless they want literal duplicates.
+            // Usually 'both' means 'don't delete/skip, just upload'.
+        }
+
+        try {
+            await startUpload(id, filesToUpload);
             showNotification('העלאה התחילה ברקע...');
         } catch (e) {
             console.error(e);
@@ -927,6 +1025,14 @@ const EventManagePage: React.FC = () => {
                 onClose={() => setShareModalOpen(false)}
                 event={event}
                 photographerName={photographerName}
+            />
+
+            <DuplicateModal
+                isOpen={duplicateModal.isOpen}
+                duplicates={duplicateModal.duplicates}
+                totalFiles={duplicateModal.totalFiles}
+                onCancel={() => setDuplicateModal(prev => ({ ...prev, isOpen: false }))}
+                onOptionSelected={handleDuplicateOption}
             />
         </Layout>
     );

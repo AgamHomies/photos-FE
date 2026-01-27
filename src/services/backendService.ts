@@ -188,6 +188,11 @@ export const BackendService = {
         return await RealPhotoAPI.uploadToS3(uploadUrl, file);
     },
 
+    checkDuplicates: async (eventId: string, filenames: string[]): Promise<{ results: any[] }> => {
+        if (USE_MOCK) return { results: [] };
+        return await RealPhotoAPI.checkDuplicates(eventId, filenames);
+    },
+
     // ============================================
     // Dashboard
     // ============================================

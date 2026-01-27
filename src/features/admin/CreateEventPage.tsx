@@ -5,6 +5,7 @@ import { BackendService } from '../../services/backendService';
 import Layout from '../../components/Layout';
 import { Toast } from '../../components';
 import EventPreviewModal from './components/EventPreviewModal';
+import DuplicateModal from './components/DuplicateModal';
 
 const CreateEventPage: React.FC = () => {
     const navigate = useNavigate();
@@ -37,6 +38,14 @@ const CreateEventPage: React.FC = () => {
     const [showUpgradeModal, setShowUpgradeModal] = useState(false);
     const [suggestedPackage, setSuggestedPackage] = useState<'premium' | 'gold'>('premium');
     const [attemptedPhotoCount, setAttemptedPhotoCount] = useState(0);
+
+    // Duplicate detection state
+    const [duplicateModal, setDuplicateModal] = useState<{
+        isOpen: boolean;
+        duplicates: any[];
+        totalFiles: number;
+        pendingFiles: File[];
+    }>({ isOpen: false, duplicates: [], totalFiles: 0, pendingFiles: [] });
 
     // Package photo limits
     const PACKAGE_LIMITS = {
@@ -103,6 +112,71 @@ const CreateEventPage: React.FC = () => {
         e.stopPropagation();
     };
 
+    const processSelectedFiles = (newFiles: File[]) => {
+        const imageFiles = newFiles.filter(file => file.type.startsWith('image/'));
+
+        if (newFiles.length > 0 && imageFiles.length === 0) {
+            triggerToast('לא נמצאו תמונות בבחירה שלך', 'error');
+            return;
+        }
+
+        if (imageFiles.length === 0) return;
+
+        // Check for duplicates (existing in gallery OR internal to this batch)
+        const existingNames = new Set(galleryFiles.map(f => f.name));
+        const duplicates: any[] = [];
+        const seenInBatch = new Set<string>();
+
+        imageFiles.forEach(f => {
+            if (existingNames.has(f.name) || seenInBatch.has(f.name)) {
+                if (!duplicates.find(d => d.filename === f.name)) {
+                    duplicates.push({
+                        filename: f.name,
+                        isDuplicate: true,
+                        isInternal: seenInBatch.has(f.name),
+                        existingThumbnailUrl: URL.createObjectURL(f) // Local preview for internal/re-selection
+                    });
+                }
+            }
+            seenInBatch.add(f.name);
+        });
+
+        if (duplicates.length > 0) {
+            setDuplicateModal({
+                isOpen: true,
+                duplicates,
+                totalFiles: imageFiles.length,
+                pendingFiles: imageFiles
+            });
+            return;
+        }
+
+        // No duplicates, proceed to limit check and add
+        addFilesToGallery(imageFiles);
+    };
+
+    const addFilesToGallery = (filesToAdd: File[]) => {
+        const photoLimit = PACKAGE_LIMITS[packageType];
+        const totalPhotos = galleryFiles.length + filesToAdd.length;
+
+        if (totalPhotos > photoLimit) {
+            if (packageType === 'gold') {
+                triggerToast('להעלאה של 30000 תמונות נדרש אישור מיוחד (:', 'error');
+                return;
+            }
+
+            let suggested: 'premium' | 'gold' = 'premium';
+            if (totalPhotos > PACKAGE_LIMITS.premium) suggested = 'gold';
+
+            setAttemptedPhotoCount(totalPhotos);
+            setSuggestedPackage(suggested);
+            setShowUpgradeModal(true);
+            return;
+        }
+
+        setGalleryFiles(prev => [...prev, ...filesToAdd]);
+    };
+
     const handleDrop = async (e: React.DragEvent) => {
         e.preventDefault();
         e.stopPropagation();
@@ -127,77 +201,16 @@ const CreateEventPage: React.FC = () => {
             const results = await Promise.all(promises);
             files.push(...results.flat());
         } else {
-            // Fallback for browsers not supporting DataTransferItem
             files.push(...Array.from(e.dataTransfer.files));
         }
 
-        const imageFiles = files.filter(file => file.type.startsWith('image/'));
-
-        if (files.length > 0 && imageFiles.length === 0) {
-            triggerToast('לא נמצאו תמונות בקבצים/תיקיות שנגררו', 'error');
-            return;
-        }
-
-        // Check photo limit based on selected package
-        const photoLimit = PACKAGE_LIMITS[packageType];
-        const totalPhotos = galleryFiles.length + imageFiles.length;
-
-        if (totalPhotos > photoLimit) {
-            if (packageType === 'gold') {
-                triggerToast('להעלאה של 30000 תמונות נדרש אישור מיוחד (:', 'error');
-                return;
-            }
-
-            // Determine suggested package
-            let suggested: 'premium' | 'gold' = 'premium';
-            if (totalPhotos > PACKAGE_LIMITS.premium) {
-                suggested = 'gold';
-            }
-
-            setAttemptedPhotoCount(totalPhotos);
-            setSuggestedPackage(suggested);
-            setShowUpgradeModal(true);
-            return;
-        }
-
-        setGalleryFiles(prev => [...prev, ...imageFiles]);
+        processSelectedFiles(files);
     };
 
     const handleGalleryFilesChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         if (e.target.files) {
             const files = Array.from(e.target.files);
-            const imageFiles = files.filter(file => file.type.startsWith('image/'));
-
-            if (files.length > 0 && imageFiles.length === 0) {
-                triggerToast('לא נמצאו תמונות בתיקייה שנבחרה', 'error');
-                return;
-            }
-
-            // Check photo limit based on selected package
-            const photoLimit = PACKAGE_LIMITS[packageType];
-            const totalPhotos = galleryFiles.length + imageFiles.length;
-
-            if (totalPhotos > photoLimit) {
-                if (packageType === 'gold') {
-                    triggerToast('להעלאה של 30000 תמונות נדרש אישור מיוחד (:', 'error');
-                    e.target.value = '';
-                    return;
-                }
-
-                // Determine suggested package
-                let suggested: 'premium' | 'gold' = 'premium';
-                if (totalPhotos > PACKAGE_LIMITS.premium) {
-                    suggested = 'gold';
-                }
-
-                setAttemptedPhotoCount(totalPhotos);
-                setSuggestedPackage(suggested);
-                setShowUpgradeModal(true);
-                e.target.value = '';
-                return;
-            }
-
-            setGalleryFiles(prev => [...prev, ...imageFiles]);
+            processSelectedFiles(files);
         }
     };
 
@@ -220,6 +233,47 @@ const CreateEventPage: React.FC = () => {
             return;
         }
 
+        await processCreateEvent(galleryFiles);
+    };
+
+    const handleDuplicateOption = (option: 'skip' | 'replace' | 'both') => {
+        const { pendingFiles } = duplicateModal;
+        setDuplicateModal(prev => ({ ...prev, isOpen: false, pendingFiles: [] }));
+
+        let finalBatch: File[] = [];
+
+        if (option === 'skip') {
+            const existingNames = new Set(galleryFiles.map(f => f.name));
+            const seenInBatch = new Set<string>();
+
+            finalBatch = pendingFiles.filter(f => {
+                if (existingNames.has(f.name) || seenInBatch.has(f.name)) return false;
+                seenInBatch.add(f.name);
+                return true;
+            });
+        } else if (option === 'replace') {
+            const replacementNames = new Set(pendingFiles.map(f => f.name));
+            // Remove existing from gallery
+            setGalleryFiles(prev => prev.filter(f => !replacementNames.has(f.name)));
+
+            // Unify new batch (keep only 1 of each internal duplicate)
+            const seenInBatch = new Set<string>();
+            finalBatch = pendingFiles.filter(f => {
+                if (seenInBatch.has(f.name)) return false;
+                seenInBatch.add(f.name);
+                return true;
+            });
+        } else {
+            // 'both' - just keep everything as is in the new batch
+            finalBatch = pendingFiles;
+        }
+
+        if (finalBatch.length > 0) {
+            addFilesToGallery(finalBatch);
+        }
+    };
+
+    const processCreateEvent = async (files: File[]) => {
         setStep('processing');
 
         try {
@@ -239,21 +293,21 @@ const CreateEventPage: React.FC = () => {
             // Auto-purchase package first to ensure success (Requested behavior)
             console.log('Auto-purchasing package...');
             await BackendService.mockPay(packageType);
+
             // Create event
             const newEvent = await BackendService.createEvent(eventPayload);
 
             // 2. Redirect to Admin Page with files to upload
             navigate(`/admin/events/${newEvent.id}`, {
                 state: {
-                    filesToUpload: galleryFiles,
+                    filesToUpload: files,
                     coverFile: coverImageFile,
                     isNewEvent: true
                 }
             });
-
-        } catch (error: any) {
-            console.error(error);
-            triggerToast('אירעה שגיאה ביצירת האירוע', 'error');
+        } catch (error) {
+            console.error("Creation flow error", error);
+            triggerToast('חלה שגיאה ביצירת האירוע', 'error');
             setStep('details');
         }
     };
@@ -693,6 +747,14 @@ const CreateEventPage: React.FC = () => {
                 message={toastMessage}
                 type={toastType}
                 onClose={() => setShowToast(false)}
+            />
+
+            <DuplicateModal
+                isOpen={duplicateModal.isOpen}
+                duplicates={duplicateModal.duplicates}
+                totalFiles={duplicateModal.totalFiles}
+                onCancel={() => setDuplicateModal(prev => ({ ...prev, isOpen: false }))}
+                onOptionSelected={handleDuplicateOption}
             />
         </Layout>
     );
