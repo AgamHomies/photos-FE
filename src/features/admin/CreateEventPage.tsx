@@ -5,7 +5,7 @@ import { BackendService } from '../../services/backendService';
 import Layout from '../../components/Layout';
 import { Toast } from '../../components';
 import EventPreviewModal from './components/EventPreviewModal';
-import DuplicateModal from './components/DuplicateModal';
+import DuplicateModal from './components/DuplicateFilesModal';
 
 const CreateEventPage: React.FC = () => {
     const navigate = useNavigate();

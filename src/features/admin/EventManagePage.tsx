@@ -28,7 +28,7 @@ import EventPreviewModal from './components/EventPreviewModal';
 import { useUpload } from '../../context/UploadContext';
 import EventShareModal from './components/EventShareModal';
 import { unsecuredCopyToClipboard } from '../../utils/clipboard';
-import DuplicateModal from './components/DuplicateModal';
+import DuplicateModal from './components/DuplicateFilesModal';
 
 const EventManagePage: React.FC = () => {
     const { id } = useParams<{ id: string }>();
