@@ -5,7 +5,7 @@ import { BackendService } from '../../services/backendService';
 import Layout from '../../components/Layout';
 import { Toast } from '../../components';
 import EventPreviewModal from './components/EventPreviewModal';
-import DuplicateModal from './components/DuplicateModal';
+import DuplicateModal from './components/DuplicateFilesModal';
 
 const CreateEventPage: React.FC = () => {
     const navigate = useNavigate();
@@ -123,22 +123,23 @@ const CreateEventPage: React.FC = () => {
         if (imageFiles.length === 0) return;
 
         // Check for duplicates (existing in gallery OR internal to this batch)
-        const existingNames = new Set(galleryFiles.map(f => f.name));
+        const existingNames = new Set(galleryFiles.map(f => f.name.toLowerCase().trim()));
         const duplicates: any[] = [];
         const seenInBatch = new Set<string>();
 
         imageFiles.forEach(f => {
-            if (existingNames.has(f.name) || seenInBatch.has(f.name)) {
-                if (!duplicates.find(d => d.filename === f.name)) {
+            const lowerName = f.name.toLowerCase().trim();
+            if (existingNames.has(lowerName) || seenInBatch.has(lowerName)) {
+                if (!duplicates.find(d => d.filename.toLowerCase().trim() === lowerName)) {
                     duplicates.push({
                         filename: f.name,
                         isDuplicate: true,
-                        isInternal: seenInBatch.has(f.name),
+                        isInternal: seenInBatch.has(lowerName),
                         existingThumbnailUrl: URL.createObjectURL(f) // Local preview for internal/re-selection
                     });
                 }
             }
-            seenInBatch.add(f.name);
+            seenInBatch.add(lowerName);
         });
 
         if (duplicates.length > 0) {

@@ -28,7 +28,7 @@ import EventPreviewModal from './components/EventPreviewModal';
 import { useUpload } from '../../context/UploadContext';
 import EventShareModal from './components/EventShareModal';
 import { unsecuredCopyToClipboard } from '../../utils/clipboard';
-import DuplicateModal from './components/DuplicateModal';
+import DuplicateModal from './components/DuplicateFilesModal';
 
 const EventManagePage: React.FC = () => {
     const { id } = useParams<{ id: string }>();
@@ -304,7 +304,9 @@ const EventManagePage: React.FC = () => {
         try {
             // 1. Check for duplicates by name against the server
             const filenames = files.map(f => f.name);
+            console.log('Checking duplicates for:', filenames);
             const response = await BackendService.checkDuplicates(id, filenames);
+            console.log('Server duplicates response:', response);
             const serverDuplicates = response.results.filter((res: any) => res.isDuplicate);
 
             // 2. Check for internal duplicates (within the selection itself)
@@ -312,8 +314,9 @@ const EventManagePage: React.FC = () => {
             const seenInSelection = new Set<string>();
 
             files.forEach(f => {
-                if (seenInSelection.has(f.name)) {
-                    if (!internalDuplicates.find(d => d.filename === f.name)) {
+                const lowerName = f.name.toLowerCase().trim();
+                if (seenInSelection.has(lowerName)) {
+                    if (!internalDuplicates.find(d => d.filename.toLowerCase().trim() === lowerName)) {
                         internalDuplicates.push({
                             filename: f.name,
                             isDuplicate: true,
@@ -322,7 +325,7 @@ const EventManagePage: React.FC = () => {
                         });
                     }
                 }
-                seenInSelection.add(f.name);
+                seenInSelection.add(lowerName);
             });
 
             const allDuplicates = [...serverDuplicates, ...internalDuplicates];
