@@ -443,9 +443,9 @@ export const RealEventAPI = {
 };
 
 export const RealPhotoAPI = {
-    getEventPhotos: async (eventId: string, page: number = 1, limit: number = 50): Promise<Photo[]> => {
+    getEventPhotos: async (eventId: string, page: number = 1, limit: number = 50, sortBy: string = 'filename'): Promise<Photo[]> => {
         try {
-            const data = await apiRequest(`/events/${eventId}/images?page=${page}&limit=${limit}`);
+            const data = await apiRequest(`/events/${eventId}/images?page=${page}&limit=${limit}&sort_by=${sortBy}`);
 
             return data.map((img: any) => ({
                 id: img.id,
