@@ -181,20 +181,59 @@ const GalleryPage: React.FC<GalleryPageProps> = ({ mode: propMode }) => {
       if (sortBy === 'matchScore') {
          sorted.sort((a, b) => (b.matchScore || 0) - (a.matchScore || 0));
       } else {
-         // Sort by Title (filename) with natural sort (1, 2, 10)
-         sorted.sort((a, b) => {
-            const titleA = a.title || '';
-            const titleB = b.title || '';
-            return titleA.localeCompare(titleB, undefined, { numeric: true, sensitivity: 'base' });
-         });
+         // Check if ALL photos have EXIF data (same logic as backend)
+         const allHaveExif = sorted.every(photo => photo.takenAt);
+
+         if (allHaveExif) {
+            // All photos have EXIF - sort by timestamp
+            sorted.sort((a, b) => {
+               const dateA = new Date(a.takenAt!).getTime();
+               const dateB = new Date(b.takenAt!).getTime();
+               if (dateA !== dateB) {
+                  return dateA - dateB;
+               }
+               // Tiebreaker: filename
+               const titleA = a.title || '';
+               const titleB = b.title || '';
+               return titleA.localeCompare(titleB, undefined, { numeric: true, sensitivity: 'base' });
+            });
+         } else {
+            // Some photos missing EXIF - use filename sorting for consistency
+            sorted.sort((a, b) => {
+               const titleA = a.title || '';
+               const titleB = b.title || '';
+               return titleA.localeCompare(titleB, undefined, { numeric: true, sensitivity: 'base' });
+            });
+         }
       }
       return sorted;
    }, [searchResults, sortBy, viewState]);
 
-   // Reset to page 1 when sorting changes
+   // Reset to page 1 and reload photos when sorting changes
    useEffect(() => {
       setPage(1);
-   }, [sortBy]);
+
+      // For couple gallery (full mode), reload photos from server with new sort
+      if (mode === 'full' && event) {
+         const reloadPhotos = async () => {
+            setLoading(true);
+            try {
+               const newPhotos = await BackendService.getEventPhotos(
+                  event.id,
+                  1,
+                  itemsPerPage,
+                  sortBy === 'time' ? 'time' : 'filename'
+               );
+               setPhotos(newPhotos);
+            } catch (error) {
+               console.error('Failed to reload photos with new sort:', error);
+            } finally {
+               setLoading(false);
+            }
+         };
+         reloadPhotos();
+      }
+   }, [sortBy, mode, event, itemsPerPage]);
 
 
 
@@ -366,7 +405,7 @@ const GalleryPage: React.FC<GalleryPageProps> = ({ mode: propMode }) => {
                   const startPage = savedPage ? parseInt(savedPage) : 1;
                   setPage(startPage);
 
-                  const eventPhotos = await BackendService.getEventPhotos(eventData.id, startPage, itemsPerPage);
+                  const eventPhotos = await BackendService.getEventPhotos(eventData.id, startPage, itemsPerPage, sortBy === 'time' ? 'time' : 'filename');
                   setPhotos(eventPhotos);
                   setViewState('results');
                } else {
@@ -421,7 +460,7 @@ const GalleryPage: React.FC<GalleryPageProps> = ({ mode: propMode }) => {
             // Save page
             sessionStorage.setItem(`gallery_page_${event.id}`, newPage.toString());
 
-            const newPhotos = await BackendService.getEventPhotos(event.id, newPage, itemsPerPage);
+            const newPhotos = await BackendService.getEventPhotos(event.id, newPage, itemsPerPage, sortBy === 'time' ? 'time' : 'filename');
             setPhotos(newPhotos);
             setPage(newPage);
          } catch (error) {
