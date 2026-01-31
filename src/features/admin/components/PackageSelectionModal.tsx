@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { X, Check, Star, Award, Crown, Sparkles } from 'lucide-react';
+import PaymentModal from './PaymentModal';
 
 interface PackageSelectionModalProps {
     isOpen: boolean;
@@ -10,6 +11,15 @@ interface PackageSelectionModalProps {
 const PackageSelectionModal: React.FC<PackageSelectionModalProps> = ({ isOpen, onClose }) => {
     const navigate = useNavigate();
     const [loading, setLoading] = useState<string | null>(null);
+    const [selectedPackage, setSelectedPackage] = useState<'basic' | 'premium' | 'gold' | null>(null);
+    const [showPaymentModal, setShowPaymentModal] = useState(false);
+
+    // Package photo limits
+    const PACKAGE_LIMITS = {
+        basic: 1200,
+        premium: 10000,
+        gold: 30000
+    };
 
     // Prevent body scroll when modal is open
     useEffect(() => {
@@ -27,11 +37,10 @@ const PackageSelectionModal: React.FC<PackageSelectionModalProps> = ({ isOpen, o
 
     const handlePackageSelect = async (packageType: 'basic' | 'premium' | 'gold') => {
         setLoading(packageType);
+        setSelectedPackage(packageType);
 
-        // Just navigate to create event page with selected package
-        // No payment here - package will be decremented when event is created
-        navigate('/admin/create-event', { state: { packageType } });
-        onClose();
+        // Show payment modal instead of navigating directly
+        setShowPaymentModal(true);
 
         setLoading(null);
     };
@@ -184,6 +193,19 @@ const PackageSelectionModal: React.FC<PackageSelectionModalProps> = ({ isOpen, o
                         </button>
                     </div>
                 </div>
+
+                {/* Payment Modal - Shows after package selection */}
+                {selectedPackage && (
+                    <PaymentModal
+                        isOpen={showPaymentModal}
+                        onClose={() => {
+                            setShowPaymentModal(false);
+                            setSelectedPackage(null);
+                        }}
+                        packageType={selectedPackage}
+                        photoLimit={PACKAGE_LIMITS[selectedPackage]}
+                    />
+                )}
             </div>
         </div>
     );

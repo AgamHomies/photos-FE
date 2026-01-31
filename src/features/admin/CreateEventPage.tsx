@@ -10,9 +10,22 @@ import DuplicateModal from './components/DuplicateFilesModal';
 const CreateEventPage: React.FC = () => {
     const navigate = useNavigate();
     const location = useLocation();
-    const [packageType, setPackageType] = useState<'basic' | 'premium' | 'gold'>(
-        (location.state?.packageType as 'basic' | 'premium' | 'gold') || 'basic'
-    );
+
+    // Get package type from URL params (PayPal return) or navigation state
+    const getInitialPackageType = (): 'basic' | 'premium' | 'gold' => {
+        const urlParams = new URLSearchParams(location.search);
+        const urlPackage = urlParams.get('package');
+
+        // If coming from PayPal, use URL parameter
+        if (urlPackage && ['basic', 'premium', 'gold'].includes(urlPackage)) {
+            return urlPackage as 'basic' | 'premium' | 'gold';
+        }
+
+        // Otherwise use navigation state or default to basic
+        return (location.state?.packageType as 'basic' | 'premium' | 'gold') || 'basic';
+    };
+
+    const [packageType, setPackageType] = useState<'basic' | 'premium' | 'gold'>(getInitialPackageType());
 
     const [step, setStep] = useState<'details' | 'upload' | 'processing' | 'done'>('details');
     const [formData, setFormData] = useState({
@@ -169,9 +182,8 @@ const CreateEventPage: React.FC = () => {
             let suggested: 'premium' | 'gold' = 'premium';
             if (totalPhotos > PACKAGE_LIMITS.premium) suggested = 'gold';
 
-            setAttemptedPhotoCount(totalPhotos);
-            setSuggestedPackage(suggested);
-            setShowUpgradeModal(true);
+            // Removed upgrade modal logic, now just toast
+            triggerToast(`חבילת ה${packageType === 'basic' ? 'בסיס' : 'פרימיום'} שלך מוגבלת ל-${photoLimit.toLocaleString()} תמונות. נסה לשדרג לחבילת ${suggested === 'premium' ? 'פרימיום' : 'זהב'}`, 'error');
             return;
         }
 
@@ -291,9 +303,8 @@ const CreateEventPage: React.FC = () => {
                 packageType: packageType
             };
 
-            // Auto-purchase package first to ensure success (Requested behavior)
-            console.log('Auto-purchasing package...');
-            await BackendService.mockPay(packageType);
+            // Payment already verified at package selection
+            console.log('Creating event with package:', packageType);
 
             // Create event
             const newEvent = await BackendService.createEvent(eventPayload);
