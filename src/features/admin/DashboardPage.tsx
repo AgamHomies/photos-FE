@@ -33,7 +33,18 @@ import EventShareModal from './components/EventShareModal';
 
 const DashboardPage: React.FC = () => {
     const navigate = useNavigate();
+    const DEFAULT_STATS: DashboardStats = {
+        totalDownloads: 0, totalPageVisits: 0, phoneSaves: 0, activeEvents: 0, expiredEvents: 0,
+        totalEvents: 0, totalImages: 0, totalSocialTraffic: 0, trafficFacebook: 0,
+        trafficInstagram: 0, trafficTiktok: 0, trafficWebsite: 0, avgDownloadsPerEvent: 0,
+        avgPageVisitsPerEvent: 0, avgPhoneSavesPerEvent: 0, avgImagesPerEvent: 0,
+        avgSocialTrafficPerEvent: 0, maxDownloadsPerEvent: 0, maxPageVisitsPerEvent: 0,
+        maxPhoneSavesPerEvent: 0, maxImagesPerEvent: 0, maxSocialTrafficPerEvent: 0,
+        totalLikes: 0, avgLikesPerEvent: 0, maxLikesPerEvent: 0,
+        statsBasic: { total: 0, active: 0 }, statsPremium: { total: 0, active: 0 }, statsGold: { total: 0, active: 0 }
+    };
     const [stats, setStats] = useState<DashboardStats | null>(null);
+    const displayStats = stats || DEFAULT_STATS;
     const [events, setEvents] = useState<Event[]>([]);
     const [globalLeads, setGlobalLeads] = useState<any[]>([]);
     const [totalLeadsCount, setTotalLeadsCount] = useState(0); // frozen at load, unaffected by deletes
@@ -380,7 +391,7 @@ const DashboardPage: React.FC = () => {
                 </div>
 
                 {/* Stats Grid - 7 Columns on Desktop */}
-                {stats && (
+                {true && (
 
                     <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-6" style={{ "zoom": "0.9" }}>
                         {/* 1. אירועים */}
@@ -399,9 +410,9 @@ const DashboardPage: React.FC = () => {
                             {/* Main Stat */}
                             <div className="relative flex-grow">
                                 <h3 className="text-3xl font-black text-slate-900 tracking-tight flex items-baseline gap-1.5">
-                                    {stats.totalEvents ?? 0}
+                                    {displayStats.totalEvents ?? 0}
                                     <span className="text-xl text-slate-300 font-light">/</span>
-                                    <span className="text-2xl text-green-500">{stats.activeEvents ?? 0}</span>
+                                    <span className="text-2xl text-green-500">{displayStats.activeEvents ?? 0}</span>
                                 </h3>
                                 <p className="text-slate-500 font-medium text-sm mt-1">סה״כ אירועים / פעילים</p>
                             </div>
@@ -414,8 +425,8 @@ const DashboardPage: React.FC = () => {
                                             <Star className="w-3 h-3 fill-current" /> בסיס
                                         </div>
                                         <div className="flex justify-center items-baseline gap-1">
-                                            <span className="font-bold text-slate-900 text-sm">{stats.statsBasic?.total || 0}</span>
-                                            <span className="text-[10px] text-green-500 font-semibold">({stats.statsBasic?.active || 0})</span>
+                                            <span className="font-bold text-slate-900 text-sm">{displayStats.statsBasic?.total || 0}</span>
+                                            <span className="text-[10px] text-green-500 font-semibold">({displayStats.statsBasic?.active || 0})</span>
                                         </div>
                                     </div>
                                     <div className="text-center p-2 rounded-xl bg-cyan-50/50 border border-cyan-100/50">
@@ -423,8 +434,8 @@ const DashboardPage: React.FC = () => {
                                             <Award className="w-3 h-3" /> פרימיום
                                         </div>
                                         <div className="flex justify-center items-baseline gap-1">
-                                            <span className="font-bold text-slate-900 text-sm">{stats.statsPremium?.total || 0}</span>
-                                            <span className="text-[10px] text-green-500 font-semibold">({stats.statsPremium?.active || 0})</span>
+                                            <span className="font-bold text-slate-900 text-sm">{displayStats.statsPremium?.total || 0}</span>
+                                            <span className="text-[10px] text-green-500 font-semibold">({displayStats.statsPremium?.active || 0})</span>
                                         </div>
                                     </div>
                                     <div className="text-center p-2 rounded-xl bg-amber-50/50 border border-amber-100/50">
@@ -432,8 +443,8 @@ const DashboardPage: React.FC = () => {
                                             <Crown className="w-3 h-3 fill-current" /> זהב
                                         </div>
                                         <div className="flex justify-center items-baseline gap-1">
-                                            <span className="font-bold text-slate-900 text-sm">{stats.statsGold?.total || 0}</span>
-                                            <span className="text-[10px] text-green-500 font-semibold">({stats.statsGold?.active || 0})</span>
+                                            <span className="font-bold text-slate-900 text-sm">{displayStats.statsGold?.total || 0}</span>
+                                            <span className="text-[10px] text-green-500 font-semibold">({displayStats.statsGold?.active || 0})</span>
                                         </div>
                                     </div>
                                 </div>
@@ -455,7 +466,7 @@ const DashboardPage: React.FC = () => {
                             {/* Main Stat */}
                             <div className="relative flex-grow">
                                 <h3 className="text-3xl font-black text-slate-900 tracking-tight">
-                                    {(stats.totalImages || 0).toLocaleString()}
+                                    {(displayStats.totalImages || 0).toLocaleString()}
                                 </h3>
                                 <p className="text-slate-500 font-medium text-sm mt-1">סה״כ תמונות שהועלו</p>
                             </div>
@@ -464,11 +475,11 @@ const DashboardPage: React.FC = () => {
                             <div className="mt-3 flex gap-2">
                                 <div className="flex-1 bg-slate-50 border border-slate-100 rounded-xl p-2.5 text-center">
                                     <p className="text-slate-400 text-[10px] font-bold uppercase tracking-wider mb-0.5">מקסימום לאירוע</p>
-                                    <p className="text-slate-800 font-bold text-sm">{stats.maxImagesPerEvent || 0}</p>
+                                    <p className="text-slate-800 font-bold text-sm">{displayStats.maxImagesPerEvent || 0}</p>
                                 </div>
                                 <div className="flex-1 bg-slate-50 border border-slate-100 rounded-xl p-2.5 text-center">
                                     <p className="text-slate-400 text-[10px] font-bold uppercase tracking-wider mb-0.5">ממוצע לאירוע</p>
-                                    <p className="text-slate-800 font-bold text-sm">{stats.avgImagesPerEvent || 0}</p>
+                                    <p className="text-slate-800 font-bold text-sm">{displayStats.avgImagesPerEvent || 0}</p>
                                 </div>
                             </div>
                         </div>
@@ -485,7 +496,7 @@ const DashboardPage: React.FC = () => {
 
                             <div className="relative flex-grow">
                                 <h3 className="text-3xl font-black text-slate-900 tracking-tight">
-                                    {(stats.totalPageVisits || 0).toLocaleString()}
+                                    {(displayStats.totalPageVisits || 0).toLocaleString()}
                                 </h3>
                                 <p className="text-slate-500 font-medium text-sm mt-1">כניסות לגלריה</p>
                             </div>
@@ -493,11 +504,11 @@ const DashboardPage: React.FC = () => {
                             <div className="mt-3 flex gap-2">
                                 <div className="flex-1 bg-slate-50 border border-slate-100 rounded-xl p-2.5 text-center">
                                     <p className="text-slate-400 text-[10px] font-bold uppercase tracking-wider mb-0.5">מקסימום לאירוע</p>
-                                    <p className="text-slate-800 font-bold text-sm">{stats.maxPageVisitsPerEvent || 0}</p>
+                                    <p className="text-slate-800 font-bold text-sm">{displayStats.maxPageVisitsPerEvent || 0}</p>
                                 </div>
                                 <div className="flex-1 bg-slate-50 border border-slate-100 rounded-xl p-2.5 text-center">
                                     <p className="text-slate-400 text-[10px] font-bold uppercase tracking-wider mb-0.5">ממוצע לאירוע</p>
-                                    <p className="text-slate-800 font-bold text-sm">{stats.avgPageVisitsPerEvent || 0}</p>
+                                    <p className="text-slate-800 font-bold text-sm">{displayStats.avgPageVisitsPerEvent || 0}</p>
                                 </div>
                             </div>
                         </div>
@@ -511,13 +522,13 @@ const DashboardPage: React.FC = () => {
                                     <Download className="w-5 h-5" />
                                 </div>
                                 <div className="bg-blue-50 text-blue-600 px-3 py-1 rounded-full text-[11px] font-bold border border-blue-100 flex items-center gap-1" title="אחוז המרה מכניסות">
-                                    {stats.totalPageVisits > 0 ? Math.round((stats.totalDownloads / stats.totalPageVisits) * 100) : 0}% המרה
+                                    {displayStats.totalPageVisits > 0 ? Math.round((displayStats.totalDownloads / displayStats.totalPageVisits) * 100) : 0}% המרה
                                 </div>
                             </div>
 
                             <div className="relative flex-grow">
                                 <h3 className="text-3xl font-black text-slate-900 tracking-tight">
-                                    {(stats.totalDownloads || 0).toLocaleString()}
+                                    {(displayStats.totalDownloads || 0).toLocaleString()}
                                 </h3>
                                 <p className="text-slate-500 font-medium text-sm mt-1">הורדות תמונות</p>
                             </div>
@@ -525,11 +536,11 @@ const DashboardPage: React.FC = () => {
                             <div className="mt-3 flex gap-2">
                                 <div className="flex-1 bg-slate-50 border border-slate-100 rounded-xl p-2.5 text-center">
                                     <p className="text-slate-400 text-[10px] font-bold uppercase tracking-wider mb-0.5">מקסימום לאירוע</p>
-                                    <p className="text-slate-800 font-bold text-sm">{stats.maxDownloadsPerEvent || 0}</p>
+                                    <p className="text-slate-800 font-bold text-sm">{displayStats.maxDownloadsPerEvent || 0}</p>
                                 </div>
                                 <div className="flex-1 bg-slate-50 border border-slate-100 rounded-xl p-2.5 text-center">
                                     <p className="text-slate-400 text-[10px] font-bold uppercase tracking-wider mb-0.5">ממוצע לאירוע</p>
-                                    <p className="text-slate-800 font-bold text-sm">{stats.avgDownloadsPerEvent || 0}</p>
+                                    <p className="text-slate-800 font-bold text-sm">{displayStats.avgDownloadsPerEvent || 0}</p>
                                 </div>
                             </div>
                         </div>
@@ -543,13 +554,13 @@ const DashboardPage: React.FC = () => {
                                     <Smartphone className="w-5 h-5" />
                                 </div>
                                 <div className="bg-emerald-50 text-emerald-600 px-3 py-1 rounded-full text-[11px] font-bold border border-emerald-100 flex items-center gap-1" title="אחוז המרה מכניסות">
-                                    {stats.totalPageVisits > 0 ? Math.round((stats.phoneSaves / stats.totalPageVisits) * 100) : 0}% המרה
+                                    {displayStats.totalPageVisits > 0 ? Math.round((displayStats.phoneSaves / displayStats.totalPageVisits) * 100) : 0}% המרה
                                 </div>
                             </div>
 
                             <div className="relative flex-grow">
                                 <h3 className="text-3xl font-black text-slate-900 tracking-tight">
-                                    {(stats.phoneSaves || 0).toLocaleString()}
+                                    {(displayStats.phoneSaves || 0).toLocaleString()}
                                 </h3>
                                 <p className="text-slate-500 font-medium text-sm mt-1">שמירות איש קשר</p>
                             </div>
@@ -557,11 +568,11 @@ const DashboardPage: React.FC = () => {
                             <div className="mt-3 flex gap-2">
                                 <div className="flex-1 bg-slate-50 border border-slate-100 rounded-xl p-2.5 text-center">
                                     <p className="text-slate-400 text-[10px] font-bold uppercase tracking-wider mb-0.5">מקסימום לאירוע</p>
-                                    <p className="text-slate-800 font-bold text-sm">{stats.maxPhoneSavesPerEvent || 0}</p>
+                                    <p className="text-slate-800 font-bold text-sm">{displayStats.maxPhoneSavesPerEvent || 0}</p>
                                 </div>
                                 <div className="flex-1 bg-slate-50 border border-slate-100 rounded-xl p-2.5 text-center">
                                     <p className="text-slate-400 text-[10px] font-bold uppercase tracking-wider mb-0.5">ממוצע לאירוע</p>
-                                    <p className="text-slate-800 font-bold text-sm">{stats.avgPhoneSavesPerEvent || 0}</p>
+                                    <p className="text-slate-800 font-bold text-sm">{displayStats.avgPhoneSavesPerEvent || 0}</p>
                                 </div>
                             </div>
                         </div>
@@ -575,13 +586,13 @@ const DashboardPage: React.FC = () => {
                                     <Share2 className="w-5 h-5" />
                                 </div>
                                 <div className="bg-pink-50 text-pink-600 px-3 py-1 rounded-full text-[11px] font-bold border border-pink-100 flex items-center gap-1" title="אחוז המרה מכניסות">
-                                    {stats.totalPageVisits > 0 ? Math.round((stats.totalSocialTraffic / stats.totalPageVisits) * 100) : 0}% המרה
+                                    {displayStats.totalPageVisits > 0 ? Math.round((displayStats.totalSocialTraffic / displayStats.totalPageVisits) * 100) : 0}% המרה
                                 </div>
                             </div>
 
                             <div className="relative flex-grow">
                                 <h3 className="text-3xl font-black text-slate-900 tracking-tight">
-                                    {(stats.totalSocialTraffic || 0).toLocaleString()}
+                                    {(displayStats.totalSocialTraffic || 0).toLocaleString()}
                                 </h3>
                                 <p className="text-slate-500 font-medium text-sm mt-1">כניסות לפרופיל</p>
                                 <p className="text-slate-400 text-xs mt-0.5">כניסה לרשתות החברתיות או לאתר</p>
@@ -590,11 +601,11 @@ const DashboardPage: React.FC = () => {
                             <div className="mt-3 flex gap-2">
                                 <div className="flex-1 bg-slate-50 border border-slate-100 rounded-xl p-2.5 text-center">
                                     <p className="text-slate-400 text-[10px] font-bold uppercase tracking-wider mb-0.5">מקסימום לאירוע</p>
-                                    <p className="text-slate-800 font-bold text-sm">{stats.maxSocialTrafficPerEvent || 0}</p>
+                                    <p className="text-slate-800 font-bold text-sm">{displayStats.maxSocialTrafficPerEvent || 0}</p>
                                 </div>
                                 <div className="flex-1 bg-slate-50 border border-slate-100 rounded-xl p-2.5 text-center">
                                     <p className="text-slate-400 text-[10px] font-bold uppercase tracking-wider mb-0.5">ממוצע לאירוע</p>
-                                    <p className="text-slate-800 font-bold text-sm">{stats.avgSocialTrafficPerEvent || 0}</p>
+                                    <p className="text-slate-800 font-bold text-sm">{displayStats.avgSocialTrafficPerEvent || 0}</p>
                                 </div>
                             </div>
                         </div>
@@ -614,7 +625,7 @@ const DashboardPage: React.FC = () => {
 
                             <div className="relative flex-grow">
                                 <h3 className="text-3xl font-black text-slate-900 tracking-tight">
-                                    {(stats.totalLikes || 0).toLocaleString()}
+                                    {(displayStats.totalLikes || 0).toLocaleString()}
                                 </h3>
                                 <p className="text-slate-500 font-medium text-sm mt-1">סה״כ פרגונים</p>
                             </div>
@@ -622,11 +633,11 @@ const DashboardPage: React.FC = () => {
                             <div className="mt-3 flex gap-2">
                                 <div className="flex-1 bg-slate-50 border border-slate-100 rounded-xl p-2.5 text-center">
                                     <p className="text-slate-400 text-[10px] font-bold uppercase tracking-wider mb-0.5">מקסימום לאירוע</p>
-                                    <p className="text-slate-800 font-bold text-sm">{stats.maxLikesPerEvent || 0}</p>
+                                    <p className="text-slate-800 font-bold text-sm">{displayStats.maxLikesPerEvent || 0}</p>
                                 </div>
                                 <div className="flex-1 bg-slate-50 border border-slate-100 rounded-xl p-2.5 text-center">
                                     <p className="text-slate-400 text-[10px] font-bold uppercase tracking-wider mb-0.5">ממוצע לאירוע</p>
-                                    <p className="text-slate-800 font-bold text-sm">{stats.avgLikesPerEvent || 0}</p>
+                                    <p className="text-slate-800 font-bold text-sm">{displayStats.avgLikesPerEvent || 0}</p>
                                 </div>
                             </div>
                         </div>
@@ -887,7 +898,7 @@ const DashboardPage: React.FC = () => {
                                 ))}
                                 {sortedEvents.length === 0 && (
                                     <tr>
-                                        <td colSpan={10} className="px-3 py-16 text-center text-slate-500">
+                                        <td colSpan={12} className="px-3 py-16 text-center text-slate-500">
                                             <div className="flex flex-col items-center gap-4">
                                                 <div className="w-16 h-16 bg-slate-50 rounded-full flex items-center justify-center">
                                                     <Calendar className="w-8 h-8 text-slate-300" />
