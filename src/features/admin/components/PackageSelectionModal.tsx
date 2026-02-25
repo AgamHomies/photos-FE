@@ -55,9 +55,9 @@ const PackageSelectionModal: React.FC<PackageSelectionModalProps> = ({ isOpen, o
             className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center z-50 p-4 animate-fade-in"
             onClick={handleBackdropClick}
         >
-            <div className="bg-white rounded-[2rem] shadow-2xl max-w-6xl w-full overflow-hidden relative border border-white/20">
+            <div className="bg-white rounded-[2rem] shadow-2xl max-w-4xl w-full max-h-[90vh] overflow-y-auto relative border border-white/20">
                 {/* Header */}
-                <div className="bg-slate-50 text-slate-900 p-8 pb-12 relative overflow-hidden text-center border-b border-slate-100">
+                <div className="bg-slate-50 text-slate-900 p-6 pb-8 relative overflow-hidden text-center border-b border-slate-100">
                     <button
                         onClick={onClose}
                         className="absolute top-6 right-6 p-2 text-slate-400 hover:text-slate-600 hover:bg-slate-100 transition-all rounded-full z-10"
@@ -66,34 +66,34 @@ const PackageSelectionModal: React.FC<PackageSelectionModalProps> = ({ isOpen, o
                     </button>
 
                     <div className="relative z-10 max-w-2xl mx-auto">
-                        <h2 className="text-3xl md:text-4xl font-black text-slate-900 mb-3 tracking-tight">
+                        <h2 className="text-2xl md:text-3xl font-black text-slate-900 mb-2 tracking-tight">
                             בחירת חבילה
                         </h2>
-                        <p className="text-slate-500 text-lg font-medium">
+                        <p className="text-slate-500 text-base font-medium">
                             התאם את החבילה המושלמת לגודל האירוע שלך
                         </p>
                     </div>
                 </div>
 
                 {/* Content - 3 Columns */}
-                <div className="p-8 md:p-12 bg-slate-50/50">
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-6 md:gap-8 items-center max-w-5xl mx-auto">
+                <div className="p-6 md:p-8 bg-slate-50/50">
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-6 md:gap-6 items-center max-w-4xl mx-auto">
 
                         {/* Basic Package */}
                         <button
                             onClick={() => handlePackageSelect('basic')}
                             disabled={!!loading}
-                            className="group relative h-full bg-white border border-slate-200 rounded-3xl p-6 transition-all hover:border-slate-300 hover:shadow-xl hover:shadow-slate-900/5 text-right flex flex-col items-center"
+                            className="group relative h-full bg-white border border-slate-200 rounded-3xl p-5 transition-all hover:border-slate-300 hover:shadow-xl hover:shadow-slate-900/5 text-right flex flex-col items-center"
                         >
-                            <div className="mb-6 p-4 bg-slate-50 rounded-2xl group-hover:bg-slate-100 transition-colors">
-                                <Star className="w-8 h-8 text-slate-400 group-hover:text-slate-600 transition-colors" />
+                            <div className="mb-4 p-3 bg-slate-50 rounded-2xl group-hover:bg-slate-100 transition-colors">
+                                <Star className="w-6 h-6 text-slate-400 group-hover:text-slate-600 transition-colors" />
                             </div>
 
-                            <h3 className="text-xl font-bold text-slate-900 mb-1">חבילת בסיס</h3>
-                            <div className="text-3xl font-black text-slate-900 mb-2">₪199</div>
-                            <p className="text-slate-500 text-sm font-medium mb-6 text-center">אירועים קטנים וימי הולדת</p>
+                            <h3 className="text-lg font-bold text-slate-900 mb-1">חבילת בסיס</h3>
+                            <div className="text-2xl font-black text-slate-900 mb-1">₪199</div>
+                            <p className="text-slate-500 text-xs font-medium mb-4 text-center">אירועים קטנים וימי הולדת</p>
 
-                            <div className="w-full space-y-3 text-sm text-slate-600 mb-8 flex-1">
+                            <div className="w-full space-y-2 text-sm text-slate-600 mb-6 flex-1">
                                 <div className="flex items-center gap-3 w-full">
                                     <div className="p-1 rounded-full bg-slate-100 text-slate-500 shrink-0"><Check className="w-3 h-3" /></div>
                                     <span>עד <span className="font-bold text-slate-900">1,200</span> תמונות</span>
@@ -108,7 +108,7 @@ const PackageSelectionModal: React.FC<PackageSelectionModalProps> = ({ isOpen, o
                                 </div>
                             </div>
 
-                            <div className="w-full py-3 rounded-xl border border-slate-200 text-slate-600 font-bold group-hover:bg-slate-800 group-hover:text-white group-hover:border-slate-800 transition-all text-center text-sm">
+                            <div className="w-full py-2.5 rounded-xl border border-slate-200 text-slate-600 font-bold group-hover:bg-slate-800 group-hover:text-white group-hover:border-slate-800 transition-all text-center text-sm">
                                 בחר בסיס
                             </div>
                         </button>
@@ -117,23 +117,23 @@ const PackageSelectionModal: React.FC<PackageSelectionModalProps> = ({ isOpen, o
                         <button
                             onClick={() => handlePackageSelect('premium')}
                             disabled={!!loading}
-                            className="group relative h-full bg-white border-2 border-cyan-500 rounded-3xl p-8 shadow-2xl shadow-cyan-900/10 transform md:-translate-y-4 transition-all hover:shadow-cyan-900/20 text-right flex flex-col items-center z-10"
+                            className="group relative h-full bg-white border-2 border-cyan-500 rounded-3xl p-6 shadow-2xl shadow-cyan-900/10 transform md:-translate-y-2 transition-all hover:shadow-cyan-900/20 text-right flex flex-col items-center z-10"
                         >
                             {/* Elegant Badge */}
-                            <div className="absolute -top-3 left-1/2 -translate-x-1/2 bg-cyan-50 text-cyan-700 border border-cyan-200 px-4 py-1 rounded-full text-sm font-bold shadow-sm flex items-center gap-1.5 whitespace-nowrap">
-                                <Sparkles className="w-3.5 h-3.5" />
+                            <div className="absolute -top-3 left-1/2 -translate-x-1/2 bg-cyan-50 text-cyan-700 border border-cyan-200 px-3 py-1 rounded-full text-xs font-bold shadow-sm flex items-center gap-1.5 whitespace-nowrap">
+                                <Sparkles className="w-3 h-3" />
                                 <span>מומלץ ביותר</span>
                             </div>
 
-                            <div className="mb-6 p-5 bg-gradient-to-br from-cyan-500 to-cyan-600 rounded-2xl shadow-lg shadow-cyan-500/20 group-hover:scale-110 transition-transform duration-300">
-                                <Award className="w-10 h-10 text-white" />
+                            <div className="mb-4 p-4 bg-gradient-to-br from-cyan-500 to-cyan-600 rounded-2xl shadow-lg shadow-cyan-500/20 group-hover:scale-110 transition-transform duration-300">
+                                <Award className="w-8 h-8 text-white" />
                             </div>
 
-                            <h3 className="text-2xl font-bold text-slate-900 mb-1">חבילת פרימיום</h3>
-                            <div className="text-4xl font-black text-slate-900 mb-2">₪279</div>
-                            <p className="text-cyan-600 text-sm font-medium mb-8 text-center bg-cyan-50 px-3 py-1 rounded-full">הבחירה המשתלמת ביותר</p>
+                            <h3 className="text-xl font-bold text-slate-900 mb-1">חבילת פרימיום</h3>
+                            <div className="text-3xl font-black text-slate-900 mb-1">₪279</div>
+                            <p className="text-cyan-600 text-xs font-medium mb-4 text-center bg-cyan-50 px-3 py-1 rounded-full">הבחירה המשתלמת ביותר</p>
 
-                            <div className="w-full space-y-4 text-sm text-slate-700 mb-8 flex-1 px-2">
+                            <div className="w-full space-y-3 text-sm text-slate-700 mb-6 flex-1 px-2">
                                 <div className="flex items-center gap-3 w-full">
                                     <div className="p-1 rounded-full bg-cyan-100 text-cyan-600 shrink-0"><Check className="w-3.5 h-3.5" /></div>
                                     <span className="text-base font-medium">עד <span className="font-bold text-slate-900">10,000</span> תמונות</span>
@@ -152,7 +152,7 @@ const PackageSelectionModal: React.FC<PackageSelectionModalProps> = ({ isOpen, o
                                 </div>
                             </div>
 
-                            <div className="w-full py-4 rounded-xl bg-cyan-600 text-white font-bold shadow-lg shadow-cyan-500/20 group-hover:bg-cyan-500 group-hover:shadow-cyan-500/30 transition-all text-center transform group-hover:-translate-y-1">
+                            <div className="w-full py-3 rounded-xl bg-cyan-600 text-white font-bold shadow-lg shadow-cyan-500/20 group-hover:bg-cyan-500 group-hover:shadow-cyan-500/30 transition-all text-center transform group-hover:-translate-y-1">
                                 בחר בחבילה זו
                             </div>
                         </button>
@@ -161,17 +161,17 @@ const PackageSelectionModal: React.FC<PackageSelectionModalProps> = ({ isOpen, o
                         <button
                             onClick={() => handlePackageSelect('gold')}
                             disabled={!!loading}
-                            className="group relative h-full bg-white border border-slate-200 rounded-3xl p-6 transition-all hover:border-amber-200 hover:shadow-xl hover:shadow-amber-900/5 text-right flex flex-col items-center"
+                            className="group relative h-full bg-white border border-slate-200 rounded-3xl p-5 transition-all hover:border-amber-200 hover:shadow-xl hover:shadow-amber-900/5 text-right flex flex-col items-center"
                         >
-                            <div className="mb-6 p-4 bg-slate-50 rounded-2xl group-hover:bg-amber-50 transition-colors">
-                                <Crown className="w-8 h-8 text-slate-400 group-hover:text-amber-500 transition-colors" />
+                            <div className="mb-4 p-3 bg-slate-50 rounded-2xl group-hover:bg-amber-50 transition-colors">
+                                <Crown className="w-6 h-6 text-slate-400 group-hover:text-amber-500 transition-colors" />
                             </div>
 
-                            <h3 className="text-xl font-bold text-slate-900 mb-1">חבילת זהב</h3>
-                            <div className="text-3xl font-black text-slate-900 mb-2">₪529</div>
-                            <p className="text-slate-500 text-sm font-medium mb-6 text-center">אירועי ענק ופסטיבלים</p>
+                            <h3 className="text-lg font-bold text-slate-900 mb-1">חבילת זהב</h3>
+                            <div className="text-2xl font-black text-slate-900 mb-1">₪529</div>
+                            <p className="text-slate-500 text-xs font-medium mb-4 text-center">אירועי ענק ופסטיבלים</p>
 
-                            <div className="w-full space-y-3 text-sm text-slate-600 mb-8 flex-1">
+                            <div className="w-full space-y-2 text-sm text-slate-600 mb-6 flex-1">
                                 <div className="flex items-center gap-3 w-full">
                                     <div className="p-1 rounded-full bg-slate-100 text-slate-500 shrink-0"><Check className="w-3 h-3" /></div>
                                     <span><span className="font-bold text-slate-900">ללא הגבלת תמונות</span></span>
@@ -186,7 +186,7 @@ const PackageSelectionModal: React.FC<PackageSelectionModalProps> = ({ isOpen, o
                                 </div>
                             </div>
 
-                            <div className="w-full py-3 rounded-xl border border-slate-200 text-slate-600 font-bold group-hover:bg-amber-50 group-hover:text-amber-600 group-hover:border-amber-200 transition-all text-center text-sm">
+                            <div className="w-full py-2.5 rounded-xl border border-slate-200 text-slate-600 font-bold group-hover:bg-amber-50 group-hover:text-amber-600 group-hover:border-amber-200 transition-all text-center text-sm">
                                 בחר זהב
                             </div>
                         </button>
