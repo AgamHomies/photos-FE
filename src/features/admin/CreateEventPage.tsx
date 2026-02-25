@@ -11,12 +11,12 @@ const CreateEventPage: React.FC = () => {
     const navigate = useNavigate();
     const location = useLocation();
 
-    // Get package type from URL params (PayPal return) or navigation state
+    // Get package type from URL params or navigation state
     const getInitialPackageType = (): 'basic' | 'premium' | 'gold' => {
         const urlParams = new URLSearchParams(location.search);
         const urlPackage = urlParams.get('package');
 
-        // If coming from PayPal, use URL parameter
+        // Check URL parameter first
         if (urlPackage && ['basic', 'premium', 'gold'].includes(urlPackage)) {
             return urlPackage as 'basic' | 'premium' | 'gold';
         }
@@ -303,7 +303,6 @@ const CreateEventPage: React.FC = () => {
                 packageType: packageType
             };
 
-            // Payment already verified at package selection
             console.log('Creating event with package:', packageType);
 
             // Create event

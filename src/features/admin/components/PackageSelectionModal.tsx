@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { X, Check, Star, Award, Crown, Sparkles } from 'lucide-react';
-import PaymentModal from './PaymentModal';
 
 interface PackageSelectionModalProps {
     isOpen: boolean;
@@ -12,7 +11,6 @@ const PackageSelectionModal: React.FC<PackageSelectionModalProps> = ({ isOpen, o
     const navigate = useNavigate();
     const [loading, setLoading] = useState<string | null>(null);
     const [selectedPackage, setSelectedPackage] = useState<'basic' | 'premium' | 'gold' | null>(null);
-    const [showPaymentModal, setShowPaymentModal] = useState(false);
 
     // Package photo limits
     const PACKAGE_LIMITS = {
@@ -39,10 +37,11 @@ const PackageSelectionModal: React.FC<PackageSelectionModalProps> = ({ isOpen, o
         setLoading(packageType);
         setSelectedPackage(packageType);
 
-        // Show payment modal instead of navigating directly
-        setShowPaymentModal(true);
+        // Navigate directly to create event
+        navigate('/admin/create-event', { state: { packageType } });
 
         setLoading(null);
+        onClose();
     };
 
     const handleBackdropClick = (e: React.MouseEvent) => {
@@ -193,19 +192,6 @@ const PackageSelectionModal: React.FC<PackageSelectionModalProps> = ({ isOpen, o
                         </button>
                     </div>
                 </div>
-
-                {/* Payment Modal - Shows after package selection */}
-                {selectedPackage && (
-                    <PaymentModal
-                        isOpen={showPaymentModal}
-                        onClose={() => {
-                            setShowPaymentModal(false);
-                            setSelectedPackage(null);
-                        }}
-                        packageType={selectedPackage}
-                        photoLimit={PACKAGE_LIMITS[selectedPackage]}
-                    />
-                )}
             </div>
         </div>
     );
