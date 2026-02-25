@@ -27,9 +27,7 @@ export const CONFIG = {
 
   // Log the current mode
   get MODE() {
-    const mode = this.USE_MOCK ? 'MOCK (localStorage)' : `REAL BACKEND (${this.API_BASE_URL})`;
-    console.log(`🔧 App Mode: ${mode}`);
-    return mode;
+    return this.USE_MOCK ? 'MOCK (localStorage)' : `REAL BACKEND (${this.API_BASE_URL})`;
   },
 
   // Mock settings (for development without backend)

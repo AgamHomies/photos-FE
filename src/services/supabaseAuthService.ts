@@ -12,10 +12,12 @@ export class SupabaseAuthService {
    * Sign up with email and password
    */
   async signUpWithEmail(email: string, password: string): Promise<SupabaseAuthResult> {
+    console.log('SupabaseAuthService: attempting signUpWithEmail', email);
     const { data, error } = await supabase.auth.signUp({
       email,
       password,
     });
+    if (error) console.error('SupabaseAuthService signUp error:', error);
 
     return {
       user: data.user,
@@ -28,10 +30,12 @@ export class SupabaseAuthService {
    * Sign in with email and password
    */
   async signInWithEmail(email: string, password: string): Promise<SupabaseAuthResult> {
+    console.log('SupabaseAuthService: attempting signInWithEmail', email);
     const { data, error } = await supabase.auth.signInWithPassword({
       email,
       password,
     });
+    if (error) console.error('SupabaseAuthService signIn error:', error);
 
     return {
       user: data.user,

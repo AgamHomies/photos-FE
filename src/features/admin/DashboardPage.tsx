@@ -35,13 +35,16 @@ const DashboardPage: React.FC = () => {
     const navigate = useNavigate();
     const [stats, setStats] = useState<DashboardStats | null>(null);
     const [events, setEvents] = useState<Event[]>([]);
+    const [globalLeads, setGlobalLeads] = useState<any[]>([]);
+    const [totalLeadsCount, setTotalLeadsCount] = useState(0); // frozen at load, unaffected by deletes
+    const [frozenLeadsPerEvent, setFrozenLeadsPerEvent] = useState<Record<string, number>>({}); // frozen per-event map
     const [loading, setLoading] = useState(true);
     const [searchTerm, setSearchTerm] = useState('');
     const [showActiveOnly, setShowActiveOnly] = useState(false);
     const [currentPage, setCurrentPage] = useState(1);
     const [deleteModalOpen, setDeleteModalOpen] = useState(false);
     const [eventToDelete, setEventToDelete] = useState<Event | null>(null);
-    const [sortField, setSortField] = useState<keyof Event | 'downloads' | 'guestVisits' | 'photoCount'>('createdAt');
+    const [sortField, setSortField] = useState<keyof Event | 'downloads' | 'guestVisits' | 'photoCount' | 'likesCount' | 'profileVisits' | 'phoneSaves'>('createdAt');
     const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('desc');
     const itemsPerPage = 5;
 
@@ -204,7 +207,7 @@ const DashboardPage: React.FC = () => {
             // I missed that. For now let's implement search and pagination. Status filtering might be broken if I don't send it.
             // Let's assume shows all status for now or I'll fix it in next step.
 
-            const response = await BackendService.getEvents(page, itemsPerPage, searchTerm);
+            const response = await BackendService.getEvents(page, itemsPerPage, searchTerm, sortField, sortDirection, showActiveOnly ? 'ready' : undefined);
             setEvents(response.items);
             setTotalPages(Math.ceil(response.total / itemsPerPage));
             setTotalEvents(response.total);
@@ -212,6 +215,15 @@ const DashboardPage: React.FC = () => {
             // Fetch stats only once? Or every time? keeping it here is fine.
             const statsData = await BackendService.getDashboardStats();
             setStats(statsData);
+
+            // Fetch global leads
+            const leadsData = await BackendService.getAllLeads();
+            setGlobalLeads(leadsData);
+            setTotalLeadsCount(leadsData.length); // frozen total — not affected by table deletes
+            // Build frozen per-event count map
+            const perEvent: Record<string, number> = {};
+            leadsData.forEach((l: any) => { perEvent[l.event_id] = (perEvent[l.event_id] || 0) + 1; });
+            setFrozenLeadsPerEvent(perEvent);
         } catch (error) {
             console.error('Failed to load dashboard data:', error);
             if (error instanceof Error && error.message.includes('Not authenticated')) {
@@ -224,7 +236,7 @@ const DashboardPage: React.FC = () => {
 
     const silentRefresh = async () => {
         try {
-            const response = await BackendService.getEvents(currentPage, itemsPerPage, searchTerm);
+            const response = await BackendService.getEvents(currentPage, itemsPerPage, searchTerm, sortField, sortDirection);
             setEvents(response.items);
             setTotalPages(Math.ceil(response.total / itemsPerPage));
         } catch (error) {
@@ -266,6 +278,40 @@ const DashboardPage: React.FC = () => {
         }
     };
 
+    const handleToggleLeadContacted = async (eventId: string, leadId: number, checked: boolean) => {
+        setGlobalLeads(prev => prev.map(l => l.id === leadId ? { ...l, is_contacted: checked } : l));
+        try {
+            await BackendService.updateLeadStatus(eventId, leadId, checked);
+        } catch (error) {
+            console.error("Error toggling lead status:", error);
+            triggerToast('שגיאה בעדכון סטטוס ליד', 'error');
+            // Revert UI state on error
+            setGlobalLeads(prev => prev.map(l => l.id === leadId ? { ...l, is_contacted: !checked } : l));
+        }
+    };
+
+    const handleDeleteLead = async (eventId: string | number, leadId: number, leadName: string) => {
+        if (!window.confirm(`למחוק את הליד של ${leadName}?`)) return;
+        setGlobalLeads(prev => prev.map(l => l.id === leadId ? { ...l, is_deleted: true } : l));
+        try {
+            const ok = await BackendService.deleteLead(eventId, leadId);
+            if (!ok) {
+                // Revert on failure — refetch
+                triggerToast('שגיאה במחיקת ליד', 'error');
+                const fresh = await BackendService.getAllLeads();
+                setGlobalLeads(fresh);
+            } else {
+                triggerToast('הליד נמחק בהצלחה!', 'success');
+            }
+        } catch (error) {
+            console.error("Error deleting lead:", error);
+            triggerToast('שגיאה במחיקת ליד', 'error');
+            // Revert on failure — refetch
+            const fresh = await BackendService.getAllLeads();
+            setGlobalLeads(fresh);
+        }
+    };
+
     const handlePublish = async (eventId: string, e: React.MouseEvent) => {
         e.stopPropagation();
         try {
@@ -278,42 +324,27 @@ const DashboardPage: React.FC = () => {
         }
     };
 
-    const handleSort = (field: keyof Event | 'downloads' | 'guestVisits' | 'photoCount') => {
-        if (sortField === field) {
-            setSortDirection(sortDirection === 'asc' ? 'desc' : 'asc');
-        } else {
-            setSortField(field);
-            setSortDirection('desc'); // Default to desc for metrics usually
-        }
+    const handleSort = (field: keyof Event | 'downloads' | 'guestVisits' | 'photoCount' | 'likesCount' | 'profileVisits' | 'phoneSaves') => {
+        const isToggle = sortField === field;
+        const newDir = isToggle ? (sortDirection === 'asc' ? 'desc' : 'asc') : 'desc';
+        // Update state for UI indicator
+        if (!isToggle) setSortField(field);
+        setSortDirection(newDir);
+        // Reload directly with explicit sort values to avoid stale closure
+        setCurrentPage(1);
+        setLoading(true);
+        BackendService.getEvents(1, itemsPerPage, searchTerm, field, newDir)
+            .then(response => {
+                setEvents(response.items);
+                setTotalPages(Math.ceil(response.total / itemsPerPage));
+                setTotalEvents(response.total);
+            })
+            .catch(e => console.error('Sort reload failed:', e))
+            .finally(() => setLoading(false));
     };
 
-    // START SORT LOGIC
-    // Sort the current page items
-    const sortedEvents = [...events].sort((a, b) => {
-        const aValue = a[sortField] || 0;
-        const bValue = b[sortField] || 0;
-
-        if (typeof aValue === 'string' && typeof bValue === 'string') {
-            return sortDirection === 'asc'
-                ? aValue.localeCompare(bValue)
-                : bValue.localeCompare(aValue);
-        }
-
-        // Date handling
-        if (sortField === 'date' || sortField === 'createdAt') {
-            const dateA = a[sortField] ? new Date(a[sortField]!) : new Date(0);
-            const dateB = b[sortField] ? new Date(b[sortField]!) : new Date(0);
-            return sortDirection === 'asc'
-                ? dateA.getTime() - dateB.getTime()
-                : dateB.getTime() - dateA.getTime();
-        }
-
-        // Numeric
-        return sortDirection === 'asc'
-            ? (Number(aValue) - Number(bValue))
-            : (Number(bValue) - Number(aValue));
-    });
-
+    // Server sorts globally - use events directly (no client-side re-sort)
+    const sortedEvents = events;
 
 
     if (loading && !stats) {
@@ -328,7 +359,7 @@ const DashboardPage: React.FC = () => {
 
     return (
         <Layout>
-            <div className="container mx-auto px-4 py-8 max-w-7xl">
+            <div className="container mx-auto px-6 lg:px-12 py-8 max-w-[1100px]">
                 {/* Header Section */}
                 <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-8">
                     <div>
@@ -341,7 +372,7 @@ const DashboardPage: React.FC = () => {
                                 onClick={handleCreateEvent}
                                 className="px-6 py-3 rounded-xl flex items-center justify-center gap-2 transition-all shadow-lg font-bold bg-cyan-500 hover:bg-cyan-600 text-white shadow-cyan-500/30"
                             >
-                                <Plus className="w-5 h-5" />
+                                <Plus className="w-4 h-4" />
                                 <span>צור אירוע חדש</span>
                             </button>
                         </div>
@@ -351,54 +382,58 @@ const DashboardPage: React.FC = () => {
                 {/* Stats Grid - 7 Columns on Desktop */}
                 {stats && (
 
-                    <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-7 gap-4 mb-8">
+                    <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-6" style={{ "zoom": "0.9" }}>
                         {/* 1. אירועים */}
-                        <div className="col-span-2 md:col-span-1 bg-white p-5 rounded-2xl shadow-sm border border-slate-100 hover:shadow-md transition-all flex flex-col">
-                            {/* Header - Icon */}
-                            <div className="p-2.5 bg-orange-50 text-orange-500 rounded-xl mb-3 w-fit">
-                                <Calendar className="w-5 h-5" />
-                            </div>
-                            <div className="relative" title={`${stats.totalEvents ?? 0}/${stats.activeEvents ?? 0}`}>
-                                <h3 className="text-3xl font-black text-slate-900 leading-none mb-1 truncate max-w-[200px] flex items-center gap-1">
-                                    <span>{stats.totalEvents ?? 0}</span>
-                                    <span className="text-slate-300 font-light text-2xl">/</span>
-                                    <span className="text-green-600">{stats.activeEvents ?? 0}</span>
-                                </h3>
-                                <p className="text-slate-500 font-semibold text-xs">אירועים פעילים</p>
+                        <div className="group bg-white p-5 rounded-[1.25rem] shadow-sm hover:shadow-md border border-slate-100/60 hover:border-slate-200 transition-all duration-300 relative overflow-hidden flex flex-col hover:-translate-y-1">
+                            {/* Decorative Background Blob */}
+                            <div className="absolute top-0 right-0 -mt-2 -mr-2 w-16 h-16 bg-gradient-to-br from-orange-100 to-amber-50 rounded-full blur-xl opacity-50 group-hover:opacity-100 transition-opacity"></div>
+
+                            {/* Header - Icon & Title */}
+                            <div className="relative flex justify-between items-start mb-4">
+                                <div className="p-2.5 bg-gradient-to-br from-orange-50 to-amber-50 text-orange-500 rounded-2xl shadow-sm border border-orange-100/50">
+                                    <Calendar className="w-5 h-5" />
+                                </div>
+                                <span className="bg-slate-50 text-slate-500 px-3 py-1 rounded-full text-[11px] font-bold border border-slate-100">סקירה כללית</span>
                             </div>
 
-                            {/* Body - Package Table (flex-1) */}
-                            <div className="w-full pt-3 mt-4 border-t border-slate-100">
-                                <div className="flex-1">
-                                    <div className="grid grid-cols-[1.5fr_0.7fr_0.8fr] gap-2 text-[10px] text-slate-400 font-semibold mb-2">
-                                        <div className="text-right pr-1">חבילה</div>
-                                        <div className="text-center">סה״כ</div>
-                                        <div className="text-center">פעילים</div>
+                            {/* Main Stat */}
+                            <div className="relative flex-grow">
+                                <h3 className="text-3xl font-black text-slate-900 tracking-tight flex items-baseline gap-1.5">
+                                    {stats.totalEvents ?? 0}
+                                    <span className="text-xl text-slate-300 font-light">/</span>
+                                    <span className="text-2xl text-green-500">{stats.activeEvents ?? 0}</span>
+                                </h3>
+                                <p className="text-slate-500 font-medium text-sm mt-1">סה״כ אירועים / פעילים</p>
+                            </div>
+
+                            {/* Footer - Package Stats */}
+                            <div className="mt-3 pt-3 border-t border-slate-100">
+                                <div className="grid grid-cols-3 gap-2">
+                                    <div className="text-center p-2 rounded-xl bg-slate-50 border border-slate-100/50">
+                                        <div className="flex justify-center items-center gap-1 text-slate-500 text-[10px] font-bold mb-1">
+                                            <Star className="w-3 h-3 fill-current" /> בסיס
+                                        </div>
+                                        <div className="flex justify-center items-baseline gap-1">
+                                            <span className="font-bold text-slate-900 text-sm">{stats.statsBasic?.total || 0}</span>
+                                            <span className="text-[10px] text-green-500 font-semibold">({stats.statsBasic?.active || 0})</span>
+                                        </div>
                                     </div>
-                                    <div className="space-y-2">
-                                        <div className="grid grid-cols-[1.5fr_0.7fr_0.8fr] gap-2 items-center text-xs">
-                                            <div className="text-right font-bold text-slate-500 flex items-center justify-start gap-1">
-                                                <Star className="w-3 h-3 fill-current" />
-                                                <span>בסיס</span>
-                                            </div>
-                                            <div className="text-center font-bold text-slate-900">{stats.statsBasic?.total || 0}</div>
-                                            <div className="text-center font-bold text-green-600">{stats.statsBasic?.active || 0}</div>
+                                    <div className="text-center p-2 rounded-xl bg-cyan-50/50 border border-cyan-100/50">
+                                        <div className="flex justify-center items-center gap-1 text-cyan-600 text-[10px] font-bold mb-1">
+                                            <Award className="w-3 h-3" /> פרימיום
                                         </div>
-                                        <div className="grid grid-cols-[1.5fr_0.7fr_0.8fr] gap-2 items-center text-xs">
-                                            <div className="text-right font-bold text-cyan-600 flex items-center justify-start gap-1">
-                                                <Award className="w-3 h-3" />
-                                                <span>פרימיום</span>
-                                            </div>
-                                            <div className="text-center font-bold text-slate-900">{stats.statsPremium?.total || 0}</div>
-                                            <div className="text-center font-bold text-green-600">{stats.statsPremium?.active || 0}</div>
+                                        <div className="flex justify-center items-baseline gap-1">
+                                            <span className="font-bold text-slate-900 text-sm">{stats.statsPremium?.total || 0}</span>
+                                            <span className="text-[10px] text-green-500 font-semibold">({stats.statsPremium?.active || 0})</span>
                                         </div>
-                                        <div className="grid grid-cols-[1.5fr_0.7fr_0.8fr] gap-2 items-center text-xs">
-                                            <div className="text-right font-bold text-amber-500 flex items-center justify-start gap-1">
-                                                <Crown className="w-3 h-3 fill-current" />
-                                                <span>זהב</span>
-                                            </div>
-                                            <div className="text-center font-bold text-slate-900">{stats.statsGold?.total || 0}</div>
-                                            <div className="text-center font-bold text-green-600">{stats.statsGold?.active || 0}</div>
+                                    </div>
+                                    <div className="text-center p-2 rounded-xl bg-amber-50/50 border border-amber-100/50">
+                                        <div className="flex justify-center items-center gap-1 text-amber-600 text-[10px] font-bold mb-1">
+                                            <Crown className="w-3 h-3 fill-current" /> זהב
+                                        </div>
+                                        <div className="flex justify-center items-baseline gap-1">
+                                            <span className="font-bold text-slate-900 text-sm">{stats.statsGold?.total || 0}</span>
+                                            <span className="text-[10px] text-green-500 font-semibold">({stats.statsGold?.active || 0})</span>
                                         </div>
                                     </div>
                                 </div>
@@ -406,204 +441,231 @@ const DashboardPage: React.FC = () => {
                         </div>
 
                         {/* 2. תמונות */}
-                        <div className="md:col-span-1 bg-white p-5 rounded-2xl shadow-sm border border-slate-100 hover:shadow-md transition-all relative group">
-                            <div className="flex flex-col items-start text-right h-full justify-between">
-                                <div>
-                                    <div className="p-2.5 bg-cyan-50 text-cyan-500 rounded-xl mb-3 w-fit">
-                                        <ImageIcon className="w-5 h-5" />
-                                    </div>
-                                    <div className="relative" title={(stats.totalImages || 0).toLocaleString()}>
-                                        <h3 className="text-3xl font-black text-slate-900 leading-none mb-1 truncate max-w-[200px]">
-                                            {(stats.totalImages || 0).toLocaleString()}
-                                        </h3>
-                                        <p className="text-slate-500 font-semibold text-xs">תמונות</p>
-                                    </div>
+                        <div className="group bg-white p-5 rounded-[1.25rem] shadow-sm hover:shadow-md border border-slate-100/60 hover:border-slate-200 transition-all duration-300 relative overflow-hidden flex flex-col hover:-translate-y-1">
+                            {/* Decorative Background Blob */}
+                            <div className="absolute top-0 right-0 -mt-2 -mr-2 w-16 h-16 bg-gradient-to-br from-cyan-100 to-blue-50 rounded-full blur-xl opacity-50 group-hover:opacity-100 transition-opacity"></div>
+
+                            {/* Header - Icon */}
+                            <div className="relative flex justify-between items-start mb-4">
+                                <div className="p-2.5 bg-gradient-to-br from-cyan-50 to-blue-50 text-cyan-500 rounded-2xl shadow-sm border border-cyan-100/50">
+                                    <ImageIcon className="w-5 h-5" />
                                 </div>
-                                <div className="w-full pt-3 border-t border-slate-100 mt-3">
-                                    <p className="text-slate-400 text-[11px] font-semibold mb-2">לאירוע</p>
-                                    <div className="flex justify-between text-right">
-                                        <div>
-                                            <p className="text-slate-400 text-[10px] font-semibold">מקסימום</p>
-                                            <p className="text-slate-900 font-bold text-sm">{stats.maxImagesPerEvent || 0}</p>
-                                        </div>
-                                        <div>
-                                            <p className="text-slate-400 text-[10px] font-semibold">ממוצע</p>
-                                            <p className="text-slate-900 font-bold text-sm">{stats.avgImagesPerEvent || 0}</p>
-                                        </div>
-                                    </div>
+                            </div>
+
+                            {/* Main Stat */}
+                            <div className="relative flex-grow">
+                                <h3 className="text-3xl font-black text-slate-900 tracking-tight">
+                                    {(stats.totalImages || 0).toLocaleString()}
+                                </h3>
+                                <p className="text-slate-500 font-medium text-sm mt-1">סה״כ תמונות שהועלו</p>
+                            </div>
+
+                            {/* Footer */}
+                            <div className="mt-3 flex gap-2">
+                                <div className="flex-1 bg-slate-50 border border-slate-100 rounded-xl p-2.5 text-center">
+                                    <p className="text-slate-400 text-[10px] font-bold uppercase tracking-wider mb-0.5">מקסימום לאירוע</p>
+                                    <p className="text-slate-800 font-bold text-sm">{stats.maxImagesPerEvent || 0}</p>
+                                </div>
+                                <div className="flex-1 bg-slate-50 border border-slate-100 rounded-xl p-2.5 text-center">
+                                    <p className="text-slate-400 text-[10px] font-bold uppercase tracking-wider mb-0.5">ממוצע לאירוע</p>
+                                    <p className="text-slate-800 font-bold text-sm">{stats.avgImagesPerEvent || 0}</p>
                                 </div>
                             </div>
                         </div>
 
-                        {/* 3. כניסות אורחים */}
-                        <div className="bg-white p-5 rounded-2xl shadow-sm border border-slate-100 hover:shadow-md transition-all relative">
-                            <div className="flex flex-col items-start text-right h-full justify-between">
-                                <div>
-                                    <div className="p-2.5 bg-purple-50 text-purple-500 rounded-xl mb-3 w-fit">
-                                        <Eye className="w-5 h-5" />
-                                    </div>
-                                    <h3 className="text-3xl font-black text-slate-900 leading-none mb-1">{(stats.totalPageVisits || 0).toLocaleString()}</h3>
-                                    <p className="text-slate-500 font-semibold text-xs">כניסות אורחים</p>
+                        {/* 3. צפיות */}
+                        <div className="group bg-white p-5 rounded-[1.25rem] shadow-sm hover:shadow-md border border-slate-100/60 hover:border-slate-200 transition-all duration-300 relative overflow-hidden flex flex-col hover:-translate-y-1">
+                            <div className="absolute top-0 right-0 -mt-2 -mr-2 w-16 h-16 bg-gradient-to-br from-purple-100 to-fuchsia-50 rounded-full blur-xl opacity-50 group-hover:opacity-100 transition-opacity"></div>
+
+                            <div className="relative flex justify-between items-start mb-4">
+                                <div className="p-2.5 bg-gradient-to-br from-purple-50 to-fuchsia-50 text-purple-600 rounded-2xl shadow-sm border border-purple-100/50">
+                                    <Eye className="w-5 h-5" />
                                 </div>
-                                <div className="w-full pt-3 border-t border-slate-100 mt-3">
-                                    <p className="text-slate-400 text-[11px] font-semibold mb-2">לאירוע</p>
-                                    <div className="flex justify-between text-right">
-                                        <div>
-                                            <p className="text-slate-400 text-[10px] font-semibold">מקסימום</p>
-                                            <p className="text-slate-900 font-bold text-sm">{stats.maxPageVisitsPerEvent || 0}</p>
-                                        </div>
-                                        <div>
-                                            <p className="text-slate-400 text-[10px] font-semibold">ממוצע</p>
-                                            <p className="text-slate-900 font-bold text-sm">{stats.avgPageVisitsPerEvent || 0}</p>
-                                        </div>
-                                    </div>
+                            </div>
+
+                            <div className="relative flex-grow">
+                                <h3 className="text-3xl font-black text-slate-900 tracking-tight">
+                                    {(stats.totalPageVisits || 0).toLocaleString()}
+                                </h3>
+                                <p className="text-slate-500 font-medium text-sm mt-1">כניסות לגלריה</p>
+                            </div>
+
+                            <div className="mt-3 flex gap-2">
+                                <div className="flex-1 bg-slate-50 border border-slate-100 rounded-xl p-2.5 text-center">
+                                    <p className="text-slate-400 text-[10px] font-bold uppercase tracking-wider mb-0.5">מקסימום לאירוע</p>
+                                    <p className="text-slate-800 font-bold text-sm">{stats.maxPageVisitsPerEvent || 0}</p>
+                                </div>
+                                <div className="flex-1 bg-slate-50 border border-slate-100 rounded-xl p-2.5 text-center">
+                                    <p className="text-slate-400 text-[10px] font-bold uppercase tracking-wider mb-0.5">ממוצע לאירוע</p>
+                                    <p className="text-slate-800 font-bold text-sm">{stats.avgPageVisitsPerEvent || 0}</p>
                                 </div>
                             </div>
                         </div>
 
                         {/* 4. הורדות */}
-                        <div className="bg-white p-5 rounded-2xl shadow-sm border border-slate-100 hover:shadow-md transition-all relative">
-                            <div className="absolute top-5 left-5">
-                                <div className="text-left group">
-                                    <span className="bg-blue-100 text-blue-600 px-2 py-0.5 rounded-full text-[10px] font-bold cursor-help">
-                                        {stats.totalPageVisits > 0 ? Math.round((stats.totalDownloads / stats.totalPageVisits) * 100) : 0}%
-                                    </span>
-                                    <p className="text-slate-600 text-[10px] font-semibold mt-1 opacity-0 group-hover:opacity-100 transition-opacity leading-tight absolute left-0 w-20">
-                                        אחוז המרה מהכניסות אורחים
-                                    </p>
+                        <div className="group bg-white p-5 rounded-[1.25rem] shadow-sm hover:shadow-md border border-slate-100/60 hover:border-slate-200 transition-all duration-300 relative overflow-hidden flex flex-col hover:-translate-y-1">
+                            <div className="absolute top-0 right-0 -mt-2 -mr-2 w-16 h-16 bg-gradient-to-br from-blue-100 to-indigo-50 rounded-full blur-xl opacity-50 group-hover:opacity-100 transition-opacity"></div>
+
+                            <div className="relative flex justify-between items-start mb-4">
+                                <div className="p-2.5 bg-gradient-to-br from-blue-50 to-indigo-50 text-blue-600 rounded-2xl shadow-sm border border-blue-100/50">
+                                    <Download className="w-5 h-5" />
+                                </div>
+                                <div className="bg-blue-50 text-blue-600 px-3 py-1 rounded-full text-[11px] font-bold border border-blue-100 flex items-center gap-1" title="אחוז המרה מכניסות">
+                                    {stats.totalPageVisits > 0 ? Math.round((stats.totalDownloads / stats.totalPageVisits) * 100) : 0}% המרה
                                 </div>
                             </div>
-                            <div className="flex flex-col items-start text-right h-full justify-between">
-                                <div>
-                                    <div className="p-2.5 bg-blue-50 text-blue-500 rounded-xl mb-3 w-fit">
-                                        <Download className="w-5 h-5" />
-                                    </div>
-                                    <h3 className="text-3xl font-black text-slate-900 leading-none mb-1">{(stats.totalDownloads || 0).toLocaleString()}</h3>
-                                    <p className="text-slate-500 font-semibold text-xs">הורדות</p>
+
+                            <div className="relative flex-grow">
+                                <h3 className="text-3xl font-black text-slate-900 tracking-tight">
+                                    {(stats.totalDownloads || 0).toLocaleString()}
+                                </h3>
+                                <p className="text-slate-500 font-medium text-sm mt-1">הורדות תמונות</p>
+                            </div>
+
+                            <div className="mt-3 flex gap-2">
+                                <div className="flex-1 bg-slate-50 border border-slate-100 rounded-xl p-2.5 text-center">
+                                    <p className="text-slate-400 text-[10px] font-bold uppercase tracking-wider mb-0.5">מקסימום לאירוע</p>
+                                    <p className="text-slate-800 font-bold text-sm">{stats.maxDownloadsPerEvent || 0}</p>
                                 </div>
-                                <div className="w-full pt-3 border-t border-slate-100 mt-3">
-                                    <p className="text-slate-400 text-[11px] font-semibold mb-2">לאירוע</p>
-                                    <div className="flex justify-between text-right">
-                                        <div>
-                                            <p className="text-slate-400 text-[10px] font-semibold">מקסימום</p>
-                                            <p className="text-slate-900 font-bold text-sm">{stats.maxDownloadsPerEvent || 0}</p>
-                                        </div>
-                                        <div>
-                                            <p className="text-slate-400 text-[10px] font-semibold">ממוצע</p>
-                                            <p className="text-slate-900 font-bold text-sm">{stats.avgDownloadsPerEvent || 0}</p>
-                                        </div>
-                                    </div>
+                                <div className="flex-1 bg-slate-50 border border-slate-100 rounded-xl p-2.5 text-center">
+                                    <p className="text-slate-400 text-[10px] font-bold uppercase tracking-wider mb-0.5">ממוצע לאירוע</p>
+                                    <p className="text-slate-800 font-bold text-sm">{stats.avgDownloadsPerEvent || 0}</p>
                                 </div>
                             </div>
                         </div>
 
-                        {/* 5. שמירות */}
-                        <div className="bg-white p-5 rounded-2xl shadow-sm border border-slate-100 hover:shadow-md transition-all relative">
-                            <div className="absolute top-5 left-5">
-                                <div className="text-left group">
-                                    <span className="bg-green-100 text-green-600 px-2 py-0.5 rounded-full text-[10px] font-bold cursor-help">
-                                        {stats.totalPageVisits > 0 ? Math.round((stats.phoneSaves / stats.totalPageVisits) * 100) : 0}%
-                                    </span>
-                                    <p className="text-slate-600 text-[10px] font-semibold mt-1 opacity-0 group-hover:opacity-100 transition-opacity leading-tight absolute left-0 w-20">
-                                        אחוז המרה מהכניסות אורחים
-                                    </p>
+                        {/* 5. שמירות איש קשר */}
+                        <div className="group bg-white p-5 rounded-[1.25rem] shadow-sm hover:shadow-md border border-slate-100/60 hover:border-slate-200 transition-all duration-300 relative overflow-hidden flex flex-col hover:-translate-y-1">
+                            <div className="absolute top-0 right-0 -mt-2 -mr-2 w-16 h-16 bg-gradient-to-br from-emerald-100 to-green-50 rounded-full blur-xl opacity-50 group-hover:opacity-100 transition-opacity"></div>
+
+                            <div className="relative flex justify-between items-start mb-4">
+                                <div className="p-2.5 bg-gradient-to-br from-emerald-50 to-green-50 text-emerald-600 rounded-2xl shadow-sm border border-emerald-100/50">
+                                    <Smartphone className="w-5 h-5" />
+                                </div>
+                                <div className="bg-emerald-50 text-emerald-600 px-3 py-1 rounded-full text-[11px] font-bold border border-emerald-100 flex items-center gap-1" title="אחוז המרה מכניסות">
+                                    {stats.totalPageVisits > 0 ? Math.round((stats.phoneSaves / stats.totalPageVisits) * 100) : 0}% המרה
                                 </div>
                             </div>
-                            <div className="flex flex-col items-start text-right h-full justify-between">
-                                <div>
-                                    <div className="p-2.5 bg-green-50 text-green-500 rounded-xl mb-3 w-fit">
-                                        <Smartphone className="w-5 h-5" />
-                                    </div>
-                                    <h3 className="text-3xl font-black text-slate-900 leading-none mb-1">{(stats.phoneSaves || 0).toLocaleString()}</h3>
-                                    <p className="text-slate-500 font-semibold text-xs">שמירות</p>
+
+                            <div className="relative flex-grow">
+                                <h3 className="text-3xl font-black text-slate-900 tracking-tight">
+                                    {(stats.phoneSaves || 0).toLocaleString()}
+                                </h3>
+                                <p className="text-slate-500 font-medium text-sm mt-1">שמירות איש קשר</p>
+                            </div>
+
+                            <div className="mt-3 flex gap-2">
+                                <div className="flex-1 bg-slate-50 border border-slate-100 rounded-xl p-2.5 text-center">
+                                    <p className="text-slate-400 text-[10px] font-bold uppercase tracking-wider mb-0.5">מקסימום לאירוע</p>
+                                    <p className="text-slate-800 font-bold text-sm">{stats.maxPhoneSavesPerEvent || 0}</p>
                                 </div>
-                                <div className="w-full pt-3 border-t border-slate-100 mt-3">
-                                    <p className="text-slate-400 text-[11px] font-semibold mb-2">לאירוע</p>
-                                    <div className="flex justify-between text-right">
-                                        <div>
-                                            <p className="text-slate-400 text-[10px] font-semibold">מקסימום</p>
-                                            <p className="text-slate-900 font-bold text-sm">{stats.maxPhoneSavesPerEvent || 0}</p>
-                                        </div>
-                                        <div>
-                                            <p className="text-slate-400 text-[10px] font-semibold">ממוצע</p>
-                                            <p className="text-slate-900 font-bold text-sm">{stats.avgPhoneSavesPerEvent || 0}</p>
-                                        </div>
-                                    </div>
+                                <div className="flex-1 bg-slate-50 border border-slate-100 rounded-xl p-2.5 text-center">
+                                    <p className="text-slate-400 text-[10px] font-bold uppercase tracking-wider mb-0.5">ממוצע לאירוע</p>
+                                    <p className="text-slate-800 font-bold text-sm">{stats.avgPhoneSavesPerEvent || 0}</p>
                                 </div>
                             </div>
                         </div>
 
-                        {/* 6. כניסות לפרופיל */}
-                        <div className="bg-white p-5 rounded-2xl shadow-sm border border-slate-100 hover:shadow-md transition-all relative flex flex-col">
-                            <div className="absolute top-5 left-5">
-                                <div className="text-left group">
-                                    <span className="bg-pink-100 text-pink-600 px-2 py-0.5 rounded-full text-[10px] font-bold cursor-help">
-                                        {stats.totalPageVisits > 0 ? Math.round((stats.totalSocialTraffic / stats.totalPageVisits) * 100) : 0}%
-                                    </span>
-                                    <p className="text-slate-600 text-[10px] font-semibold mt-1 opacity-0 group-hover:opacity-100 transition-opacity leading-tight absolute left-0 w-20">
-                                        אחוז המרה מהכניסות אורחים
-                                    </p>
+                        {/* 6. פרופיל ברשתות */}
+                        <div className="group bg-white p-5 rounded-[1.25rem] shadow-sm hover:shadow-md border border-slate-100/60 hover:border-slate-200 transition-all duration-300 relative overflow-hidden flex flex-col hover:-translate-y-1">
+                            <div className="absolute top-0 right-0 -mt-2 -mr-2 w-16 h-16 bg-gradient-to-br from-pink-100 to-rose-50 rounded-full blur-xl opacity-50 group-hover:opacity-100 transition-opacity"></div>
+
+                            <div className="relative flex justify-between items-start mb-4">
+                                <div className="p-2.5 bg-gradient-to-br from-pink-50 to-rose-50 text-pink-600 rounded-2xl shadow-sm border border-pink-100/50">
+                                    <Share2 className="w-5 h-5" />
+                                </div>
+                                <div className="bg-pink-50 text-pink-600 px-3 py-1 rounded-full text-[11px] font-bold border border-pink-100 flex items-center gap-1" title="אחוז המרה מכניסות">
+                                    {stats.totalPageVisits > 0 ? Math.round((stats.totalSocialTraffic / stats.totalPageVisits) * 100) : 0}% המרה
                                 </div>
                             </div>
-                            <div className="flex flex-col items-start text-right h-full justify-between">
-                                <div>
-                                    <div className="p-2.5 bg-pink-50 text-pink-500 rounded-xl mb-3 w-fit">
-                                        <Share2 className="w-5 h-5" />
-                                    </div>
-                                    <h3 className="text-3xl font-black text-slate-900 leading-none mb-1">{(stats.totalSocialTraffic || 0).toLocaleString()}</h3>
-                                    <p className="text-slate-500 font-semibold text-xs">כניסות לפרופיל</p>
-                                    <p className="text-slate-400 text-[10px] mt-1">אתר • פייסבוק • אינסטגרם • טיקטוק</p>
+
+                            <div className="relative flex-grow">
+                                <h3 className="text-3xl font-black text-slate-900 tracking-tight">
+                                    {(stats.totalSocialTraffic || 0).toLocaleString()}
+                                </h3>
+                                <p className="text-slate-500 font-medium text-sm mt-1">כניסות לפרופיל</p>
+                                <p className="text-slate-400 text-xs mt-0.5">כניסה לרשתות החברתיות או לאתר</p>
+                            </div>
+
+                            <div className="mt-3 flex gap-2">
+                                <div className="flex-1 bg-slate-50 border border-slate-100 rounded-xl p-2.5 text-center">
+                                    <p className="text-slate-400 text-[10px] font-bold uppercase tracking-wider mb-0.5">מקסימום לאירוע</p>
+                                    <p className="text-slate-800 font-bold text-sm">{stats.maxSocialTrafficPerEvent || 0}</p>
                                 </div>
-                                <div className="w-full pt-3 border-t border-slate-100 mt-3">
-                                    <p className="text-slate-400 text-[11px] font-semibold mb-2">לאירוע</p>
-                                    <div className="flex justify-between text-right">
-                                        <div>
-                                            <p className="text-slate-400 text-[10px] font-semibold">מקסימום</p>
-                                            <p className="text-slate-900 font-bold text-sm">{stats.maxSocialTrafficPerEvent || 0}</p>
-                                        </div>
-                                        <div>
-                                            <p className="text-slate-400 text-[10px] font-semibold">ממוצע</p>
-                                            <p className="text-slate-900 font-bold text-sm">{stats.avgSocialTrafficPerEvent || 0}</p>
-                                        </div>
-                                    </div>
+                                <div className="flex-1 bg-slate-50 border border-slate-100 rounded-xl p-2.5 text-center">
+                                    <p className="text-slate-400 text-[10px] font-bold uppercase tracking-wider mb-0.5">ממוצע לאירוע</p>
+                                    <p className="text-slate-800 font-bold text-sm">{stats.avgSocialTrafficPerEvent || 0}</p>
                                 </div>
                             </div>
                         </div>
 
                         {/* 7. פרגונים (Likes) */}
-                        <div className="bg-white p-5 rounded-2xl shadow-sm border border-slate-100 hover:shadow-md transition-all relative flex flex-col">
-                            <div className="absolute top-5 left-5">
-                                <div className="text-left group">
-                                    <span className="bg-rose-100 text-rose-600 px-2 py-0.5 rounded-full text-[10px] font-bold cursor-help">
-                                        {stats.totalPageVisits > 0 ? Math.round((stats.totalLikes / stats.totalPageVisits) * 100) : 0}%
-                                    </span>
-                                    <p className="text-slate-600 text-[10px] font-semibold mt-1 opacity-0 group-hover:opacity-100 transition-opacity leading-tight absolute left-0 w-20">
-                                        אחוז המרה מהכניסות אורחים
-                                    </p>
+                        <div className="group bg-white p-5 rounded-[1.25rem] shadow-sm hover:shadow-md border border-slate-100/60 hover:border-slate-200 transition-all duration-300 relative overflow-hidden flex flex-col hover:-translate-y-1">
+                            <div className="absolute top-0 right-0 -mt-2 -mr-2 w-16 h-16 bg-gradient-to-br from-rose-100 to-red-50 rounded-full blur-xl opacity-50 group-hover:opacity-100 transition-opacity"></div>
+
+                            <div className="relative flex justify-between items-start mb-4">
+                                <div className="p-2.5 bg-gradient-to-br from-rose-50 to-red-50 text-rose-500 rounded-2xl shadow-sm border border-rose-100/50">
+                                    <Heart className="w-5 h-5" />
+                                </div>
+                                <div className="bg-rose-50 text-rose-600 px-3 py-1 rounded-full text-[11px] font-bold border border-rose-100 flex items-center gap-1">
+                                    לייקים מתמונות
                                 </div>
                             </div>
-                            <div className="flex flex-col items-start text-right h-full justify-between">
-                                <div>
-                                    <div className="p-2.5 bg-rose-50 text-rose-500 rounded-xl mb-3 w-fit">
-                                        <Heart className="w-5 h-5" />
-                                    </div>
-                                    <h3 className="text-3xl font-black text-slate-900 leading-none mb-1">{(stats.totalLikes || 0).toLocaleString()}</h3>
-                                    <p className="text-slate-500 font-semibold text-xs">פרגונים</p>
-                                    <p className="text-slate-400 text-[10px] mt-1">פרגונים על התמונות</p>
+
+                            <div className="relative flex-grow">
+                                <h3 className="text-3xl font-black text-slate-900 tracking-tight">
+                                    {(stats.totalLikes || 0).toLocaleString()}
+                                </h3>
+                                <p className="text-slate-500 font-medium text-sm mt-1">סה״כ פרגונים</p>
+                            </div>
+
+                            <div className="mt-3 flex gap-2">
+                                <div className="flex-1 bg-slate-50 border border-slate-100 rounded-xl p-2.5 text-center">
+                                    <p className="text-slate-400 text-[10px] font-bold uppercase tracking-wider mb-0.5">מקסימום לאירוע</p>
+                                    <p className="text-slate-800 font-bold text-sm">{stats.maxLikesPerEvent || 0}</p>
                                 </div>
-                                <div className="w-full pt-3 border-t border-slate-100 mt-3">
-                                    <p className="text-slate-400 text-[11px] font-semibold mb-2">לאירוע</p>
-                                    <div className="flex justify-between text-right">
-                                        <div>
-                                            <p className="text-slate-400 text-[10px] font-semibold">מקסימום</p>
-                                            <p className="text-slate-900 font-bold text-sm">{stats.maxLikesPerEvent || 0}</p>
-                                        </div>
-                                        <div>
-                                            <p className="text-slate-400 text-[10px] font-semibold">ממוצע</p>
-                                            <p className="text-slate-900 font-bold text-sm">{stats.avgLikesPerEvent || 0}</p>
-                                        </div>
-                                    </div>
+                                <div className="flex-1 bg-slate-50 border border-slate-100 rounded-xl p-2.5 text-center">
+                                    <p className="text-slate-400 text-[10px] font-bold uppercase tracking-wider mb-0.5">ממוצע לאירוע</p>
+                                    <p className="text-slate-800 font-bold text-sm">{stats.avgLikesPerEvent || 0}</p>
                                 </div>
+                            </div>
+                        </div>
+
+                        {/* 8. לידים */}
+                        <div className="group bg-white p-5 rounded-[1.25rem] shadow-sm hover:shadow-md border border-slate-100/60 hover:border-slate-200 transition-all duration-300 relative overflow-hidden flex flex-col hover:-translate-y-1">
+                            <div className="absolute top-0 right-0 -mt-2 -mr-2 w-16 h-16 bg-gradient-to-br from-amber-100 to-yellow-50 rounded-full blur-xl opacity-50 group-hover:opacity-100 transition-opacity"></div>
+
+                            <div className="relative flex justify-between items-start mb-4">
+                                <div className="p-2.5 bg-gradient-to-br from-amber-50 to-yellow-50 text-amber-600 rounded-2xl shadow-sm border border-amber-100/50">
+                                    <Users className="w-5 h-5" />
+                                </div>
+                            </div>
+
+                            <div className="relative flex-grow">
+                                <h3 className="text-3xl font-black text-slate-900 tracking-tight">
+                                    {totalLeadsCount.toLocaleString()}
+                                </h3>
+                                <p className="text-slate-500 font-medium text-sm mt-1">לידים שנאספו</p>
+                            </div>
+
+                            <div className="mt-3 flex gap-2">
+                                {(() => {
+                                    const counts = Object.values(frozenLeadsPerEvent) as number[];
+                                    const max = counts.length ? Math.max(...counts) : 0;
+                                    const avg = counts.length ? Math.round(counts.reduce((a: number, b: number) => a + b, 0) / counts.length) : 0;
+                                    return (
+                                        <>
+                                            <div className="flex-1 bg-slate-50 border border-slate-100 rounded-xl p-2.5 text-center">
+                                                <p className="text-slate-400 text-[10px] font-bold uppercase tracking-wider mb-0.5">מקסימום לאירוע</p>
+                                                <p className="text-slate-800 font-bold text-sm">{max}</p>
+                                            </div>
+                                            <div className="flex-1 bg-slate-50 border border-slate-100 rounded-xl p-2.5 text-center">
+                                                <p className="text-slate-400 text-[10px] font-bold uppercase tracking-wider mb-0.5">ממוצע לאירוע</p>
+                                                <p className="text-slate-800 font-bold text-sm">{avg}</p>
+                                            </div>
+                                        </>
+                                    );
+                                })()}
                             </div>
                         </div>
                     </div>
@@ -639,50 +701,74 @@ const DashboardPage: React.FC = () => {
                         </div>
                     </div>
 
-                    <div className="overflow-x-auto">
+                    <div className="overflow-x-auto" style={{ "zoom": "0.9" }}>
                         <table className="w-full text-right">
                             <thead className="bg-slate-50 text-slate-500 text-xs uppercase font-medium">
                                 <tr>
-                                    <th scope="col" className="w-6 p-0 rounded-tr-lg"></th>
-                                    <th className="px-6 py-4 cursor-pointer hover:bg-slate-100" onClick={() => handleSort('name')}>
+                                    <th scope="col" className="w-12 p-0 rounded-tr-lg"></th>
+                                    <th className="px-5 py-4 cursor-pointer hover:bg-slate-100 w-[240px]" onClick={() => handleSort('name')}>
                                         <div className="flex items-center gap-1">
-                                            שם אירוע
+                                            <span><span className="block">שם</span><span className="block">אירוע</span></span>
                                             {sortField === 'name' && (sortDirection === 'asc' ? '↑' : '↓')}
                                         </div>
                                     </th>
-                                    <th className="px-6 py-4 cursor-pointer hover:bg-slate-100" onClick={() => handleSort('date')}>
+                                    <th className="px-5 py-4 cursor-pointer hover:bg-slate-100" onClick={() => handleSort('date')}>
                                         <div className="flex items-center gap-1">
-                                            תאריך אירוע
+                                            <span><span className="block">תאריך</span><span className="block">אירוע</span></span>
                                             {sortField === 'date' && (sortDirection === 'asc' ? '↑' : '↓')}
                                         </div>
                                     </th>
 
-                                    <th className="px-6 py-4 cursor-pointer hover:bg-slate-100" onClick={() => handleSort('createdAt')}>
+                                    <th className="px-5 py-4 cursor-pointer hover:bg-slate-100" onClick={() => handleSort('createdAt')}>
                                         <div className="flex items-center gap-1">
-                                            תאריך העלאה
+                                            <span><span className="block">תאריך</span><span className="block">יצירה</span></span>
                                             {sortField === 'createdAt' && (sortDirection === 'asc' ? '↑' : '↓')}
                                         </div>
                                     </th>
-                                    <th className="px-6 py-4 cursor-pointer hover:bg-slate-100" onClick={() => handleSort('photoCount')}>
+                                    <th className="px-5 py-4 cursor-pointer hover:bg-slate-100" onClick={() => handleSort('photoCount')}>
                                         <div className="flex items-center gap-1">
                                             תמונות
                                             {sortField === 'photoCount' && (sortDirection === 'asc' ? '↑' : '↓')}
                                         </div>
                                     </th>
-                                    <th className="px-6 py-4 cursor-pointer hover:bg-slate-100" onClick={() => handleSort('guestVisits')}>
+                                    <th className="px-5 py-4 cursor-pointer hover:bg-slate-100" onClick={() => handleSort('guestVisits')}>
                                         <div className="flex items-center gap-1">
-                                            כניסות אורחים
+                                            <span><span className="block">כניסות</span><span className="block">לגלריה</span></span>
                                             {sortField === 'guestVisits' && (sortDirection === 'asc' ? '↑' : '↓')}
                                         </div>
                                     </th>
-                                    <th className="px-6 py-4 cursor-pointer hover:bg-slate-100" onClick={() => handleSort('downloads')}>
+                                    <th className="px-5 py-4 cursor-pointer hover:bg-slate-100" onClick={() => handleSort('downloads')}>
                                         <div className="flex items-center gap-1">
                                             הורדות
                                             {sortField === 'downloads' && (sortDirection === 'asc' ? '↑' : '↓')}
                                         </div>
                                     </th>
-                                    <th className="px-6 py-4 w-64 text-center">לינק ייחודי</th>
-                                    <th className="px-6 py-4">סטטוס</th>
+                                    <th className="px-5 py-4 cursor-pointer hover:bg-slate-100" onClick={() => handleSort('phoneSaves' as any)}>
+                                        <div className="flex items-center gap-1">
+                                            שמירות
+                                            {sortField === 'phoneSaves' && (sortDirection === 'asc' ? '↑' : '↓')}
+                                        </div>
+                                    </th>
+                                    <th className="px-5 py-4 cursor-pointer hover:bg-slate-100" onClick={() => handleSort('profileVisits' as any)}>
+                                        <div className="flex items-center gap-1">
+                                            <span><span className="block">כניסות</span><span className="block">לפרופיל</span></span>
+                                            {sortField === 'profileVisits' && (sortDirection === 'asc' ? '↑' : '↓')}
+                                        </div>
+                                    </th>
+                                    <th className="px-5 py-4 cursor-pointer hover:bg-slate-100" onClick={() => handleSort('likesCount' as any)}>
+                                        <div className="flex items-center gap-1">
+                                            פרגונים
+                                            {sortField === 'likesCount' && (sortDirection === 'asc' ? '↑' : '↓')}
+                                        </div>
+                                    </th>
+                                    <th className="px-5 py-4 cursor-pointer hover:bg-slate-100" onClick={() => handleSort('leadsCount' as any)}>
+                                        <div className="flex items-center gap-1">
+                                            לידים
+                                            {sortField === 'leadsCount' && (sortDirection === 'asc' ? '↑' : '↓')}
+                                        </div>
+                                    </th>
+                                    <th className="px-5 py-4 w-64 text-center">לינק</th>
+
                                 </tr>
                             </thead>
                             <tbody className="divide-y divide-slate-100">
@@ -692,56 +778,69 @@ const DashboardPage: React.FC = () => {
                                         onClick={() => navigate(`/admin/events/${event.id}?tab=details`)}
                                         className="hover:bg-slate-50/80 transition-colors cursor-pointer group"
                                     >
-                                        <td className="p-0 relative w-6">
-                                            {/* Package Indicator - Separate Column */}
-                                            <div className={`absolute inset-0 flex items-center justify-center ${(() => {
-                                                const visuals = getPackageVisuals(event.packageType);
-                                                return visuals.bg;
-                                            })()}`}>
+                                        <td className={`p-0 w-12 text-center align-middle ${getPackageVisuals(event.packageType).bg}`}>
+                                            <div className="flex items-center justify-center h-full min-h-[4rem]">
                                                 {(() => {
-                                                    const visuals = getPackageVisuals(event.packageType);
-                                                    const Icon = visuals.icon;
-                                                    return <Icon className="w-3.5 h-3.5 text-white" />;
+                                                    const Icon = getPackageVisuals(event.packageType).icon;
+                                                    return <Icon className="w-5 h-5 text-white/90" />;
                                                 })()}
                                             </div>
                                         </td>
 
-                                        <td className="px-6 py-4">
+                                        <td className="px-5 py-4">
                                             <div className="flex items-center gap-3">
-                                                {event.coverImage && !event.coverImage.includes('placeholder') ? (
-                                                    <img
-                                                        src={event.coverImage}
-                                                        alt={event.name}
-                                                        className="w-12 h-12 rounded-xl object-cover bg-slate-100 border border-slate-100 shrink-0"
-                                                    />
-                                                ) : (
-                                                    <div className="w-12 h-12 bg-slate-50 rounded-xl flex items-center justify-center text-slate-400 border border-slate-100 shrink-0">
-                                                        <ImageIcon className="w-6 h-6" />
-                                                    </div>
-                                                )}
-                                                <div>
+                                                <div className="relative shrink-0">
+                                                    {event.coverImage && !event.coverImage.includes('placeholder') ? (
+                                                        <img
+                                                            src={event.coverImage}
+                                                            alt={event.name}
+                                                            className="w-12 h-12 rounded-xl object-cover bg-slate-100 border border-slate-100"
+                                                        />
+                                                    ) : (
+                                                        <div className="w-12 h-12 bg-slate-50 rounded-xl flex items-center justify-center text-slate-400 border border-slate-100">
+                                                            <ImageIcon className="w-6 h-6" />
+                                                        </div>
+                                                    )}
                                                     <div
-                                                        className="font-bold text-slate-900 group-hover:text-cyan-600 transition-colors text-base"
+                                                        className={`absolute -top-1 -right-1 w-3 h-3 rounded-full border-2 border-white ${event.status === 'active' ? 'bg-green-500 shadow-[0_0_8px_rgba(34,197,94,0.4)]' : 'bg-slate-300'}`}
+                                                        title={event.status === 'active' ? 'פעיל' : 'פג תוקף'}
+                                                    ></div>
+                                                </div>
+                                                <div className="min-w-0 flex-1">
+                                                    <div
+                                                        className="font-bold text-slate-900 group-hover:text-cyan-600 transition-colors text-sm truncate max-w-[200px]"
                                                         title={event.name}
                                                     >
-                                                        {event.name.length > 23 ? `${event.name.substring(0, 23)}...` : event.name}
+                                                        {event.name}
                                                     </div>
-                                                    <div className="text-xs text-slate-400 mt-0.5 flex items-center gap-1">
-                                                        <MapPin className="w-3 h-3" />
-                                                        {event.location || 'ללא מיקום'}
+                                                    <div className="text-[11px] text-slate-400 mt-0.5 flex items-center gap-1 truncate max-w-[200px]">
+                                                        <MapPin className="w-3 h-3 shrink-0" />
+                                                        <span className="truncate">{event.location || 'ללא מיקום'}</span>
                                                     </div>
                                                 </div>
                                             </div>
                                         </td>
-                                        <td className="px-6 py-4 text-slate-600 text-sm font-medium">{new Date(event.date).toLocaleDateString('he-IL')}</td>
+                                        <td className="px-5 py-4 text-slate-600 text-sm font-medium">{new Date(event.date).toLocaleDateString('he-IL')}</td>
 
-                                        <td className="px-6 py-4 text-slate-600 text-sm font-medium">
+                                        <td className="px-5 py-4 text-slate-600 text-sm font-medium">
                                             {event.createdAt ? new Date(event.createdAt).toLocaleDateString('he-IL') : '-'}
                                         </td>
-                                        <td className="px-6 py-4 text-slate-600 text-sm font-medium">{event.photoCount}</td>
-                                        <td className="px-6 py-4 text-slate-600 text-sm font-medium">{event.guestVisits}</td>
-                                        <td className="px-6 py-4 text-slate-600 text-sm font-medium">{event.downloads}</td>
-                                        <td className="px-6 py-4">
+                                        <td className="px-5 py-4 text-slate-600 text-sm font-medium">{event.photoCount}</td>
+                                        <td className="px-5 py-4 text-slate-600 text-sm font-medium">{event.guestVisits}</td>
+                                        <td className="px-5 py-4 text-slate-600 text-sm font-medium">{event.downloads}</td>
+                                        <td className="px-5 py-4 text-slate-600 text-sm font-medium">
+                                            {event.phoneSaves || event.stats?.contact_saved_count || 0}
+                                        </td>
+                                        <td className="px-5 py-4 text-slate-600 text-sm font-medium">
+                                            {(event as any).socialTrafficCount || 0}
+                                        </td>
+                                        <td className="px-5 py-4 text-slate-600 text-sm font-medium">
+                                            {(event as any).likesCount || 0}
+                                        </td>
+                                        <td className="px-5 py-4 text-slate-600 text-sm font-medium">
+                                            {(event as any).leadsCount || 0}
+                                        </td>
+                                        <td className="px-5 py-4">
                                             {event.status === 'expired' ? (
                                                 <div className="px-3 py-1.5 text-xs font-bold text-slate-500 bg-slate-100 rounded-lg flex items-center gap-1.5 border border-slate-200 justify-center cursor-not-allowed">
                                                     <X className="w-3 h-3" />
@@ -783,17 +882,12 @@ const DashboardPage: React.FC = () => {
                                                 </div>
                                             )}
                                         </td>
-                                        <td className="px-6 py-4">
-                                            <span className={`px-3 py-1 rounded-full text-xs font-bold whitespace-nowrap ${event.status === 'active' ? 'bg-green-100 text-green-600' : 'bg-slate-100 text-slate-500'
-                                                }`}>
-                                                {event.status === 'active' ? 'פעיל' : 'פג תוקף'}
-                                            </span>
-                                        </td>
+
                                     </tr>
                                 ))}
                                 {sortedEvents.length === 0 && (
                                     <tr>
-                                        <td colSpan={10} className="px-6 py-16 text-center text-slate-500">
+                                        <td colSpan={10} className="px-3 py-16 text-center text-slate-500">
                                             <div className="flex flex-col items-center gap-4">
                                                 <div className="w-16 h-16 bg-slate-50 rounded-full flex items-center justify-center">
                                                     <Calendar className="w-8 h-8 text-slate-300" />
@@ -838,6 +932,74 @@ const DashboardPage: React.FC = () => {
                                 &gt;
                             </button>
                         </div>
+                    </div>
+                </div>
+
+                {/* Global Leads Section */}
+                <div className="mt-8 bg-white rounded-3xl shadow-sm border border-slate-100 overflow-hidden">
+                    <div className="p-8 border-b border-slate-100 flex items-center justify-between">
+                        <h2 className="text-xl font-bold text-slate-900 flex items-center gap-2">
+                            <div className="bg-amber-100 p-2 rounded-lg text-amber-600">
+                                <Users className="w-5 h-5" />
+                            </div>
+                            כל הלידים ({globalLeads.filter(l => !l.is_deleted).length})
+                        </h2>
+                    </div>
+                    <div className="p-0 overflow-x-auto">
+                        <table className="w-full text-right">
+                            <thead className="bg-slate-50 text-slate-500 text-xs uppercase font-medium whitespace-nowrap">
+                                <tr>
+                                    <th className="px-3 py-3">שם האורח</th>
+                                    <th className="px-3 py-3">אירוע מקור</th>
+                                    <th className="px-3 py-3">מספר טלפון</th>
+                                    <th className="px-3 py-3">תאריך פנייה</th>
+                                    <th className="px-3 py-3 text-center">מחיקה</th>
+                                </tr>
+                            </thead>
+                            <tbody className="divide-y divide-slate-100">
+                                {(() => {
+                                    const activeLeads = globalLeads.filter(l => !l.is_deleted);
+                                    return activeLeads.length > 0 ? activeLeads.map(lead => (
+                                        <tr key={lead.id} className={`hover:bg-slate-50/50 transition-colors ${lead.is_contacted ? 'opacity-60' : ''}`}>
+                                            <td className="px-6 py-5 text-slate-900 font-bold">{lead.name}</td>
+                                            <td className="px-6 py-5 text-slate-600">{lead.event_name}</td>
+                                            <td className="px-6 py-5">
+                                                <a href={`tel:${lead.phone}`} className="text-cyan-600 hover:text-cyan-700 hover:underline inline-flex items-center gap-2 font-medium" dir="ltr">
+                                                    {lead.phone}
+                                                </a>
+                                            </td>
+                                            <td className="px-6 py-5 text-slate-500 text-sm">
+                                                {new Date(lead.created_at).toLocaleDateString('he-IL', {
+                                                    year: 'numeric',
+                                                    month: 'long',
+                                                    day: 'numeric',
+                                                    hour: '2-digit',
+                                                    minute: '2-digit'
+                                                })}
+                                            </td>
+                                            <td className="px-4 py-5 text-center">
+                                                <button
+                                                    onClick={() => handleDeleteLead(lead.event_id, lead.id, lead.name)}
+                                                    className="p-2 text-red-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors"
+                                                    title="מחק ליד"
+                                                >
+                                                    <Trash2 className="w-4 h-4" />
+                                                </button>
+                                            </td>
+                                        </tr>
+                                    )) : (
+                                        <tr>
+                                            <td colSpan={5} className="px-6 py-12 text-center text-slate-400">
+                                                <div className="flex flex-col items-center gap-3">
+                                                    <Users className="w-10 h-10 text-slate-200" />
+                                                    <p>לא נמצאו לידים במערכת.</p>
+                                                </div>
+                                            </td>
+                                        </tr>
+                                    );
+                                })()}
+                            </tbody>
+                        </table>
                     </div>
                 </div>
 
@@ -891,7 +1053,7 @@ const DashboardPage: React.FC = () => {
                                     onClick={() => setLinkModalConfig(prev => ({ ...prev, isOpen: false }))}
                                     className="absolute top-4 right-4 p-2 text-slate-400 hover:text-slate-600 transition-colors"
                                 >
-                                    <X className="w-5 h-5" />
+                                    <X className="w-4 h-4" />
                                 </button>
 
                                 <div className="flex flex-col items-center text-center mt-2">

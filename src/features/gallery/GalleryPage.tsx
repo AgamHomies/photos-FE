@@ -25,6 +25,8 @@ import {
 } from 'lucide-react';
 import { Toast } from '../../components';
 import { SortingControl } from './components/SortingControl';
+import { LeadCaptureModal } from './components/LeadCaptureModal';
+import UpcomingEventSplash from './components/UpcomingEventSplash';
 
 // Lightbox Component to handle scroll locking and backdrop click
 const LightboxOverlay: React.FC<{
@@ -140,6 +142,12 @@ const GalleryPage: React.FC<GalleryPageProps> = ({ mode: propMode }) => {
    const [searchResults, setSearchResults] = useState<Photo[]>([]); // Store all search results for client-side pagination
    const [lightboxPhoto, setLightboxPhoto] = useState<Photo | null>(null);
    const [selectedPhotos, setSelectedPhotos] = useState<Set<string>>(new Set());
+   const [isLeadModalOpen, setIsLeadModalOpen] = useState(false);
+   const [showSplash, setShowSplash] = useState(false);
+   const fabAnchorRef = useRef<HTMLDivElement>(null);
+   const [isFabDocked, setIsFabDocked] = useState(false);
+   const gridRef = useRef<HTMLDivElement>(null);
+   const [fabRight, setFabRight] = useState(16); // px from right edge
 
    // Pagination State
    const [page, setPage] = useState(1);
@@ -173,6 +181,18 @@ const GalleryPage: React.FC<GalleryPageProps> = ({ mode: propMode }) => {
 
    const [sortBy, setSortBy] = useState<'time' | 'matchScore'>('matchScore');
 
+   // Track when FAB anchor is visible to switch between floating and docked mode
+   useEffect(() => {
+      const anchor = fabAnchorRef.current;
+      if (!anchor) return;
+      const observer = new IntersectionObserver(
+         ([entry]) => setIsFabDocked(entry.isIntersecting),
+         { threshold: 0.1 }
+      );
+      observer.observe(anchor);
+      return () => observer.disconnect();
+   }, [viewState]);
+
    // Sort search results based on active sort mode
    const sortedSearchResults = React.useMemo(() => {
       if (viewState !== 'results') return [];
@@ -196,6 +216,20 @@ const GalleryPage: React.FC<GalleryPageProps> = ({ mode: propMode }) => {
       setPage(1);
    }, [sortBy]);
 
+   // Track grid right edge to align floating FAB with the rightmost photo column
+   useEffect(() => {
+      const grid = gridRef.current;
+      if (!grid) return;
+      const update = () => {
+         const rect = grid.getBoundingClientRect();
+         setFabRight(Math.max(window.innerWidth - rect.right, 8));
+      };
+      update();
+      const ro = new ResizeObserver(update);
+      ro.observe(grid);
+      window.addEventListener('resize', update);
+      return () => { ro.disconnect(); window.removeEventListener('resize', update); };
+   }, [viewState]);
 
 
 
@@ -494,6 +528,9 @@ const GalleryPage: React.FC<GalleryPageProps> = ({ mode: propMode }) => {
          const originalFile = e.target.files[0];
          setViewState('scanning'); // Show scanning state immediately
          setSelectedImage(originalFile); // Show original while processing
+
+
+
 
          try {
             const resizedFile = await resizeImage(originalFile);
@@ -1097,7 +1134,7 @@ END:VCARD`;
                   )}
 
                   {/* Grid */}
-                  <div className="flex flex-wrap justify-center pb-8" dir="rtl">
+                  <div ref={gridRef} className="flex flex-wrap justify-center pb-8" dir="rtl">
                      {photos.map((photo) => {
                         const isSelected = selectedPhotos.has(photo.id);
 
@@ -1172,9 +1209,11 @@ END:VCARD`;
                      })}
                   </div>
 
+
+
                   {/* Pagination Controls */}
                   {totalPages > 1 && (
-                     <div className="flex flex-col items-center gap-4 mt-12 mb-8" dir="rtl">
+                     <div className="flex flex-col items-center gap-4 mt-4 mb-8" dir="rtl">
                         <div className="flex justify-center items-center gap-3">
                            {/* First Button */}
                            <button
@@ -1261,6 +1300,26 @@ END:VCARD`;
                      </div>
                   )}
 
+                  {/* FAB anchor point — docked full-width button below pagination */}
+                  {viewState === 'results' && (
+                     <div ref={fabAnchorRef} className="mt-2 mb-6">
+                        {isFabDocked && (
+                           <button
+                              onClick={() => setIsLeadModalOpen(true)}
+                              className="w-full flex items-center justify-center gap-2 py-3 transition-all duration-200 hover:brightness-110 active:scale-[0.99] rounded-xl"
+                              style={{
+                                 background: 'linear-gradient(135deg, #C4A882, #A8885F)',
+                                 boxShadow: '0 4px 18px rgba(164,135,100,0.35)',
+                              }}
+                              dir="rtl"
+                           >
+                              <span className="text-white font-bold text-sm whitespace-nowrap">גם לי יש אירוע</span>
+                              <Calendar className="w-4 h-4 text-white shrink-0" />
+                           </button>
+                        )}
+                     </div>
+                  )}
+
                   {photos.length === 0 && (
                      <div className="text-center py-20 bg-white rounded-3xl border border-[#F0EBE3] mt-8">
                         <p className="text-[#8B7355] text-lg">לא נמצאו תמונות. נסה סלפי אחר.</p>
@@ -1334,6 +1393,8 @@ END:VCARD`;
                            </div>
                         </button>
                      )}
+
+
                   </div>
                </div>
             </div>
@@ -1364,6 +1425,44 @@ END:VCARD`;
                   const navArray = viewState === 'results' ? searchResults : photos;
                   return navArray.findIndex(p => p.id === lightboxPhoto.id) > 0;
                })()}
+            />
+         )}
+
+         {/* Upcoming Event Splash - shown once before gallery */}
+         {showSplash && (
+            <UpcomingEventSplash
+               photographerName={photographer?.name}
+               onContinue={() => setShowSplash(false)}
+               onLeadCapture={() => {
+                  setShowSplash(false);
+                  setIsLeadModalOpen(true);
+               }}
+            />
+         )}
+
+         {/* Floating FAB — icon only bubble, right-aligned with rightmost photo */}
+         {viewState === 'results' && !isFabDocked && (
+            <button
+               onClick={() => setIsLeadModalOpen(true)}
+               className="fixed bottom-6 z-30 w-14 h-14 rounded-full shadow-xl transition-all duration-300 hover:scale-110 active:scale-95 flex items-center justify-center"
+               style={{
+                  right: fabRight,
+                  background: 'linear-gradient(135deg, #C4A882, #A8885F)',
+                  boxShadow: '0 8px 28px rgba(164, 135, 100, 0.65)',
+               }}
+               aria-label="גם לי יש אירוע"
+            >
+               <span className="absolute inset-0 rounded-full animate-ping opacity-25" style={{ background: '#C4A882' }} />
+               <Calendar className="w-6 h-6 text-white relative z-10" />
+            </button>
+         )}
+
+         {/* Lead Capture Modal */}
+         {id && (
+            <LeadCaptureModal
+               isOpen={isLeadModalOpen}
+               onClose={() => setIsLeadModalOpen(false)}
+               slug={id}
             />
          )}
 
