@@ -55,7 +55,7 @@ const PackageSelectionModal: React.FC<PackageSelectionModalProps> = ({ isOpen, o
             className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center z-50 p-4 animate-fade-in"
             onClick={handleBackdropClick}
         >
-            <div className="bg-white rounded-[2rem] shadow-2xl max-w-4xl w-full relative border border-white/20">
+            <div className="bg-white rounded-[2rem] shadow-2xl max-w-4xl w-full relative border border-white/20 overflow-hidden">
                 {/* Header */}
                 <div className="bg-slate-50 text-slate-900 p-4 pb-6 relative overflow-hidden text-center border-b border-slate-100">
                     <button
