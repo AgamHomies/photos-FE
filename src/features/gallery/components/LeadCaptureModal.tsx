@@ -6,12 +6,14 @@ export interface LeadCaptureModalProps {
     isOpen: boolean;
     onClose: () => void;
     slug: string;
+    photographerName?: string;
 }
 
 export const LeadCaptureModal: React.FC<LeadCaptureModalProps> = ({
     isOpen,
     onClose,
-    slug
+    slug,
+    photographerName
 }) => {
     const [name, setName] = useState('');
     const [phone, setPhone] = useState('');
@@ -95,7 +97,10 @@ export const LeadCaptureModal: React.FC<LeadCaptureModalProps> = ({
                     ) : (
                         <form onSubmit={handleSubmit} className="space-y-4">
                             <p className="text-[#8B7355] text-sm mb-4">
-                                נשמח להיות חלק גם מהאירוע המיוחד שלכם. השאירו פרטים ונחזור אליכם בהקדם.
+                                {photographerName
+                                    ? `אנחנו ב${photographerName} נשמח לארח אתכם גם באירוע שלכם. השאירו פרטים ונחזור אליכם בהקדם.`
+                                    : `נשמח להיות חלק גם מהאירוע המיוחד שלכם. השאירו פרטים ונחזור אליכם בהקדם.`
+                                }
                             </p>
 
                             <div>
@@ -125,8 +130,8 @@ export const LeadCaptureModal: React.FC<LeadCaptureModalProps> = ({
                                     placeholder="0501234567"
                                     dir="ltr"
                                     className={`w-full px-4 py-2 bg-white border rounded focus:ring-1 outline-none transition-all text-right placeholder:text-gray-400 ${phoneError
-                                            ? 'border-red-400 focus:ring-red-300 focus:border-red-400'
-                                            : 'border-[#D4C4B0] focus:ring-[#C4A882] focus:border-[#C4A882]'
+                                        ? 'border-red-400 focus:ring-red-300 focus:border-red-400'
+                                        : 'border-[#D4C4B0] focus:ring-[#C4A882] focus:border-[#C4A882]'
                                         }`}
                                     disabled={isSubmitting}
                                 />

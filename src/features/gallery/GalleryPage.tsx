@@ -1502,6 +1502,7 @@ END:VCARD`;
                isOpen={isLeadModalOpen}
                onClose={() => setIsLeadModalOpen(false)}
                slug={id}
+               photographerName={photographer?.name}
             />
          )}
 
