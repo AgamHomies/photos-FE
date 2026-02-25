@@ -590,7 +590,7 @@ const EventManagePage: React.FC = () => {
     return (
         <Layout>
             <div className="bg-white border-b border-slate-200 sticky top-0 z-30 shadow-sm">
-                <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
+                <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
 
                     {/* Progress Bar (Visible if uploading or processing) */}
                     {showProgressBar && (
@@ -637,24 +637,24 @@ const EventManagePage: React.FC = () => {
 
                         {/* Links - Only visible when done */}
                         {showLinks && (
-                            <div className="flex gap-3 animate-fade-in">
+                            <div className="flex gap-2 animate-fade-in">
                                 <button
                                     onClick={() => handleLinkClick('guest')}
-                                    className="w-32 justify-center px-4 py-2 text-sm font-bold text-slate-600 border border-slate-200 hover:bg-slate-50 rounded-xl transition-colors flex items-center gap-2"
+                                    className="justify-center px-3.5 py-2 text-sm font-bold text-slate-600 border border-slate-200 hover:bg-slate-50 rounded-xl transition-colors flex items-center gap-2"
                                 >
                                     <Users className="w-4 h-4" />
                                     <span>לאורחים</span>
                                 </button>
                                 <button
                                     onClick={() => handleLinkClick('couple')}
-                                    className="w-32 justify-center px-4 py-2 text-sm font-bold text-cyan-600 bg-cyan-50 hover:bg-cyan-100 rounded-xl transition-colors flex items-center gap-2 border border-cyan-100"
+                                    className="justify-center px-3.5 py-2 text-sm font-bold text-cyan-600 bg-cyan-50 hover:bg-cyan-100 rounded-xl transition-colors flex items-center gap-2 border border-cyan-100"
                                 >
                                     <Heart className="w-4 h-4" />
                                     <span>לבעלי האירוע</span>
                                 </button>
                                 <button
                                     onClick={shareEvent}
-                                    className="w-32 justify-center px-4 py-2 text-sm font-bold text-green-600 bg-green-50 hover:bg-green-100 rounded-xl transition-colors flex items-center gap-2 border border-green-100"
+                                    className="justify-center px-3.5 py-2 text-sm font-bold text-green-600 bg-green-50 hover:bg-green-100 rounded-xl transition-colors flex items-center gap-2 border border-green-100"
                                 >
                                     <Share2 className="w-4 h-4" />
                                     <span>שתף</span>
@@ -689,7 +689,7 @@ const EventManagePage: React.FC = () => {
                 </div>
             </div>
 
-            <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+            <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
                 {activeTab === 'photos' && (
                     <div className="space-y-8">
                         {/* Upload Section */}
@@ -813,7 +813,7 @@ const EventManagePage: React.FC = () => {
                 )}
 
                 {activeTab === 'details' && (
-                    <div className="max-w-5xl mx-auto">
+                    <div className="max-w-3xl mx-auto">
                         <form onSubmit={handleUpdateDetails}>
                             <div className="bg-white rounded-3xl shadow-sm border border-slate-100 overflow-hidden">
                                 <div className="p-8 border-b border-slate-100 flex items-center justify-between">
@@ -921,8 +921,6 @@ const EventManagePage: React.FC = () => {
                                     </div>
                                 </div>
                             </div>
-
-
                         </form>
 
                         <div id="delete-section" className="mt-8 bg-red-50 rounded-3xl border border-red-100 p-8">

@@ -229,10 +229,19 @@ export const RealProfileAPI = {
 // Events API
 // ============================================
 export const RealEventAPI = {
-    getEvents: async (page: number = 1, limit: number = 20, search?: string): Promise<{ items: Event[], total: number }> => {
+    getEvents: async (page: number = 1, limit: number = 20, search?: string, sortBy?: string, sortDir?: string, status?: string): Promise<{ items: Event[], total: number }> => {
         let url = `/events/?page=${page}&limit=${limit}`;
         if (search) {
             url += `&search=${encodeURIComponent(search)}`;
+        }
+        if (sortBy) {
+            url += `&sort_by=${encodeURIComponent(sortBy)}`;
+        }
+        if (sortDir) {
+            url += `&sort_dir=${encodeURIComponent(sortDir)}`;
+        }
+        if (status) {
+            url += `&status=${encodeURIComponent(status)}`;
         }
         const data = await apiRequest(url);
 
@@ -247,6 +256,9 @@ export const RealEventAPI = {
             guestVisits: event.stats?.views_count || 0,
             downloads: event.stats?.downloads_count || 0,
             phoneSaves: event.stats?.contact_saved_count || 0,
+            leadsCount: event.leads_count || 0,
+            likesCount: event.likes_count || 0,
+            socialTrafficCount: event.social_traffic_count || 0,
             uniqueLink: `${CONFIG.API_BASE_URL}/public/e/${event.guest_slug || event.id}`,
             expiryDate: event.expiry_date || '',
             status: mapEventStatus(event.status),
@@ -256,6 +268,7 @@ export const RealEventAPI = {
             initialProcessingDone: event.initial_processing_done,
             createdAt: event.created_at,
             packageType: event.package_type || 'basic',
+            stats: event.stats,
         }));
 
         return {

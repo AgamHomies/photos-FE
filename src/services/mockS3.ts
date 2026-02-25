@@ -313,7 +313,7 @@ export const MockS3Service = {
         return stats;
     },
 
-    getEvents: async (page: number = 1, limit: number = 20, search?: string): Promise<{ items: Event[], total: number }> => {
+    getEvents: async (page: number = 1, limit: number = 20, search?: string, sortBy?: string, sortDir?: string): Promise<{ items: Event[], total: number }> => {
         await new Promise(resolve => setTimeout(resolve, 700));
         const email = localStorage.getItem(CURRENT_USER_KEY);
         if (!email) return { items: [], total: 0 };

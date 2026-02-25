@@ -65,6 +65,19 @@ export interface Event {
   slug?: string;
   coupleSlug?: string;
   packageType?: 'basic' | 'premium' | 'gold';
+  leadsCount?: number;
+  likesCount?: number;
+
+  stats?: {
+    views_count?: number;
+    downloads_count?: number;
+    contact_saved_count?: number;
+    traffic_facebook?: number;
+    traffic_instagram?: number;
+    traffic_tiktok?: number;
+    traffic_website?: number;
+    traffic_other?: number;
+  };
 
   mode?: 'guest' | 'full';
 

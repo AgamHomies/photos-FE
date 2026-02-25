@@ -19,8 +19,19 @@ import {
     RealPaymentAPI,
 } from './realApi';
 import { PhotographerRegistration, PhotographerProfile, Photo, Event, DashboardStats } from '../types';
+import { supabase } from './supabaseClient';
 
 const USE_MOCK = CONFIG.USE_MOCK;
+
+/**
+ * Gets a valid (auto-refreshed) Supabase token.
+ * Supabase handles token refresh automatically, so this avoids
+ * the 401 errors that happen when the 1-hour JWT expires.
+ */
+async function getValidToken(): Promise<string | null> {
+    const { data } = await supabase.auth.getSession();
+    return data.session?.access_token ?? localStorage.getItem('access_token');
+}
 
 export const BackendService = {
     // ============================================
@@ -69,10 +80,10 @@ export const BackendService = {
     // ============================================
     // Events
     // ============================================
-    getEvents: async (page: number = 1, limit: number = 20, search?: string): Promise<{ items: Event[], total: number }> => {
+    getEvents: async (page: number = 1, limit: number = 20, search?: string, sortBy?: string, sortDir?: string, status?: string): Promise<{ items: Event[], total: number }> => {
         return USE_MOCK
-            ? await MockS3Service.getEvents(page, limit, search)
-            : await RealEventAPI.getEvents(page, limit, search);
+            ? await MockS3Service.getEvents(page, limit, search, sortBy, sortDir)
+            : await RealEventAPI.getEvents(page, limit, search, sortBy, sortDir, status);
     },
 
     getEvent: async (id: string): Promise<Event | undefined> => {
@@ -288,15 +299,126 @@ export const BackendService = {
     },
 
     // ============================================
-    // Tracking
+    // Tracking & Leads
     // ============================================
+    getAllLeads: async (): Promise<any[]> => {
+        if (USE_MOCK) {
+            console.log('Mock: getting all leads globally');
+            return [
+                { id: 1, event_id: 1, event_name: 'חתונת השנה', name: 'רון משה', phone: '050-1234567', is_contacted: false, created_at: new Date().toISOString() },
+                { id: 2, event_id: 2, event_name: 'בר מצווה גיל', name: 'דנה ישראלי', phone: '054-9876543', is_contacted: true, created_at: new Date(Date.now() - 86400000).toISOString() }
+            ];
+        }
+        try {
+            const token = await getValidToken();
+            const response = await fetch(`${CONFIG.API_BASE_URL}/events/leads/all`, {
+                headers: token ? {
+                    'Authorization': `Bearer ${token}`
+                } : {}
+            });
+            if (!response.ok) throw new Error('Failed to fetch all leads');
+            return await response.json();
+        } catch (error) {
+            console.error('Failed to fetch all leads', error);
+            return [];
+        }
+    },
+
+    getEventLeads: async (eventId: string): Promise<any[]> => {
+        if (USE_MOCK) {
+            console.log('Mock: getting event leads', eventId);
+            return [
+                { id: 1, event_id: parseInt(eventId), name: 'רון משה', phone: '050-1234567', is_contacted: false, created_at: new Date().toISOString() },
+                { id: 2, event_id: parseInt(eventId), name: 'דנה ישראלי', phone: '054-9876543', is_contacted: true, created_at: new Date(Date.now() - 86400000).toISOString() }
+            ];
+        }
+        try {
+            const token = localStorage.getItem('access_token');
+            const response = await fetch(`${CONFIG.API_BASE_URL}/events/${eventId}/leads`, {
+                headers: token ? {
+                    'Authorization': `Bearer ${token}`
+                } : {}
+            });
+            if (!response.ok) throw new Error('Failed to fetch leads');
+            return await response.json();
+        } catch (error) {
+            console.error('Failed to fetch leads', error);
+            return [];
+        }
+    },
+
+    updateLeadStatus: async (eventId: string, leadId: number, isContacted: boolean): Promise<boolean> => {
+        if (USE_MOCK) {
+            console.log(`Mock: updating lead ${leadId} status to ${isContacted}`);
+            return true;
+        }
+        try {
+            const token = await getValidToken();
+            const response = await fetch(`${CONFIG.API_BASE_URL}/events/${eventId}/leads/${leadId}`, {
+                method: 'PATCH',
+                headers: {
+                    'Content-Type': 'application/json',
+                    ...(token ? { 'Authorization': `Bearer ${token}` } : {})
+                },
+                body: JSON.stringify({ is_contacted: isContacted }),
+            });
+            if (!response.ok) {
+                console.error(`Lead update returned ${response.status}:`, await response.text());
+            }
+            return response.ok;
+        } catch (error) {
+            console.error('Failed to update lead status', error);
+            return false;
+        }
+    },
+
+    deleteLead: async (eventId: string | number, leadId: number): Promise<boolean> => {
+        if (USE_MOCK) {
+            console.log(`Mock: deleting lead ${leadId}`);
+            return true;
+        }
+        try {
+            const token = await getValidToken();
+            const response = await fetch(`${CONFIG.API_BASE_URL}/events/${eventId}/leads/${leadId}`, {
+                method: 'DELETE',
+                headers: token ? { 'Authorization': `Bearer ${token}` } : {},
+            });
+            return response.ok || response.status === 204;
+        } catch (error) {
+            console.error('Failed to delete lead', error);
+            return false;
+        }
+    },
+
+    submitGuestLead: async (slug: string, name: string, phone: string): Promise<{ success: boolean; leadId?: number }> => {
+        if (USE_MOCK) {
+            console.log('Mock: saving guest lead', { slug, name, phone });
+            return { success: true, leadId: 1 };
+        }
+        try {
+            const response = await fetch(`${CONFIG.API_BASE_URL}/public/${slug}/lead`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ name, phone }),
+            });
+            if (!response.ok) throw new Error('Failed to save lead');
+            const data = await response.json();
+            return { success: true, leadId: data.lead_id };
+        } catch (error) {
+            console.error('Failed to save lead', error);
+            return { success: false };
+        }
+    },
+
     trackContactSaved: async (slug: string): Promise<void> => {
         if (USE_MOCK) {
             console.log('Mock: tracking contact saved');
             return;
         }
         try {
-            await fetch(`${CONFIG.API_BASE_URL}/public/events/${slug}/track-contact-saved`, {
+            await fetch(`${CONFIG.API_BASE_URL}/public/${slug}/track/contact`, {
                 method: 'POST',
             });
         } catch (error) {
