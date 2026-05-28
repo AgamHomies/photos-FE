@@ -57,7 +57,7 @@ export const UploadProvider: React.FC<{ children: ReactNode }> = ({ children }) 
             // B. Upload Gallery Files
             if (files.length > 0) {
                 const BATCH_SIZE = 100;
-                const CONCURRENCY_LIMIT = 15;
+                const CONCURRENCY_LIMIT = 6;
                 let processedCount = 0;
                 const totalFiles = files.length;
 
