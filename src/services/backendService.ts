@@ -194,6 +194,11 @@ export const BackendService = {
         return await RealPhotoAPI.confirmUploads(eventId, photoIds);
     },
 
+    processPhoto: async (eventId: string, photoId: string): Promise<any> => {
+        if (USE_MOCK) return { success: true };
+        return await RealPhotoAPI.processPhoto(eventId, photoId);
+    },
+
     uploadToS3: async (uploadUrl: string, file: File): Promise<void> => {
         if (USE_MOCK) throw new Error('Not implemented for mock');
         return await RealPhotoAPI.uploadToS3(uploadUrl, file);

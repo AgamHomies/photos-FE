@@ -555,6 +555,12 @@ export const RealPhotoAPI = {
         });
     },
 
+    processPhoto: async (eventId: string, photoId: string): Promise<any> => {
+        return await apiRequest(`/events/${eventId}/photos/${photoId}/process`, {
+            method: 'POST',
+        });
+    },
+
     uploadToS3: async (uploadUrl: string, file: File): Promise<void> => {
         await fetch(uploadUrl, {
             method: 'PUT',

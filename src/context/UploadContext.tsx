@@ -83,44 +83,59 @@ export const UploadProvider: React.FC<{ children: ReactNode }> = ({ children }) 
                     const totalBatches = Math.ceil(totalFiles / BATCH_SIZE);
 
                     updateUploadState(eventId, {
-                        stage: `מעלה חלק ${currentBatchNum} מתוך ${totalBatches}...`
+                        stage: `מתחיל העלאה ועיבוד חלק ${currentBatchNum} מתוך ${totalBatches}...`
                     });
 
                     // 1. Presign
                     const fileInfos = chunk.map(f => ({ filename: f.name, contentType: f.type }));
                     const { urls } = await BackendService.getPresignedUrls(eventId, fileInfos);
 
-                    // 2. Upload to S3
+                    // 2. Upload to S3 and process
+                    let completedInBatch = 0;
                     const uploadTasks = urls.map((urlInfo: any, index: number) => async () => {
                         const file = chunk[index];
+                        
+                        // Upload file to R2
                         await BackendService.uploadToS3(urlInfo.uploadUrl, file);
+                        
+                        // Synchronously process face recognition on backend
+                        try {
+                            await BackendService.processPhoto(eventId, urlInfo.photoId);
+                        } catch (err) {
+                            console.error(`Failed to process photo ${urlInfo.photoId}:`, err);
+                        }
+                        
+                        completedInBatch++;
+                        const currentProcessed = processedCount + completedInBatch;
+                        const currentProgress = Math.floor((currentProcessed / totalFiles) * 98);
+                        
+                        updateUploadState(eventId, {
+                            progress: currentProgress,
+                            stage: `מעלה ומעבד תמונות (${currentProcessed}/${totalFiles})...`
+                        });
+                        
                         return urlInfo.photoId;
                     });
 
                     const uploadedPhotoIds = await uploadWithConcurrency(uploadTasks, CONCURRENCY_LIMIT);
 
-                    // 3. Confirm
+                    // 3. Confirm (all images in this chunk are already processed)
                     await BackendService.confirmUploads(eventId, uploadedPhotoIds);
 
                     processedCount += chunk.length;
-                    // Client upload is 0-80% of total "perceived" progress
-                    const clientProgress = Math.floor((processedCount / totalFiles) * 80);
-
-                    updateUploadState(eventId, { progress: clientProgress });
+                    const chunkProgress = Math.floor((processedCount / totalFiles) * 98);
+                    updateUploadState(eventId, { progress: chunkProgress });
                 }
             }
 
-            // Finish client-side upload -> Set to 80% and let server polling take over
-            // We keep isUploading: true but essentially "done" with client part
-            // Actually, we can just remove it from here and let the page handle polling, 
-            // OR we can keep it around so the user sees "Waiting for server..."
+            // Finish client-side upload and processing -> Set to 100%
             updateUploadState(eventId, {
-                progress: 80,
-                stage: 'העלאה הושלמה, ממתין לעיבוד...',
-                isUploading: true // Keep true until polling takes over or we clear
+                progress: 100,
+                stage: 'העלאה ועיבוד הושלמו בהצלחה!',
+                isUploading: false
             });
 
-            // Give it a moment then clear, to allow polling to takeover UI
+            // Give it a moment then clear, to allow immediate refresh of UI
             setTimeout(() => {
                 clearUpload(eventId);
             }, 1000);
@@ -129,7 +144,7 @@ export const UploadProvider: React.FC<{ children: ReactNode }> = ({ children }) 
             console.error(error);
             updateUploadState(eventId, {
                 isUploading: false,
-                error: error instanceof Error ? error.message : 'שגיאה בהעלאת תמונות'
+                error: error instanceof Error ? error.message : 'שגיאה בהעלאה או בעיבוד של תמונות'
             });
         }
     }, [clearUpload]);
