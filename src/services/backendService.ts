@@ -194,9 +194,9 @@ export const BackendService = {
         return await RealPhotoAPI.confirmUploads(eventId, photoIds);
     },
 
-    processPhoto: async (eventId: string, photoId: string): Promise<any> => {
+    processPhoto: async (eventId: string, photoId: string, resizedFile?: Blob): Promise<any> => {
         if (USE_MOCK) return { success: true };
-        return await RealPhotoAPI.processPhoto(eventId, photoId);
+        return await RealPhotoAPI.processPhoto(eventId, photoId, resizedFile);
     },
 
     uploadToS3: async (uploadUrl: string, file: File): Promise<void> => {

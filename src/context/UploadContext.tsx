@@ -16,6 +16,60 @@ interface UploadContextType {
 
 const UploadContext = createContext<UploadContextType | undefined>(undefined);
 
+const resizeImage = (file: File, maxDim: number = 1024): Promise<Blob> => {
+    return new Promise((resolve, reject) => {
+        const img = new Image();
+        const objectUrl = URL.createObjectURL(file);
+        img.onload = () => {
+            URL.revokeObjectURL(objectUrl);
+            let width = img.width;
+            let height = img.height;
+            
+            if (width > height) {
+                if (width > maxDim) {
+                    height = Math.round((height * maxDim) / width);
+                    width = maxDim;
+                }
+            } else {
+                if (height > maxDim) {
+                    width = Math.round((width * maxDim) / height);
+                    height = maxDim;
+                }
+            }
+            
+            const canvas = document.createElement('canvas');
+            canvas.width = width;
+            canvas.height = height;
+            
+            const ctx = canvas.getContext('2d');
+            if (!ctx) {
+                reject(new Error('Failed to get canvas 2d context'));
+                return;
+            }
+            
+            ctx.drawImage(img, 0, 0, width, height);
+            canvas.toBlob(
+                (blob) => {
+                    if (blob) {
+                        resolve(blob);
+                    } else {
+                        reject(new Error('Canvas toBlob returned null'));
+                    }
+                },
+                'image/jpeg',
+                0.8
+            );
+        };
+        
+        img.onerror = (err) => {
+            URL.revokeObjectURL(objectUrl);
+            reject(err);
+        };
+        
+        img.src = objectUrl;
+    });
+};
+
 export const UploadProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
     const [uploads, setUploads] = useState<Record<string, UploadState>>({});
 
@@ -95,17 +149,26 @@ export const UploadProvider: React.FC<{ children: ReactNode }> = ({ children }) 
                     const uploadTasks = urls.map((urlInfo: any, index: number) => async () => {
                         const file = chunk[index];
                         
+                        // Resize client-side to 1024px to accelerate backend face recognition
+                        let resizedBlob: Blob | undefined = undefined;
+                        try {
+                            resizedBlob = await resizeImage(file, 1024);
+                        } catch (resizeErr) {
+                            console.warn(`Failed to resize image ${file.name} in-browser:`, resizeErr);
+                        }
+                        
                         // Upload file to R2
                         await BackendService.uploadToS3(urlInfo.uploadUrl, file);
                         
-                        // Synchronously process face recognition on backend
+                        // Synchronously process face recognition on backend using client-resized blob
                         try {
-                            await BackendService.processPhoto(eventId, urlInfo.photoId);
+                            await BackendService.processPhoto(eventId, urlInfo.photoId, resizedBlob);
                         } catch (err) {
                             console.error(`Failed to process photo ${urlInfo.photoId}:`, err);
                         }
                         
                         completedInBatch++;
+                        // eslint-disable-next-line no-loop-func
                         const currentProcessed = processedCount + completedInBatch;
                         const currentProgress = Math.floor((currentProcessed / totalFiles) * 98);
                         

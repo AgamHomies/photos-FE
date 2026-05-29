@@ -555,9 +555,16 @@ export const RealPhotoAPI = {
         });
     },
 
-    processPhoto: async (eventId: string, photoId: string): Promise<any> => {
+    processPhoto: async (eventId: string, photoId: string, resizedFile?: Blob): Promise<any> => {
+        let body = undefined;
+        if (resizedFile) {
+            const formData = new FormData();
+            formData.append('file', resizedFile, 'resized.jpg');
+            body = formData;
+        }
         return await apiRequest(`/events/${eventId}/photos/${photoId}/process`, {
             method: 'POST',
+            body,
         });
     },
 
