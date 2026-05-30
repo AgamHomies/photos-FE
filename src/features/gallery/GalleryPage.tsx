@@ -23,6 +23,7 @@ import {
    ChevronsRight,
    RefreshCw
 } from 'lucide-react';
+import heic2any from 'heic2any';
 import { Toast } from '../../components';
 import { SortingControl } from './components/SortingControl';
 import { LeadCaptureModal } from './components/LeadCaptureModal';
@@ -198,9 +199,21 @@ const GalleryPage: React.FC<GalleryPageProps> = ({ mode: propMode }) => {
       if (viewState !== 'results') return [];
 
       const sorted = [...searchResults];
-      if (sortBy === 'matchScore') {
-         sorted.sort((a, b) => (b.matchScore || 0) - (a.matchScore || 0));
-      } else {
+       if (sortBy === 'matchScore') {
+          sorted.sort((a, b) => {
+             // Calculate bounding box area (prominence in photo)
+             const areaA = (a.boundingBox?.Width || 0) * (a.boundingBox?.Height || 0);
+             const areaB = (b.boundingBox?.Width || 0) * (b.boundingBox?.Height || 0);
+             
+             // Primary sort: Area (descending, largest face first)
+             if (areaA !== areaB) {
+                return areaB - areaA;
+             }
+             
+             // Secondary sort: Match confidence (descending)
+             return (b.matchScore || 0) - (a.matchScore || 0);
+          });
+       } else {
          // Check if ALL photos have EXIF data (same logic as backend)
          const allHaveExif = sorted.every(photo => photo.takenAt);
 
@@ -512,10 +525,31 @@ const GalleryPage: React.FC<GalleryPageProps> = ({ mode: propMode }) => {
    };
 
 
-   const resizeImage = (file: File): Promise<File> => {
+   const resizeImage = async (file: File): Promise<File> => {
+      // Handle HEIC from iPhones
+      let processedFile = file;
+      if (file.type === 'image/heic' || file.name.toLowerCase().endsWith('.heic')) {
+         try {
+            const conversionResult = await heic2any({
+               blob: file,
+               toType: 'image/jpeg',
+               quality: 0.8
+            });
+            const resultBlob = Array.isArray(conversionResult) ? conversionResult[0] : conversionResult;
+            processedFile = new File([resultBlob], file.name.replace(/\.[^/.]+$/, ".jpg"), {
+               type: 'image/jpeg',
+               lastModified: Date.now(),
+            });
+         } catch (error) {
+            console.warn("HEIC conversion failed on frontend, will upload original HEIC for backend to process", error);
+            // Fall back to original file
+            processedFile = file;
+         }
+      }
+
       return new Promise((resolve, reject) => {
          const img = new Image();
-         img.src = URL.createObjectURL(file);
+         img.src = URL.createObjectURL(processedFile);
 
          img.onload = () => {
             const maxWidth = 1200;
@@ -558,7 +592,10 @@ const GalleryPage: React.FC<GalleryPageProps> = ({ mode: propMode }) => {
             }, 'image/jpeg', 0.8);
          };
 
-         img.onerror = (error) => reject(error);
+         img.onerror = (error) => {
+             console.warn("Image load failed (likely unsupported HEIC format), passing raw file to backend.", error);
+             resolve(processedFile);
+         };
       });
    };
 
@@ -747,8 +784,8 @@ const GalleryPage: React.FC<GalleryPageProps> = ({ mode: propMode }) => {
       if (!lightboxPhoto) return;
 
       const handleKeyDown = (e: KeyboardEvent) => {
-         // Use searchResults for guest mode to enable navigation across all images, not just current page
-         const navArray = viewState === 'results' ? searchResults : photos;
+         // Use sortedSearchResults for guest mode to enable navigation across all sorted images
+         const navArray = mode === 'full' ? photos : sortedSearchResults;
          const currentIndex = navArray.findIndex(p => p.id === lightboxPhoto.id);
 
          if (e.key === 'ArrowLeft') { // Next in RTL
@@ -766,13 +803,13 @@ const GalleryPage: React.FC<GalleryPageProps> = ({ mode: propMode }) => {
 
       window.addEventListener('keydown', handleKeyDown);
       return () => window.removeEventListener('keydown', handleKeyDown);
-   }, [lightboxPhoto, photos, searchResults, viewState]);
+   }, [lightboxPhoto, photos, sortedSearchResults, mode]);
 
    const handleNextPhoto = (e?: React.MouseEvent) => {
       e?.stopPropagation();
       if (!lightboxPhoto) return;
-      // Use searchResults for guest mode to enable navigation across all images
-      const navArray = viewState === 'results' ? searchResults : photos;
+      // Use sortedSearchResults for guest mode to enable navigation across all sorted images
+      const navArray = mode === 'full' ? photos : sortedSearchResults;
       const currentIndex = navArray.findIndex(p => p.id === lightboxPhoto.id);
       if (currentIndex < navArray.length - 1) {
          setLightboxPhoto(navArray[currentIndex + 1]);
@@ -782,8 +819,8 @@ const GalleryPage: React.FC<GalleryPageProps> = ({ mode: propMode }) => {
    const handlePrevPhoto = (e?: React.MouseEvent) => {
       e?.stopPropagation();
       if (!lightboxPhoto) return;
-      // Use searchResults for guest mode to enable navigation across all images
-      const navArray = viewState === 'results' ? searchResults : photos;
+      // Use sortedSearchResults for guest mode to enable navigation across all sorted images
+      const navArray = mode === 'full' ? photos : sortedSearchResults;
       const currentIndex = navArray.findIndex(p => p.id === lightboxPhoto.id);
       if (currentIndex > 0) {
          setLightboxPhoto(navArray[currentIndex - 1]);
@@ -1064,7 +1101,7 @@ END:VCARD`;
                                  <label className="bg-[#C4A882] hover:bg-[#B39872] text-white px-8 py-4 rounded-full font-bold shadow-md hover:shadow-lg transition-all cursor-pointer flex items-center gap-3 transform hover:-translate-y-1 w-full max-w-xs justify-center group">
                                     <Camera className="w-5 h-5 group-hover:scale-110 transition-transform" />
                                     <span>העלה סלפי למציאת התמונות</span>
-                                    <input type="file" accept="image/*" className="hidden" onChange={handleImageUpload} />
+                                    <input type="file" accept="image/*,.heic,.HEIC" className="hidden" onChange={handleImageUpload} />
                                  </label>
 
                                  <div className="mt-4 flex items-center gap-2 text-[10px] text-[#A89680]">
@@ -1457,11 +1494,11 @@ END:VCARD`;
                onDownload={handleDownload}
                onShare={handleShare}
                hasNext={(() => {
-                  const navArray = viewState === 'results' ? searchResults : photos;
+                  const navArray = mode === 'full' ? photos : sortedSearchResults;
                   return navArray.findIndex(p => p.id === lightboxPhoto.id) < navArray.length - 1;
                })()}
                hasPrev={(() => {
-                  const navArray = viewState === 'results' ? searchResults : photos;
+                  const navArray = mode === 'full' ? photos : sortedSearchResults;
                   return navArray.findIndex(p => p.id === lightboxPhoto.id) > 0;
                })()}
             />
