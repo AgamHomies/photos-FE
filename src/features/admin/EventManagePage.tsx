@@ -16,6 +16,7 @@ import {
     Image as ImageIcon,
     FileText,
     CheckCircle2,
+    ScanFace,
     XCircle,
     Copy,
     ExternalLink,
@@ -573,22 +574,52 @@ const EventManagePage: React.FC = () => {
     // Combined State
     const showProgressBar = isClientUploading || isServerProcessing || awaitingServer;
 
-    // ── Single unified "upload" indicator ──────────────────────────────────
-    // To the user this is ONE process: photos being uploaded. Under the hood it
-    // is client upload + server-side face recognition, but we never split them.
-    // The bar is driven purely by how many images the server has finished
-    // processing out of the session total, so it only ever moves forward.
-    // (confirmUploads fires per batch, so processing overlaps the client upload
-    // and the count climbs continuously from the start.)
+    // ── 3-step progress: (1) initial upload → (2) face recognition → (3) done ──
+    // Face recognition (step 2) is the dominant phase. Each step's bar is driven
+    // by a fixed denominator so it only ever moves forward (no backward jumps).
     const serverTotal = batches.reduce((acc: number, b: any) => acc + (b.totalImages || 0), 0);
     const serverProcessed = batches.reduce((acc: number, b: any) => acc + (b.processedImages || 0), 0);
     // True total of this session: known up-front while the client is uploading,
     // otherwise the server's view. Fixed during a session => percentage is monotonic.
     const sessionTotal = (isClientUploading ? activeUpload?.totalCount : 0) || serverTotal;
     const rawPct = sessionTotal > 0 ? Math.floor((serverProcessed / sessionTotal) * 100) : 0;
-    const uploadPct = processingComplete ? 100 : Math.min(99, rawPct);
+    const recognitionPct = processingComplete ? 100 : Math.min(99, rawPct);
 
-    const uploadTitle = processingComplete ? 'ההעלאה הושלמה בהצלחה!' : 'מעלה תמונות...';
+    // Step 1 = client pushing files to storage (cover + photos). Step 2 = server
+    // face recognition. Step 3 = done.
+    const currentStep: 1 | 2 | 3 = isClientUploading ? 1 : (processingComplete ? 3 : 2);
+    const clientPct = activeUpload?.progress ?? 0;
+    const uploadedCount = activeUpload?.uploadedCount ?? 0;
+    const clientTotal = activeUpload?.totalCount ?? 0;
+
+    const progressSteps = [
+        { num: 1 as const, label: 'העלאת תמונות', Icon: Upload },
+        { num: 2 as const, label: 'זיהוי פנים', Icon: ScanFace },
+        { num: 3 as const, label: 'סיום', Icon: CheckCircle2 },
+    ];
+
+    // Detail bar for the currently-active step.
+    let barPct: number;
+    let barTitle: string;
+    let barCount: string;
+    let barSubtitle: string;
+    if (currentStep === 1) {
+        barPct = clientPct;
+        barTitle = 'מעלה את התמונות לאחסון...';
+        barCount = clientTotal > 0 ? `${uploadedCount.toLocaleString('he-IL')} מתוך ${clientTotal.toLocaleString('he-IL')}` : '';
+        barSubtitle = 'מעלים את כל התמונות הראשוניות. אפשר להשאיר את החלון פתוח.';
+    } else if (currentStep === 2) {
+        barPct = recognitionPct;
+        barTitle = 'מזהה פנים בתמונות...';
+        barCount = sessionTotal > 0 ? `${recognitionPct}% · ${serverProcessed.toLocaleString('he-IL')} מתוך ${sessionTotal.toLocaleString('he-IL')}` : '';
+        barSubtitle = 'מזהים פרצופים בכל תמונה כדי שהאורחים יוכלו למצוא את עצמם.';
+    } else {
+        barPct = 100;
+        barTitle = 'הכל מוכן!';
+        barCount = sessionTotal > 0 ? `${sessionTotal.toLocaleString('he-IL')} תמונות` : '';
+        barSubtitle = 'כל התמונות מוכנות — האורחים יכולים למצוא את עצמם.';
+    }
+    const barDone = currentStep === 3;
 
     const showLinks = !showProgressBar && (event.isPublished || event.initialProcessingDone) && event.status !== 'expired';
 
@@ -597,35 +628,59 @@ const EventManagePage: React.FC = () => {
             <div className="bg-white border-b border-slate-200 sticky top-0 z-30 shadow-sm">
                 <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
 
-                    {/* Single unified upload progress bar */}
+                    {/* 3-step progress: initial upload → face recognition → done */}
                     {showProgressBar && (
                         <div className="mb-6 bg-slate-50 border border-slate-200 rounded-xl p-4">
+                            {/* Step indicator */}
+                            <div className="flex items-center mb-4">
+                                {progressSteps.map((s, i) => {
+                                    const done = currentStep > s.num;
+                                    const active = currentStep === s.num;
+                                    return (
+                                        <React.Fragment key={s.num}>
+                                            <div className="flex items-center gap-2">
+                                                <div className={`w-7 h-7 rounded-full flex items-center justify-center transition-colors ${done ? 'bg-green-500 text-white' : active ? 'bg-cyan-500 text-white' : 'bg-slate-200 text-slate-400'}`}>
+                                                    {done
+                                                        ? <CheckCircle2 className="w-4 h-4" />
+                                                        : active && s.num !== 3
+                                                            ? <Loader2 className="w-4 h-4 animate-spin" />
+                                                            : <s.Icon className="w-4 h-4" />}
+                                                </div>
+                                                <span className={`text-xs font-bold whitespace-nowrap ${done ? 'text-green-600' : active ? 'text-cyan-600' : 'text-slate-400'}`}>
+                                                    {s.label}
+                                                </span>
+                                            </div>
+                                            {i < progressSteps.length - 1 && (
+                                                <div className={`flex-1 h-0.5 mx-2 rounded transition-colors ${currentStep > s.num ? 'bg-green-500' : 'bg-slate-200'}`} />
+                                            )}
+                                        </React.Fragment>
+                                    );
+                                })}
+                            </div>
+
+                            {/* Active step detail */}
                             <div className="flex justify-between items-center mb-2">
                                 <span className="font-bold text-slate-700 flex items-center gap-2">
-                                    {processingComplete
+                                    {barDone
                                         ? <CheckCircle2 className="w-4 h-4 text-green-500" />
                                         : <Loader2 className="w-4 h-4 animate-spin text-cyan-500" />}
-                                    {uploadTitle}
+                                    {barTitle}
                                 </span>
-                                {!processingComplete && sessionTotal > 0 && (
-                                    <span className="font-semibold text-cyan-600 whitespace-nowrap">
-                                        הועלו {serverProcessed.toLocaleString('he-IL')} מתוך {sessionTotal.toLocaleString('he-IL')}
+                                {barCount && (
+                                    <span className={`font-semibold whitespace-nowrap ${barDone ? 'text-green-600' : 'text-cyan-600'}`}>
+                                        {barCount}
                                     </span>
                                 )}
                             </div>
 
                             <div className="w-full bg-slate-200 rounded-full h-2.5 overflow-hidden">
                                 <div
-                                    className={`h-2.5 rounded-full transition-all duration-500 ${processingComplete ? 'bg-green-500' : 'bg-cyan-500'}`}
-                                    style={{ width: `${uploadPct}%` }}
+                                    className={`h-2.5 rounded-full transition-all duration-500 ${barDone ? 'bg-green-500' : 'bg-cyan-500'}`}
+                                    style={{ width: `${barPct}%` }}
                                 ></div>
                             </div>
 
-                            <p className="text-xs text-slate-400 mt-2">
-                                {processingComplete
-                                    ? 'כל התמונות זמינות עכשיו.'
-                                    : 'אנא אל תסגור את החלון עד סיום ההעלאה.'}
-                            </p>
+                            <p className="text-xs text-slate-400 mt-2">{barSubtitle}</p>
                         </div>
                     )}
 
