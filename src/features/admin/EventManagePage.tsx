@@ -17,6 +17,7 @@ import {
     FileText,
     CheckCircle2,
     ScanFace,
+    Clock,
     XCircle,
     Copy,
     ExternalLink,
@@ -53,6 +54,9 @@ const EventManagePage: React.FC = () => {
     const [awaitingServer, setAwaitingServer] = useState(false);
     const emptyPollsRef = useRef(0);
     const prevUploading = useRef(false);
+    // Anchors a (timestamp, processed-count) sample when face-recognition (step 2)
+    // begins, so we can derive a rate and show a time-remaining estimate.
+    const recognitionAnchorRef = useRef<{ ts: number; processed: number } | null>(null);
     const folderInputRef = useRef<HTMLInputElement>(null);
 
     const queryParams = new URLSearchParams(location.search);
@@ -611,8 +615,8 @@ const EventManagePage: React.FC = () => {
     } else if (currentStep === 2) {
         barPct = recognitionPct;
         barTitle = 'מזהה פנים בתמונות...';
-        barCount = sessionTotal > 0 ? `${recognitionPct}% · ${serverProcessed.toLocaleString('he-IL')} מתוך ${sessionTotal.toLocaleString('he-IL')}` : '';
-        barSubtitle = 'מזהים פרצופים בכל תמונה כדי שהאורחים יוכלו למצוא את עצמם.';
+        barCount = sessionTotal > 0 ? `${serverProcessed.toLocaleString('he-IL')} מתוך ${sessionTotal.toLocaleString('he-IL')}` : '';
+        barSubtitle = 'חלק מהתמונות כבר עובדו בזמן ההעלאה. ממשיכים לזהות פרצופים בשאר.';
     } else {
         barPct = 100;
         barTitle = 'הכל מוכן!';
@@ -620,6 +624,39 @@ const EventManagePage: React.FC = () => {
         barSubtitle = 'כל התמונות מוכנות — האורחים יכולים למצוא את עצמם.';
     }
     const barDone = currentStep === 3;
+
+    // Time-remaining estimate. Step 1 reuses the rate the uploader already tracks.
+    // Step 2 derives a rate from a sample anchored when recognition first begins.
+    let recognitionEtaSeconds: number | undefined;
+    if (currentStep === 2 && sessionTotal > 0 && !processingComplete) {
+        const now = Date.now();
+        if (!recognitionAnchorRef.current) {
+            recognitionAnchorRef.current = { ts: now, processed: serverProcessed };
+        }
+        const anchor = recognitionAnchorRef.current;
+        const elapsedSec = (now - anchor.ts) / 1000;
+        const doneSinceAnchor = serverProcessed - anchor.processed;
+        if (elapsedSec > 2 && doneSinceAnchor > 0) {
+            const rate = doneSinceAnchor / elapsedSec; // images/sec
+            const remaining = sessionTotal - serverProcessed;
+            if (rate > 0) recognitionEtaSeconds = Math.round(remaining / rate);
+        }
+    } else if (currentStep !== 2) {
+        recognitionAnchorRef.current = null;
+    }
+    const activeEtaSeconds = currentStep === 1 ? activeUpload?.etaSeconds
+        : currentStep === 2 ? recognitionEtaSeconds
+        : undefined;
+    const formatEta = (sec?: number): string | null => {
+        if (sec == null || !isFinite(sec) || sec <= 0) return null;
+        if (sec < 60) return 'פחות מדקה';
+        const mins = Math.round(sec / 60);
+        if (mins === 1) return 'כדקה';
+        if (mins < 60) return `כ-${mins} דקות`;
+        const hrs = Math.round(mins / 60);
+        return hrs === 1 ? 'כשעה' : `כ-${hrs} שעות`;
+    };
+    const etaLabel = formatEta(activeEtaSeconds);
 
     const showLinks = !showProgressBar && (event.isPublished || event.initialProcessingDone) && event.status !== 'expired';
 
@@ -680,7 +717,14 @@ const EventManagePage: React.FC = () => {
                                 ></div>
                             </div>
 
-                            <p className="text-xs text-slate-400 mt-2">{barSubtitle}</p>
+                            <div className="flex justify-between items-center gap-2 mt-2">
+                                <p className="text-xs text-slate-400">{barSubtitle}</p>
+                                {etaLabel && !barDone && (
+                                    <span className="text-xs font-medium text-slate-500 flex items-center gap-1 whitespace-nowrap">
+                                        <Clock className="w-3 h-3" /> נשארו {etaLabel}
+                                    </span>
+                                )}
+                            </div>
                         </div>
                     )}
 
