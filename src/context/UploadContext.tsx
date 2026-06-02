@@ -1,5 +1,6 @@
 import React, { createContext, useContext, useState, useCallback, ReactNode } from 'react';
 import { BackendService } from '../services/backendService';
+import { compressImage } from '../utils/imageCompression';
 
 interface UploadState {
     progress: number;
@@ -50,8 +51,9 @@ export const UploadProvider: React.FC<{ children: ReactNode }> = ({ children }) 
             // A. Upload Cover if exists
             if (coverFile) {
                 updateUploadState(eventId, { stage: 'מעלה תמונת קאבר...' });
-                const coverInfo = await BackendService.getPresignedCoverUrl(eventId, coverFile.name, coverFile.type);
-                await BackendService.uploadToS3(coverInfo.uploadUrl, coverFile);
+                const compressedCover = await compressImage(coverFile);
+                const coverInfo = await BackendService.getPresignedCoverUrl(eventId, compressedCover.name, compressedCover.type);
+                await BackendService.uploadToS3(coverInfo.uploadUrl, compressedCover);
                 await BackendService.setCoverImage(eventId, coverInfo.photoId.toString());
             }
 
@@ -59,11 +61,21 @@ export const UploadProvider: React.FC<{ children: ReactNode }> = ({ children }) 
             if (files.length > 0) {
                 const BATCH_SIZE = 250;
                 const CONCURRENCY_LIMIT = 20;
-                let processedCount = 0;
+                const COMPRESS_CONCURRENCY = 6; // canvas decode/encode is memory-heavy
                 const totalFiles = files.length;
 
+                // Each photo counts as two units of work: compress, then upload.
+                // The bar fills smoothly across both phases (0-98%).
+                const totalUnits = totalFiles * 2;
+                let compressedCount = 0;
+                let uploadedCount = 0;
+                const bumpProgress = () => {
+                    const p = Math.floor(((compressedCount + uploadedCount) / totalUnits) * 98);
+                    updateUploadState(eventId, { progress: p });
+                };
+
                 // Helper for concurrency
-                const uploadWithConcurrency = async (tasks: (() => Promise<any>)[], limit: number) => {
+                const runWithConcurrency = async (tasks: (() => Promise<any>)[], limit: number) => {
                     const results = [];
                     const executing: Promise<any>[] = [];
                     for (const task of tasks) {
@@ -80,45 +92,40 @@ export const UploadProvider: React.FC<{ children: ReactNode }> = ({ children }) 
 
                 for (let i = 0; i < totalFiles; i += BATCH_SIZE) {
                     const chunk = files.slice(i, i + BATCH_SIZE);
-                    const currentBatchNum = Math.floor(i / BATCH_SIZE) + 1;
-                    const totalBatches = Math.ceil(totalFiles / BATCH_SIZE);
 
-                    updateUploadState(eventId, {
-                        stage: `מתחיל העלאה חלק ${currentBatchNum} מתוך ${totalBatches}...`
+                    // 1. Compress (downscale) this chunk client-side before uploading.
+                    const compressTasks = chunk.map((f) => async () => {
+                        const compressed = await compressImage(f);
+                        compressedCount++;
+                        bumpProgress();
+                        // eslint-disable-next-line no-loop-func
+                        updateUploadState(eventId, {
+                            stage: `מכין תמונות (${compressedCount}/${totalFiles})...`
+                        });
+                        return compressed;
                     });
+                    const compressedChunk: File[] = await runWithConcurrency(compressTasks, COMPRESS_CONCURRENCY);
 
-                    // 1. Presign
-                    const fileInfos = chunk.map(f => ({ filename: f.name, contentType: f.type }));
+                    // 2. Presign (filenames/types reflect the compressed output)
+                    const fileInfos = compressedChunk.map(f => ({ filename: f.name, contentType: f.type }));
                     const { urls } = await BackendService.getPresignedUrls(eventId, fileInfos);
 
-                    // 2. Upload to S3 and process
-                    let completedInBatch = 0;
+                    // 3. Upload to R2
                     const uploadTasks = urls.map((urlInfo: any, index: number) => async () => {
-                        const file = chunk[index];
-                        // Upload file to R2
-                        await BackendService.uploadToS3(urlInfo.uploadUrl, file);
-                        
-                        completedInBatch++;
+                        await BackendService.uploadToS3(urlInfo.uploadUrl, compressedChunk[index]);
+                        uploadedCount++;
+                        bumpProgress();
                         // eslint-disable-next-line no-loop-func
-                        const currentProcessed = processedCount + completedInBatch;
-                        const currentProgress = Math.floor((currentProcessed / totalFiles) * 98);
-                        
                         updateUploadState(eventId, {
-                            progress: currentProgress,
-                            stage: `מעלה תמונות (${currentProcessed}/${totalFiles})...`
+                            stage: `מעלה תמונות (${uploadedCount}/${totalFiles})...`
                         });
-                        
                         return urlInfo.photoId;
                     });
 
-                    const uploadedPhotoIds = await uploadWithConcurrency(uploadTasks, CONCURRENCY_LIMIT);
+                    const uploadedPhotoIds = await runWithConcurrency(uploadTasks, CONCURRENCY_LIMIT);
 
-                    // 3. Confirm (all images in this chunk are uploaded, processing in background)
+                    // 4. Confirm (all images in this chunk are uploaded, processing in background)
                     await BackendService.confirmUploads(eventId, uploadedPhotoIds);
-
-                    processedCount += chunk.length;
-                    const chunkProgress = Math.floor((processedCount / totalFiles) * 98);
-                    updateUploadState(eventId, { progress: chunkProgress });
                 }
             }
 

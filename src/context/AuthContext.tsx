@@ -39,10 +39,26 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
                     } as User);
                 }
             } else {
-                const { session } = await supabaseAuthService.getSession();
-                if (session) {
-                    setIsAuthenticated(true);
-                    setUser(session.user);
+                try {
+                    const { session, error } = await supabaseAuthService.getSession();
+                    if (error) throw error;
+                    if (session) {
+                        // Validate the stored token against the server. If it was
+                        // issued by a different/older project it returns 401, and we
+                        // must not treat the user as authenticated.
+                        const { user: verifiedUser, error: userError } = await supabaseAuthService.getCurrentUser();
+                        if (userError || !verifiedUser) throw userError || new Error('Invalid session');
+                        setIsAuthenticated(true);
+                        setUser(verifiedUser);
+                    }
+                } catch (e) {
+                    // A stored session token rejected by Supabase (e.g. 401 from
+                    // /auth/v1/user when the token is stale or belongs to another
+                    // project) would otherwise leave the app stuck. Purge it so the
+                    // login screen works cleanly.
+                    try { await supabaseAuthService.signOut(); } catch { /* ignore */ }
+                    setIsAuthenticated(false);
+                    setUser(null);
                 }
             }
             setIsLoading(false);
