@@ -7,6 +7,11 @@ interface UploadState {
     stage: string;
     isUploading: boolean;
     error?: string;
+    phase?: 'preparing' | 'uploading' | 'processing' | 'done';
+    uploadedCount?: number;
+    totalCount?: number;
+    rate?: number;        // images uploaded per second (upload phase)
+    etaSeconds?: number;  // estimated seconds remaining for the upload phase
 }
 
 interface UploadContextType {
@@ -43,7 +48,10 @@ export const UploadProvider: React.FC<{ children: ReactNode }> = ({ children }) 
             [eventId]: {
                 progress: 0,
                 stage: 'מתחיל העלאה...',
-                isUploading: true
+                isUploading: true,
+                phase: 'preparing',
+                uploadedCount: 0,
+                totalCount: files.length,
             }
         }));
 
@@ -69,6 +77,7 @@ export const UploadProvider: React.FC<{ children: ReactNode }> = ({ children }) 
                 const totalUnits = totalFiles * 2;
                 let compressedCount = 0;
                 let uploadedCount = 0;
+                let uploadStartTime = 0; // ms, set when the first file actually uploads
                 const bumpProgress = () => {
                     const p = Math.floor(((compressedCount + uploadedCount) / totalUnits) * 98);
                     updateUploadState(eventId, { progress: p });
@@ -100,6 +109,7 @@ export const UploadProvider: React.FC<{ children: ReactNode }> = ({ children }) 
                         bumpProgress();
                         // eslint-disable-next-line no-loop-func
                         updateUploadState(eventId, {
+                            phase: 'preparing',
                             stage: `מכין תמונות (${compressedCount}/${totalFiles})...`
                         });
                         return compressed;
@@ -111,13 +121,25 @@ export const UploadProvider: React.FC<{ children: ReactNode }> = ({ children }) 
                     const { urls } = await BackendService.getPresignedUrls(eventId, fileInfos);
 
                     // 3. Upload to R2
+                    if (uploadStartTime === 0) uploadStartTime = Date.now();
                     const uploadTasks = urls.map((urlInfo: any, index: number) => async () => {
                         await BackendService.uploadToS3(urlInfo.uploadUrl, compressedChunk[index]);
                         uploadedCount++;
                         bumpProgress();
+
+                        const elapsedSec = (Date.now() - uploadStartTime) / 1000;
+                        const rate = elapsedSec > 0 ? uploadedCount / elapsedSec : 0;
+                        const remaining = totalFiles - uploadedCount;
+                        const etaSeconds = rate > 0 ? Math.round(remaining / rate) : undefined;
+
                         // eslint-disable-next-line no-loop-func
                         updateUploadState(eventId, {
-                            stage: `מעלה תמונות (${uploadedCount}/${totalFiles})...`
+                            phase: 'uploading',
+                            stage: `מעלה תמונות (${uploadedCount}/${totalFiles})...`,
+                            uploadedCount,
+                            totalCount: totalFiles,
+                            rate,
+                            etaSeconds,
                         });
                         return urlInfo.photoId;
                     });
@@ -133,7 +155,9 @@ export const UploadProvider: React.FC<{ children: ReactNode }> = ({ children }) 
             updateUploadState(eventId, {
                 progress: 100,
                 stage: 'ההעלאה הושלמה! התמונות עוברות סריקת פנים ברקע...',
-                isUploading: false
+                isUploading: false,
+                phase: 'done',
+                etaSeconds: undefined,
             });
 
             // Give it a moment then clear, to allow immediate refresh of UI

@@ -42,9 +42,9 @@ const EventManagePage: React.FC = () => {
     const [batches, setBatches] = useState<any[]>([]);
     const [loading, setLoading] = useState(true);
 
-    // Server Progress State (for 80-100% phase or when returning to page)
-    const [serverProgress, setServerProgress] = useState(0);
-    const [serverProgressStage, setServerProgressStage] = useState('');
+    // Set true by the poll once every batch has finished server-side processing.
+    // Drives the "done" state of the single unified progress bar (100% + success).
+    const [processingComplete, setProcessingComplete] = useState(false);
     const hasStartedUpload = useRef(false);
     // Bridge flag: true from the moment client upload finishes until server-side
     // processing is confirmed done. Keeps the progress bar alive even if the first
@@ -191,9 +191,8 @@ const EventManagePage: React.FC = () => {
             // stays visible and the poll keeps running until the server confirms done,
             // even if the first getBatches call beats batch creation.
             setAwaitingServer(true);
+            setProcessingComplete(false);
             emptyPollsRef.current = 0;
-            setServerProgress(prev => (prev < 80 ? 80 : prev));
-            setServerProgressStage('מסנכרן נתונים מהשרת...');
             loadEventData(id);
         }
         prevUploading.current = isClientUploading;
@@ -211,8 +210,6 @@ const EventManagePage: React.FC = () => {
         if (isClientUploading) return;
         if (!isServerProcessing && !awaitingServer) return;
 
-        setServerProgress(prev => (prev < 80 ? 80 : prev));
-
         const poll = async () => {
             try {
                 const updatedBatches = await BackendService.getBatches(id);
@@ -224,27 +221,13 @@ const EventManagePage: React.FC = () => {
                     emptyPollsRef.current += 1;
                     if (emptyPollsRef.current > 20) {
                         setAwaitingServer(false);
-                        setServerProgress(0);
-                        setServerProgressStage('');
                     }
                     return;
                 }
                 emptyPollsRef.current = 0;
 
                 const stillProcessing = checkIsProcessing(updatedBatches);
-                const total = updatedBatches.reduce((acc: number, b: any) => acc + b.totalImages, 0);
-                const processed = updatedBatches.reduce((acc: number, b: any) => acc + b.processedImages, 0);
-
-                if (stillProcessing) {
-                    if (total > 0) {
-                        // Cap at 99% while processing; only completion reaches 100%.
-                        setServerProgress(80 + Math.min(19, Math.floor((processed / total) * 19)));
-                        setServerProgressStage(`מעבד תמונות בשרת (${processed}/${total})...`);
-                    } else {
-                        setServerProgressStage('מסנכרן נתונים מהשרת...');
-                    }
-                    return;
-                }
+                if (stillProcessing) return; // render derives % from processed/total
 
                 // All batches finished — auto-publish if needed, reload, complete.
                 try {
@@ -257,21 +240,19 @@ const EventManagePage: React.FC = () => {
                     console.error("Auto-publish failed", err);
                 }
 
-                setServerProgress(100);
-                setServerProgressStage('העיבוד הסתיים בהצלחה!');
+                setProcessingComplete(true);
                 await loadEventData(id);
                 setTimeout(() => {
                     setAwaitingServer(false);
-                    setServerProgress(0);
-                    setServerProgressStage('');
-                }, 1500);
+                    setProcessingComplete(false);
+                }, 2500);
             } catch (e) {
                 console.error("Polling error", e);
             }
         };
 
-        poll(); // immediate tick so the first update doesn't wait 3s
-        const interval = setInterval(poll, 3000);
+        poll(); // immediate tick so the first update doesn't wait for the interval
+        const interval = setInterval(poll, 1500);
         return () => clearInterval(interval);
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [id, isServerProcessing, awaitingServer, uploads]);
@@ -298,18 +279,6 @@ const EventManagePage: React.FC = () => {
                 setBatches(batchesData);
                 setPage(1);
                 setHasMore(photosData.length === ITEMS_PER_PAGE);
-
-                // Initial progress check
-                const isProcessing = checkIsProcessing(batchesData);
-                if (isProcessing) {
-                    const total = batchesData.reduce((acc: number, b: any) => acc + b.totalImages, 0);
-                    const processed = batchesData.reduce((acc: number, b: any) => acc + b.processedImages, 0);
-                    if (total > 0) {
-                        const rawPct = processed / total;
-                        setServerProgress(80 + Math.floor(rawPct * 20));
-                        setServerProgressStage('ממשיך עיבוד מהשרת...');
-                    }
-                }
             } else {
                 navigate('/admin');
             }
@@ -603,8 +572,23 @@ const EventManagePage: React.FC = () => {
 
     // Combined State
     const showProgressBar = isClientUploading || isServerProcessing || awaitingServer;
-    const currentProgress = isClientUploading ? activeUpload!.progress : serverProgress;
-    const currentStage = isClientUploading ? activeUpload!.stage : serverProgressStage;
+
+    // ── Single unified "upload" indicator ──────────────────────────────────
+    // To the user this is ONE process: photos being uploaded. Under the hood it
+    // is client upload + server-side face recognition, but we never split them.
+    // The bar is driven purely by how many images the server has finished
+    // processing out of the session total, so it only ever moves forward.
+    // (confirmUploads fires per batch, so processing overlaps the client upload
+    // and the count climbs continuously from the start.)
+    const serverTotal = batches.reduce((acc: number, b: any) => acc + (b.totalImages || 0), 0);
+    const serverProcessed = batches.reduce((acc: number, b: any) => acc + (b.processedImages || 0), 0);
+    // True total of this session: known up-front while the client is uploading,
+    // otherwise the server's view. Fixed during a session => percentage is monotonic.
+    const sessionTotal = (isClientUploading ? activeUpload?.totalCount : 0) || serverTotal;
+    const rawPct = sessionTotal > 0 ? Math.floor((serverProcessed / sessionTotal) * 100) : 0;
+    const uploadPct = processingComplete ? 100 : Math.min(99, rawPct);
+
+    const uploadTitle = processingComplete ? 'ההעלאה הושלמה בהצלחה!' : 'מעלה תמונות...';
 
     const showLinks = !showProgressBar && (event.isPublished || event.initialProcessingDone) && event.status !== 'expired';
 
@@ -613,26 +597,34 @@ const EventManagePage: React.FC = () => {
             <div className="bg-white border-b border-slate-200 sticky top-0 z-30 shadow-sm">
                 <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
 
-                    {/* Progress Bar (Visible if uploading or processing) */}
+                    {/* Single unified upload progress bar */}
                     {showProgressBar && (
                         <div className="mb-6 bg-slate-50 border border-slate-200 rounded-xl p-4">
                             <div className="flex justify-between items-center mb-2">
                                 <span className="font-bold text-slate-700 flex items-center gap-2">
-                                    <Loader2 className="w-4 h-4 animate-spin text-cyan-500" />
-                                    {currentStage || 'מעבד נתונים...'}
+                                    {processingComplete
+                                        ? <CheckCircle2 className="w-4 h-4 text-green-500" />
+                                        : <Loader2 className="w-4 h-4 animate-spin text-cyan-500" />}
+                                    {uploadTitle}
                                 </span>
-                                <span className="font-mono font-bold text-cyan-600">{currentProgress}%</span>
+                                {!processingComplete && sessionTotal > 0 && (
+                                    <span className="font-semibold text-cyan-600 whitespace-nowrap">
+                                        הועלו {serverProcessed.toLocaleString('he-IL')} מתוך {sessionTotal.toLocaleString('he-IL')}
+                                    </span>
+                                )}
                             </div>
+
                             <div className="w-full bg-slate-200 rounded-full h-2.5 overflow-hidden">
                                 <div
-                                    className="bg-cyan-500 h-2.5 rounded-full transition-all duration-500"
-                                    style={{ width: `${currentProgress}%` }}
+                                    className={`h-2.5 rounded-full transition-all duration-500 ${processingComplete ? 'bg-green-500' : 'bg-cyan-500'}`}
+                                    style={{ width: `${uploadPct}%` }}
                                 ></div>
                             </div>
+
                             <p className="text-xs text-slate-400 mt-2">
-                                {isClientUploading
-                                    ? 'אנא אל תסגור את החלון עד סיום ההעלאה.'
-                                    : 'התמונות עוברות עיבוד בשרת. ניתן לערוך פרטים במקביל.'}
+                                {processingComplete
+                                    ? 'כל התמונות זמינות עכשיו.'
+                                    : 'אנא אל תסגור את החלון עד סיום ההעלאה.'}
                             </p>
                         </div>
                     )}
