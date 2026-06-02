@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { BackendService } from '../../services/backendService';
 import { DashboardStats, Event } from '../../types';
@@ -245,29 +245,36 @@ const DashboardPage: React.FC = () => {
         }
     };
 
+    // Guards against overlapping refreshes: if the backend is slow, a 5s
+    // interval would otherwise stack pending requests and thrash re-renders.
+    const isRefreshingRef = useRef(false);
+
     const silentRefresh = async () => {
+        if (isRefreshingRef.current) return;
+        isRefreshingRef.current = true;
         try {
             const response = await BackendService.getEvents(currentPage, itemsPerPage, searchTerm, sortField, sortDirection);
             setEvents(response.items);
             setTotalPages(Math.ceil(response.total / itemsPerPage));
         } catch (error) {
             console.error('Silent refresh failed:', error);
+        } finally {
+            isRefreshingRef.current = false;
         }
     };
 
-    // Polling for processing events
+    // Poll only while an event is still processing. Depend on the derived
+    // boolean (not the events array) so the interval isn't torn down and
+    // rebuilt on every fetch — it only flips when processing actually starts/stops.
+    const hasProcessingEvents = events.some(e => !e.isPublished && !e.initialProcessingDone);
+
     useEffect(() => {
-        // Check if any event is still processing (not published AND not initial processing done)
-        const hasProcessingEvents = events.some(e => !e.isPublished && !e.initialProcessingDone);
+        if (!hasProcessingEvents) return;
 
-        if (hasProcessingEvents) {
-            const intervalId = setInterval(() => {
-                silentRefresh();
-            }, 5000); // Check every 5 seconds
-
-            return () => clearInterval(intervalId);
-        }
-    }, [events]);
+        const intervalId = setInterval(silentRefresh, 5000);
+        return () => clearInterval(intervalId);
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [hasProcessingEvents]);
 
     const openDeleteModal = (event: Event, e: React.MouseEvent) => {
         e.stopPropagation();

@@ -46,7 +46,11 @@ const EventManagePage: React.FC = () => {
     const [serverProgress, setServerProgress] = useState(0);
     const [serverProgressStage, setServerProgressStage] = useState('');
     const hasStartedUpload = useRef(false);
-    const [isRefreshing, setIsRefreshing] = useState(false);
+    // Bridge flag: true from the moment client upload finishes until server-side
+    // processing is confirmed done. Keeps the progress bar alive even if the first
+    // getBatches call races ahead of batch creation.
+    const [awaitingServer, setAwaitingServer] = useState(false);
+    const emptyPollsRef = useRef(0);
     const prevUploading = useRef(false);
     const folderInputRef = useRef<HTMLInputElement>(null);
 
@@ -177,82 +181,100 @@ const EventManagePage: React.FC = () => {
         }
     }, [id, location.state]);
 
-    // 2. Watch for client upload completion to trigger immediate refresh
+    // 2. Watch for client upload completion to bridge into server-progress tracking
     useEffect(() => {
         const activeUpload = id ? uploads[id] : null;
         const isClientUploading = !!activeUpload?.isUploading;
 
         if (prevUploading.current && !isClientUploading && id) {
-            // Client upload just finished. We need to fetch batches to see the new server processing job.
-            // We temporarily force the progress bar to show to bridge the gap.
-            setIsRefreshing(true);
-            setServerProgress(80);
+            // Client upload just finished. Flip on the bridge flag so the progress bar
+            // stays visible and the poll keeps running until the server confirms done,
+            // even if the first getBatches call beats batch creation.
+            setAwaitingServer(true);
+            emptyPollsRef.current = 0;
+            setServerProgress(prev => (prev < 80 ? 80 : prev));
             setServerProgressStage('מסנכרן נתונים מהשרת...');
-
-            loadEventData(id).finally(() => {
-                setIsRefreshing(false);
-            });
+            loadEventData(id);
         }
         prevUploading.current = isClientUploading;
     }, [uploads, id]);
 
-    // 3. Polling for Server-Side Processing
+    // 3. Polling for Server-Side Processing.
+    // Runs while batches are processing OR while we're bridging right after an upload.
+    // Depends on the *boolean* processing state (not the batches array) so a single
+    // stable interval is used instead of being torn down and rebuilt on every poll.
+    const isServerProcessing = checkIsProcessing(batches);
     useEffect(() => {
-        let interval: NodeJS.Timeout;
-        const isServerProcessing = checkIsProcessing(batches);
-        const activeUpload = id ? uploads[id] : null;
-        const isClientUploading = activeUpload?.isUploading;
+        if (!id) return;
+        const isClientUploading = !!uploads[id]?.isUploading;
+        // Don't poll while the client is still pushing files to R2 (avoids conflict).
+        if (isClientUploading) return;
+        if (!isServerProcessing && !awaitingServer) return;
 
-        // Poll if we are NOT currently uploading from client (to avoid conflict) 
-        // OR if we just finished upload and want to track server progress
-        if (id && isServerProcessing) {
-            // If we are transitioning from client upload or just loaded up and processing, 
-            // ensure we start at min 80% to avoid visual glitch 0% -> 80%
-            if (serverProgress < 80) setServerProgress(80);
+        setServerProgress(prev => (prev < 80 ? 80 : prev));
 
-            if (!isClientUploading) {
-                interval = setInterval(async () => {
-                    try {
-                        const updatedBatches = await BackendService.getBatches(id);
-                        setBatches(updatedBatches);
+        const poll = async () => {
+            try {
+                const updatedBatches = await BackendService.getBatches(id);
+                setBatches(updatedBatches);
 
-                        // Calculate server-side progress
-                        const total = updatedBatches.reduce((acc: number, b: any) => acc + b.totalImages, 0);
-                        const processed = updatedBatches.reduce((acc: number, b: any) => acc + b.processedImages, 0);
-
-                        if (total > 0) {
-                            const rawPct = processed / total;
-                            const serverProg = 80 + Math.floor(rawPct * 20);
-                            // Only update main progress if we are not in client-upload mode
-                            setServerProgress(serverProg);
-                            setServerProgressStage(`מעבד תמונות בשרת (${processed}/${total})...`);
-                        }
-
-                        // If all became done, refresh photos/event and AUTO-PUBLISH
-                        if (!checkIsProcessing(updatedBatches)) {
-                            // Check if we need to publish
-                            const processingStatus = await BackendService.getProcessingStatus(id);
-                            if (processingStatus.initial_processing_done && !processingStatus.is_published) {
-                                try {
-                                    await BackendService.publishEvent(id);
-                                    showNotification('האירוע פורסם אוטומטית!', 'success');
-                                } catch (err) {
-                                    console.error("Auto-publish failed", err);
-                                }
-                            }
-
-                            loadEventData(id);
-                            setServerProgress(100);
-                            setServerProgressStage('העיבוד הסתיים בהצלחה!');
-                        }
-                    } catch (e) {
-                        console.error("Polling error", e);
+                if (updatedBatches.length === 0) {
+                    // Batch not visible yet (race) — keep bridging. Bail after ~60s so a
+                    // failed confirm never hangs the bar forever.
+                    emptyPollsRef.current += 1;
+                    if (emptyPollsRef.current > 20) {
+                        setAwaitingServer(false);
+                        setServerProgress(0);
+                        setServerProgressStage('');
                     }
-                }, 3000);
+                    return;
+                }
+                emptyPollsRef.current = 0;
+
+                const stillProcessing = checkIsProcessing(updatedBatches);
+                const total = updatedBatches.reduce((acc: number, b: any) => acc + b.totalImages, 0);
+                const processed = updatedBatches.reduce((acc: number, b: any) => acc + b.processedImages, 0);
+
+                if (stillProcessing) {
+                    if (total > 0) {
+                        // Cap at 99% while processing; only completion reaches 100%.
+                        setServerProgress(80 + Math.min(19, Math.floor((processed / total) * 19)));
+                        setServerProgressStage(`מעבד תמונות בשרת (${processed}/${total})...`);
+                    } else {
+                        setServerProgressStage('מסנכרן נתונים מהשרת...');
+                    }
+                    return;
+                }
+
+                // All batches finished — auto-publish if needed, reload, complete.
+                try {
+                    const processingStatus = await BackendService.getProcessingStatus(id);
+                    if (processingStatus.initial_processing_done && !processingStatus.is_published) {
+                        await BackendService.publishEvent(id);
+                        showNotification('האירוע פורסם אוטומטית!', 'success');
+                    }
+                } catch (err) {
+                    console.error("Auto-publish failed", err);
+                }
+
+                setServerProgress(100);
+                setServerProgressStage('העיבוד הסתיים בהצלחה!');
+                await loadEventData(id);
+                setTimeout(() => {
+                    setAwaitingServer(false);
+                    setServerProgress(0);
+                    setServerProgressStage('');
+                }, 1500);
+            } catch (e) {
+                console.error("Polling error", e);
             }
-        }
+        };
+
+        poll(); // immediate tick so the first update doesn't wait 3s
+        const interval = setInterval(poll, 3000);
         return () => clearInterval(interval);
-    }, [batches, id, uploads]);
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [id, isServerProcessing, awaitingServer, uploads]);
 
     const loadEventData = async (eventId: string) => {
         // Don't show full page loader if we are just refreshing data
@@ -576,12 +598,11 @@ const EventManagePage: React.FC = () => {
     if (!event) return null;
 
     // determine if we should show links
-    const isServerProcessing = checkIsProcessing(batches);
     const activeUpload = id ? uploads[id] : null;
     const isClientUploading = activeUpload?.isUploading;
 
     // Combined State
-    const showProgressBar = isClientUploading || isServerProcessing || isRefreshing;
+    const showProgressBar = isClientUploading || isServerProcessing || awaitingServer;
     const currentProgress = isClientUploading ? activeUpload!.progress : serverProgress;
     const currentStage = isClientUploading ? activeUpload!.stage : serverProgressStage;
 
