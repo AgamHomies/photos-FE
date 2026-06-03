@@ -1,6 +1,6 @@
 import React, { useState, ChangeEvent, FormEvent, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
-import { Eye, EyeOff, Check, Facebook, Instagram, Linkedin, Youtube } from 'lucide-react';
+import { Eye, EyeOff, Check, Facebook, Instagram, Linkedin, Youtube, Camera, PartyPopper, ChevronRight } from 'lucide-react';
 import { PhotographerRegistration } from '../../types';
 import { useAuth } from '../../hooks/useAuth';
 import { BackendService } from '../../services/backendService';
@@ -14,9 +14,13 @@ const AuthPage: React.FC = () => {
     const location = useLocation();
     const { login, user, isAuthenticated } = useAuth();
 
-    // Check if we came from a registration button
-    const initialMode = (location.state as any)?.mode === 'register' ? false : true;
+    // Check if we came from a registration button or with a pre-set user type
+    const locationState = location.state as any;
+    const initialMode = locationState?.mode === 'register' ? false : true;
     const [isLogin, setIsLogin] = useState(initialMode);
+    const [userType, setUserType] = useState<'photographer' | 'individual' | null>(
+        locationState?.userType ?? null
+    );
     const [loading, setLoading] = useState(false);
     const [showPassword, setShowPassword] = useState(false);
 
@@ -59,7 +63,7 @@ const AuthPage: React.FC = () => {
             if (isAuthenticated && user) {
                 try {
                     // Sync user with backend
-                    const syncResponse = await BackendService.syncUser();
+                    const syncResponse = await BackendService.syncUser(userType ?? undefined);
 
                     // Check if profile is complete
                     if (syncResponse?.data?.profileComplete) {
@@ -185,7 +189,7 @@ const AuthPage: React.FC = () => {
                 // Sync user with backend database
                 if (sessionData) {
                     try {
-                        const syncResponse = await BackendService.syncUser();
+                        const syncResponse = await BackendService.syncUser(userType ?? undefined);
                         console.log('Sync response:', syncResponse);
 
                         // Check if profile is complete based on backend response
@@ -267,12 +271,59 @@ const AuthPage: React.FC = () => {
                 <div className="absolute top-1/3 left-1/4 w-96 h-96 bg-blue-50 rounded-full mix-blend-multiply filter blur-3xl opacity-50 animate-blob" style={{ animationDelay: '2s' }}></div>
 
                 <div className="max-w-md w-full space-y-8 bg-white p-6 md:p-10 rounded-2xl shadow-[0_8px_30px_rgb(0,0,0,0.04)] relative z-10">
+
+                    {/* User type selection — shown only when type not yet chosen */}
+                    {userType === null ? (
+                        <div className="text-center space-y-6">
+                            <div>
+                                <h2 className="text-3xl font-bold text-slate-800 mb-2">ברוך הבא!</h2>
+                                <p className="text-slate-500">איך תרצה להיכנס?</p>
+                            </div>
+                            <div className="grid grid-cols-2 gap-4">
+                                <button
+                                    onClick={() => setUserType('photographer')}
+                                    className="group flex flex-col items-center gap-3 p-6 rounded-2xl border-2 border-slate-200 hover:border-cyan-400 hover:shadow-lg hover:shadow-cyan-900/5 transition-all"
+                                >
+                                    <div className="p-3 bg-slate-100 rounded-2xl group-hover:bg-cyan-50 transition-colors">
+                                        <Camera className="w-7 h-7 text-slate-500 group-hover:text-cyan-600 transition-colors" />
+                                    </div>
+                                    <div>
+                                        <p className="font-bold text-slate-800 text-sm">צלם מקצועי</p>
+                                        <p className="text-xs text-slate-400 mt-0.5">לצלמים ועסקים</p>
+                                    </div>
+                                </button>
+                                <button
+                                    onClick={() => setUserType('individual')}
+                                    className="group flex flex-col items-center gap-3 p-6 rounded-2xl border-2 border-slate-200 hover:border-cyan-400 hover:shadow-lg hover:shadow-cyan-900/5 transition-all"
+                                >
+                                    <div className="p-3 bg-slate-100 rounded-2xl group-hover:bg-cyan-50 transition-colors">
+                                        <PartyPopper className="w-7 h-7 text-slate-500 group-hover:text-cyan-600 transition-colors" />
+                                    </div>
+                                    <div>
+                                        <p className="font-bold text-slate-800 text-sm">בעל האירוע</p>
+                                        <p className="text-xs text-slate-400 mt-0.5">לאירועים פרטיים</p>
+                                    </div>
+                                </button>
+                            </div>
+                        </div>
+                    ) : (
+                    <>
                     <div className="text-center">
+                        <button
+                            onClick={() => setUserType(null)}
+                            className="flex items-center gap-1 text-xs text-slate-400 hover:text-slate-600 transition-colors mb-4 mx-auto"
+                        >
+                            <ChevronRight className="w-3 h-3" />
+                            <span>חזרה לבחירה</span>
+                        </button>
                         <h2 className="text-3xl font-bold text-slate-800 mb-2">
                             {isLogin ? 'ברוך הבא!' : 'צור חשבון חדש'}
                         </h2>
                         <p className="text-slate-500">
-                            {isLogin ? 'התחבר לחשבון הצלם שלך' : 'הצטרף לקהילת הצלמים שלנו'}
+                            {isLogin
+                                ? (userType === 'individual' ? 'התחבר לחשבון שלך' : 'התחבר לחשבון הצלם שלך')
+                                : (userType === 'individual' ? 'הירשם והתחל להעלות אירועים' : 'הצטרף לקהילת הצלמים שלנו')
+                            }
                         </p>
                     </div>
 
@@ -458,6 +509,8 @@ const AuthPage: React.FC = () => {
                             <a href="#" className="hover:text-slate-600 transition-colors">עזרה</a>
                         </div>
                     </div>
+                    </>
+                    )}
                 </div>
             </main>
 

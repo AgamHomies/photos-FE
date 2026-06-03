@@ -37,12 +37,12 @@ export const BackendService = {
     // ============================================
     // Authentication
     // ============================================
-    syncUser: async (): Promise<any> => {
+    syncUser: async (userType?: 'photographer' | 'individual'): Promise<any> => {
         if (USE_MOCK) {
             console.log('Mock sync user');
             return { success: true };
         }
-        return await RealAuthAPI.syncUser();
+        return await RealAuthAPI.syncUser(userType);
     },
 
     // Deprecated methods removed to enforce Supabase Auth flow

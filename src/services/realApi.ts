@@ -65,7 +65,7 @@ export const RealAuthAPI = {
     // Login and Register are handled directly by Supabase client in the UI components
     // We only need to sync the user with our backend after successful Supabase auth
 
-    syncUser: async (): Promise<any> => {
+    syncUser: async (userType?: 'photographer' | 'individual'): Promise<any> => {
         const token = await getAuthToken();
 
         try {
@@ -73,7 +73,9 @@ export const RealAuthAPI = {
                 method: 'POST',
                 headers: {
                     'Authorization': `Bearer ${token}`,
+                    'Content-Type': 'application/json',
                 },
+                body: userType ? JSON.stringify({ user_type: userType }) : undefined,
             });
 
             const data = await response.json();
