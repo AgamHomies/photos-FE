@@ -28,12 +28,18 @@ const AuthCallbackPage: React.FC = () => {
                     setMessage('מסנכרן נתוני משתמש...');
 
                     try {
-                        // Sync user with backend (creates account if needed)
-                        await RealAuthAPI.syncUser();
+                        // Read the user type chosen before the OAuth redirect
+                        const pendingType = sessionStorage.getItem('pending_user_type') as 'photographer' | 'individual' | null;
+                        sessionStorage.removeItem('pending_user_type');
+                        if (pendingType) localStorage.setItem('active_mode', pendingType);
+
+                        const syncResponse = await RealAuthAPI.syncUser(pendingType ?? undefined);
 
                         setStatus('success');
                         setMessage('אימות הצליח! מעביר לדף הראשי...');
-                        setTimeout(() => navigate('/admin'), 1500);
+
+                        const isComplete = syncResponse?.data?.profileComplete;
+                        setTimeout(() => navigate(isComplete ? '/admin' : '/complete-profile'), 1500);
                     } catch (syncError: any) {
                         console.error('Sync error:', syncError);
                         setStatus('error');

@@ -998,7 +998,7 @@ END:VCARD`;
                {photographer?.name || 'שם הצלם'}
             </h1>
             <p className="text-xs tracking-[0.2em] text-[#A89680] uppercase mb-4">
-               PHOTOGRAPHY STUDIO
+               {event?.createdAs === 'individual' ? 'SMART GALLERY' : 'PHOTOGRAPHY STUDIO'}
             </p>
 
             <div className="flex items-center justify-center gap-4">
@@ -1424,52 +1424,88 @@ END:VCARD`;
 
                   {viewState === 'results' ? (
                      <div className="animate-fade-in">
-                        <h2 className="text-2xl font-bold text-[#4A3B2C] mb-3 leading-tight">
-                           אהבתם את התמונות?
-                           <br />
-                           חכו שתראו איך נצלם את האירוע שלכם (:
-                        </h2>
-                        <p className="text-[#8B7355] mb-6 text-base">
-                           שמרו את הפרטים שלנו או עברו לאתר שלנו לפרטים נוספים
-                        </p>
+                        {event?.createdAs === 'individual' ? (
+                           <>
+                              <h2 className="text-2xl font-bold text-[#4A3B2C] mb-3 leading-tight">
+                                 גם לאירוע שלכם מגיעה גלריה כזו
+                              </h2>
+                              <p className="text-[#8B7355] mb-6 text-base">
+                                 הצטרפו אלינו — העלו תמונות ותנו לאורחים למצוא את עצמם
+                              </p>
+                           </>
+                        ) : (
+                           <>
+                              <h2 className="text-2xl font-bold text-[#4A3B2C] mb-3 leading-tight">
+                                 אהבתם את התמונות?
+                                 <br />
+                                 חכו שתראו איך נצלם את האירוע שלכם (:
+                              </h2>
+                              <p className="text-[#8B7355] mb-6 text-base">
+                                 שמרו את הפרטים שלנו או עברו לאתר שלנו לפרטים נוספים
+                              </p>
+                           </>
+                        )}
                      </div>
                   ) : (
                      <div className="animate-fade-in">
                         <h2 className="text-2xl font-bold text-[#4A3B2C] mb-3 leading-tight">
                            היום אתם אורחים -<br />מחר אתם בעלי האירוע!
                         </h2>
-                        <p className="text-[#8B7355] mb-6 text-base">
-                           שמרו את הפרטים שלנו או עברו לאתר שלנו לפרטים נוספים
-                        </p>
+                        {event?.createdAs === 'individual' ? (
+                           <>
+                              <p className="text-[#8B7355] mb-1 text-base font-medium">
+                                 הצטרפו ל-Click2Pic — הפלטפורמה שמוצאת לכל אורח את התמונות שלו, בשניות
+                              </p>
+                              <p className="text-[#8B7355] mb-6 text-sm">
+                                 שלחו לנו הודעה או היכנסו לאתר שלנו לפרטים נוספים ←
+                              </p>
+                           </>
+                        ) : (
+                           <p className="text-[#8B7355] mb-6 text-base">
+                              שמרו את הפרטים שלנו או עברו לאתר שלנו לפרטים נוספים
+                           </p>
+                        )}
                      </div>
                   )}
 
                   <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-4 justify-center">
 
-                     {/* Save Phone */}
-                     <button
-                        onClick={handleSavePhone}
-                        className="group relative overflow-hidden bg-[#C4A882] text-white py-4 px-8 rounded-full font-bold shadow-lg hover:shadow-xl hover:bg-[#B39872] transition-all transform hover:-translate-y-0.5 active:translate-y-0"
-                     >
-                        <div className="flex items-center justify-center gap-3 relative z-10">
-                           <span>שמור מספר טלפון</span>
-                           <Phone className="w-4 h-4 fill-current group-hover:rotate-12 transition-transform" />
-                        </div>
-                     </button>
+                     {event?.createdAs === 'individual' ? (
+                        <>
+                           <a
+                              href="/auth"
+                              className="group relative overflow-hidden bg-[#C4A882] text-white py-4 px-8 rounded-full font-bold shadow-lg hover:shadow-xl hover:bg-[#B39872] transition-all transform hover:-translate-y-0.5 active:translate-y-0 text-center"
+                           >
+                              הצטרפו ל-Click2Pic
+                           </a>
+                        </>
+                     ) : (
+                        <>
+                           {/* Save Phone */}
+                           <button
+                              onClick={handleSavePhone}
+                              className="group relative overflow-hidden bg-[#C4A882] text-white py-4 px-8 rounded-full font-bold shadow-lg hover:shadow-xl hover:bg-[#B39872] transition-all transform hover:-translate-y-0.5 active:translate-y-0"
+                           >
+                              <div className="flex items-center justify-center gap-3 relative z-10">
+                                 <span>שמור מספר טלפון</span>
+                                 <Phone className="w-4 h-4 fill-current group-hover:rotate-12 transition-transform" />
+                              </div>
+                           </button>
 
-                     {/* Website Link */}
-                     {photographer?.websiteUrl && (
-                        <button
-                           onClick={() => handleSocialClick(photographer.websiteUrl!, 'website')}
-                           className="group relative overflow-hidden bg-white text-[#4A3B2C] py-4 px-8 rounded-full font-bold shadow-md border border-[#E8DFD3] hover:border-[#C4A882] hover:bg-gray-50 transition-all transform hover:-translate-y-0.5 active:translate-y-0"
-                        >
-                           <div className="flex items-center justify-center gap-3 relative z-10">
-                              <Globe className="w-4 h-4 text-[#C4A882] group-hover:scale-110 transition-transform" />
-                              <span>מעבר לאתר הצלם</span>
-                           </div>
-                        </button>
+                           {/* Website Link */}
+                           {photographer?.websiteUrl && (
+                              <button
+                                 onClick={() => handleSocialClick(photographer.websiteUrl!, 'website')}
+                                 className="group relative overflow-hidden bg-white text-[#4A3B2C] py-4 px-8 rounded-full font-bold shadow-md border border-[#E8DFD3] hover:border-[#C4A882] hover:bg-gray-50 transition-all transform hover:-translate-y-0.5 active:translate-y-0"
+                              >
+                                 <div className="flex items-center justify-center gap-3 relative z-10">
+                                    <Globe className="w-4 h-4 text-[#C4A882] group-hover:scale-110 transition-transform" />
+                                    <span>מעבר לאתר הצלם</span>
+                                 </div>
+                              </button>
+                           )}
+                        </>
                      )}
-
 
                   </div>
                </div>
@@ -1540,6 +1576,7 @@ END:VCARD`;
                onClose={() => setIsLeadModalOpen(false)}
                slug={id}
                photographerName={photographer?.name}
+               isIndividual={event?.createdAs === 'individual'}
             />
          )}
 

@@ -884,6 +884,7 @@ const EventManagePage: React.FC = () => {
                                             src={photo.thumbnailUrl || photo.url}
                                             alt={photo.title}
                                             className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
+                                            onError={(e) => { (e.target as HTMLImageElement).src = photo.url; }}
                                         />
 
                                         {/* Overlay Actions */}

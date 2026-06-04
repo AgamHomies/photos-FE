@@ -33,6 +33,8 @@ import EventShareModal from './components/EventShareModal';
 
 const DashboardPage: React.FC = () => {
     const navigate = useNavigate();
+    const activeMode = (localStorage.getItem('active_mode') ?? 'photographer') as 'photographer' | 'individual';
+    const isIndividual = activeMode === 'individual';
     const DEFAULT_STATS: DashboardStats = {
         totalDownloads: 0, totalPageVisits: 0, phoneSaves: 0, activeEvents: 0, expiredEvents: 0,
         totalEvents: 0, totalImages: 0, totalSocialTraffic: 0, trafficFacebook: 0,
@@ -218,23 +220,22 @@ const DashboardPage: React.FC = () => {
             // I missed that. For now let's implement search and pagination. Status filtering might be broken if I don't send it.
             // Let's assume shows all status for now or I'll fix it in next step.
 
-            const response = await BackendService.getEvents(page, itemsPerPage, searchTerm, sortField, sortDirection, showActiveOnly ? 'ready' : undefined);
+            const response = await BackendService.getEvents(page, itemsPerPage, searchTerm, sortField, sortDirection, showActiveOnly ? 'ready' : undefined, activeMode);
             setEvents(response.items);
             setTotalPages(Math.ceil(response.total / itemsPerPage));
             setTotalEvents(response.total);
 
-            // Fetch stats only once? Or every time? keeping it here is fine.
-            const statsData = await BackendService.getDashboardStats();
-            setStats(statsData);
+            if (!isIndividual) {
+                const statsData = await BackendService.getDashboardStats();
+                setStats(statsData);
 
-            // Fetch global leads
-            const leadsData = await BackendService.getAllLeads();
-            setGlobalLeads(leadsData);
-            setTotalLeadsCount(leadsData.length); // frozen total — not affected by table deletes
-            // Build frozen per-event count map
-            const perEvent: Record<string, number> = {};
-            leadsData.forEach((l: any) => { perEvent[l.event_id] = (perEvent[l.event_id] || 0) + 1; });
-            setFrozenLeadsPerEvent(perEvent);
+                const leadsData = await BackendService.getAllLeads();
+                setGlobalLeads(leadsData);
+                setTotalLeadsCount(leadsData.length);
+                const perEvent: Record<string, number> = {};
+                leadsData.forEach((l: any) => { perEvent[l.event_id] = (perEvent[l.event_id] || 0) + 1; });
+                setFrozenLeadsPerEvent(perEvent);
+            }
         } catch (error) {
             console.error('Failed to load dashboard data:', error);
             if (error instanceof Error && error.message.includes('Not authenticated')) {
@@ -398,7 +399,7 @@ const DashboardPage: React.FC = () => {
                 </div>
 
                 {/* Stats Grid - 7 Columns on Desktop */}
-                {true && (
+                {!isIndividual && (
 
                     <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-6" style={{ "zoom": "0.9" }}>
                         {/* 1. אירועים */}
@@ -954,7 +955,7 @@ const DashboardPage: React.FC = () => {
                 </div>
 
                 {/* Global Leads Section */}
-                <div className="mt-8 bg-white rounded-3xl shadow-sm border border-slate-100 overflow-hidden">
+                {!isIndividual && <div className="mt-8 bg-white rounded-3xl shadow-sm border border-slate-100 overflow-hidden">
                     <div className="p-8 border-b border-slate-100 flex items-center justify-between">
                         <h2 className="text-xl font-bold text-slate-900 flex items-center gap-2">
                             <div className="bg-amber-100 p-2 rounded-lg text-amber-600">
@@ -1019,7 +1020,7 @@ const DashboardPage: React.FC = () => {
                             </tbody>
                         </table>
                     </div>
-                </div>
+                </div>}
 
                 {/* Delete Confirmation Modal */}
                 {

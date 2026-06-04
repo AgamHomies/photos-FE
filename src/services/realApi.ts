@@ -231,20 +231,13 @@ export const RealProfileAPI = {
 // Events API
 // ============================================
 export const RealEventAPI = {
-    getEvents: async (page: number = 1, limit: number = 20, search?: string, sortBy?: string, sortDir?: string, status?: string): Promise<{ items: Event[], total: number }> => {
+    getEvents: async (page: number = 1, limit: number = 20, search?: string, sortBy?: string, sortDir?: string, status?: string, createdAs?: string): Promise<{ items: Event[], total: number }> => {
         let url = `/events/?page=${page}&limit=${limit}`;
-        if (search) {
-            url += `&search=${encodeURIComponent(search)}`;
-        }
-        if (sortBy) {
-            url += `&sort_by=${encodeURIComponent(sortBy)}`;
-        }
-        if (sortDir) {
-            url += `&sort_dir=${encodeURIComponent(sortDir)}`;
-        }
-        if (status) {
-            url += `&status=${encodeURIComponent(status)}`;
-        }
+        if (search) url += `&search=${encodeURIComponent(search)}`;
+        if (sortBy) url += `&sort_by=${encodeURIComponent(sortBy)}`;
+        if (sortDir) url += `&sort_dir=${encodeURIComponent(sortDir)}`;
+        if (status) url += `&status=${encodeURIComponent(status)}`;
+        if (createdAs) url += `&created_as=${encodeURIComponent(createdAs)}`;
         const data = await apiRequest(url);
 
         const items = data.items.map((event: any) => ({
@@ -303,6 +296,7 @@ export const RealEventAPI = {
                 initialProcessingDone: data.initial_processing_done,
                 createdAt: data.created_at,
                 packageType: data.package_type || 'basic',
+                createdAs: data.created_as || 'photographer',
             };
         } catch (error) {
             console.error('Failed to get event:', error);
@@ -318,6 +312,7 @@ export const RealEventAPI = {
             location: eventData.location || '',
             expiry_date: eventData.expiryDate,
             package_type: eventData.packageType || 'basic',
+            created_as: (eventData as any).createdAs || 'photographer',
         };
 
         const data = await apiRequest('/events/', {
@@ -622,7 +617,8 @@ export const RealGalleryAPI = {
                 status: mapEventStatus(eventData.status),
                 slug: eventData.guest_slug,
                 coupleSlug: eventData.couple_slug,
-                mode: data.mode, // Map mode
+                mode: data.mode,
+                createdAs: eventData.created_as || 'photographer',
             };
         } catch (error) {
             console.error('Failed to get event by slug:', error);

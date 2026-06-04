@@ -7,13 +7,15 @@ export interface LeadCaptureModalProps {
     onClose: () => void;
     slug: string;
     photographerName?: string;
+    isIndividual?: boolean;
 }
 
 export const LeadCaptureModal: React.FC<LeadCaptureModalProps> = ({
     isOpen,
     onClose,
     slug,
-    photographerName
+    photographerName,
+    isIndividual = false,
 }) => {
     const [name, setName] = useState('');
     const [phone, setPhone] = useState('');
@@ -76,7 +78,9 @@ export const LeadCaptureModal: React.FC<LeadCaptureModalProps> = ({
         <div className="fixed inset-0 z-[100] flex items-center justify-center bg-[#4A3B2C]/50 p-4 animate-in fade-in duration-200 backdrop-blur-sm">
             <div className="bg-[#FAF9F6] rounded-xl w-full max-w-sm overflow-hidden shadow-2xl animate-in zoom-in-95 duration-200 border border-[#D4C4B0]/50" dir="rtl">
                 <div className="flex items-center justify-between p-5 border-b border-[#D4C4B0]/30 bg-white">
-                    <h3 className="text-xl font-bold text-[#4A3B2C]">יש לכם אירוע בקרוב?</h3>
+                    <h3 className="text-xl font-bold text-[#4A3B2C]">
+                        {isIndividual ? 'גם לאירוע שלכם מגיעה גלריה חכמה?' : 'יש לכם אירוע בקרוב?'}
+                    </h3>
                     <button
                         onClick={onClose}
                         className="p-2 -mr-2 text-[#8B7355] hover:text-[#4A3B2C] rounded-full hover:bg-[#EEE9E1] transition-colors"
@@ -97,9 +101,11 @@ export const LeadCaptureModal: React.FC<LeadCaptureModalProps> = ({
                     ) : (
                         <form onSubmit={handleSubmit} className="space-y-4">
                             <p className="text-[#8B7355] text-sm mb-4">
-                                {photographerName
-                                    ? `אנחנו ב${photographerName} נשמח לארח אתכם גם באירוע שלכם. השאירו פרטים ונחזור אליכם בהקדם.`
-                                    : `נשמח להיות חלק גם מהאירוע המיוחד שלכם. השאירו פרטים ונחזור אליכם בהקדם.`
+                                {isIndividual
+                                    ? 'צרו גלריה משלכם ב-Click2Pic — תוך דקות, עם זיהוי פנים'
+                                    : photographerName
+                                        ? `אנחנו ב${photographerName} נשמח לארח אתכם גם באירוע שלכם. השאירו פרטים ונחזור אליכם בהקדם.`
+                                        : `נשמח להיות חלק גם מהאירוע המיוחד שלכם. השאירו פרטים ונחזור אליכם בהקדם.`
                                 }
                             </p>
 

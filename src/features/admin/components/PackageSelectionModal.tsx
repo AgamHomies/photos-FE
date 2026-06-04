@@ -12,12 +12,11 @@ const PackageSelectionModal: React.FC<PackageSelectionModalProps> = ({ isOpen, o
     const [loading, setLoading] = useState<string | null>(null);
     const [selectedPackage, setSelectedPackage] = useState<'basic' | 'premium' | 'gold' | null>(null);
 
-    // Package photo limits
-    const PACKAGE_LIMITS = {
-        basic: 1200,
-        premium: 10000,
-        gold: 30000
-    };
+    const isIndividual = (localStorage.getItem('active_mode') ?? 'photographer') === 'individual';
+
+    const PRICES = isIndividual
+        ? { basic: '50', premium: '70', gold: '100' }
+        : { basic: '199', premium: '279', gold: '529' };
 
     // Prevent body scroll when modal is open
     useEffect(() => {
@@ -90,7 +89,7 @@ const PackageSelectionModal: React.FC<PackageSelectionModalProps> = ({ isOpen, o
                             </div>
 
                             <h3 className="text-lg font-bold text-slate-900 mb-0.5">חבילת בסיס</h3>
-                            <div className="text-2xl font-black text-slate-900 mb-1">₪199</div>
+                            <div className="text-2xl font-black text-slate-900 mb-1">₪{PRICES.basic}</div>
                             <p className="text-slate-500 text-xs font-medium mb-3 text-center">אירועים קטנים וימי הולדת</p>
 
                             <div className="w-full space-y-1.5 text-sm text-slate-600 mb-4 flex-1">
@@ -130,7 +129,7 @@ const PackageSelectionModal: React.FC<PackageSelectionModalProps> = ({ isOpen, o
                             </div>
 
                             <h3 className="text-xl font-bold text-slate-900 mb-0.5">חבילת פרימיום</h3>
-                            <div className="text-3xl font-black text-slate-900 mb-1">₪279</div>
+                            <div className="text-3xl font-black text-slate-900 mb-1">₪{PRICES.premium}</div>
                             <p className="text-cyan-600 text-xs font-medium mb-3 text-center bg-cyan-50 px-3 py-0.5 rounded-full">הבחירה המשתלמת ביותר</p>
 
                             <div className="w-full space-y-2 text-sm text-slate-700 mb-5 flex-1 px-1">
@@ -168,7 +167,7 @@ const PackageSelectionModal: React.FC<PackageSelectionModalProps> = ({ isOpen, o
                             </div>
 
                             <h3 className="text-lg font-bold text-slate-900 mb-0.5">חבילת זהב</h3>
-                            <div className="text-2xl font-black text-slate-900 mb-1">₪529</div>
+                            <div className="text-2xl font-black text-slate-900 mb-1">₪{PRICES.gold}</div>
                             <p className="text-slate-500 text-xs font-medium mb-3 text-center">אירועי ענק ופסטיבלים</p>
 
                             <div className="w-full space-y-1.5 text-sm text-slate-600 mb-4 flex-1">

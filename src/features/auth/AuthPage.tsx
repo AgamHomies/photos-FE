@@ -96,6 +96,8 @@ const AuthPage: React.FC = () => {
 
     const handleGoogleSignIn = async () => {
         setLoading(true);
+        // Persist chosen type so AuthCallbackPage can read it after OAuth redirect
+        if (userType) sessionStorage.setItem('pending_user_type', userType);
         try {
             const { error } = await supabaseAuthService.signInWithGoogle();
             if (error) triggerToast('שגיאה בהתחברות עם Google: ' + error.message, 'error');
@@ -189,6 +191,7 @@ const AuthPage: React.FC = () => {
                 // Sync user with backend database
                 if (sessionData) {
                     try {
+                        if (userType) localStorage.setItem('active_mode', userType);
                         const syncResponse = await BackendService.syncUser(userType ?? undefined);
                         console.log('Sync response:', syncResponse);
 

@@ -80,6 +80,7 @@ export interface Event {
   };
 
   mode?: 'guest' | 'full';
+  createdAs?: string;
 
   // Publishing & Processing
   isPublished?: boolean;

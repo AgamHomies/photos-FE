@@ -300,7 +300,8 @@ const CreateEventPage: React.FC = () => {
                 location: formData.location,
                 coverImage: '',
                 expiryDate: new Date(new Date().setFullYear(new Date().getFullYear() + 1)).toISOString().split('T')[0],
-                packageType: packageType
+                packageType: packageType,
+                createdAs: (localStorage.getItem('active_mode') ?? 'photographer') as 'photographer' | 'individual',
             };
 
             console.log('Creating event with package:', packageType);
