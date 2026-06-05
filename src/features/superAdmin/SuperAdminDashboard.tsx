@@ -653,7 +653,7 @@ const SuperAdminDashboard: React.FC = () => {
                                                         <td className="px-4 py-3 font-medium text-gray-900 max-w-[160px] truncate">{event.name}</td>
                                                         <td className="px-4 py-3 text-gray-600 max-w-[140px] truncate">
                                                             <div className="flex items-center gap-1">
-                                                                {event.user_type === 'individual'
+                                                                {event.created_as === 'individual'
                                                                     ? <PartyPopper className="w-3 h-3 text-purple-500 shrink-0" />
                                                                     : <Camera className="w-3 h-3 text-blue-500 shrink-0" />}
                                                                 <span className="truncate">{event.photographer_name || '—'}</span>
@@ -770,7 +770,7 @@ const SuperAdminDashboard: React.FC = () => {
                                                     <td className="px-4 py-3 text-gray-600 max-w-[160px] truncate">{lead.event_name}</td>
                                                     <td className="px-4 py-3 text-gray-600 max-w-[140px] truncate">
                                                         <div className="flex items-center gap-1">
-                                                            {lead.user_type === 'individual'
+                                                            {lead.event_created_as === 'individual'
                                                                 ? <PartyPopper className="w-3 h-3 text-purple-500 shrink-0" />
                                                                 : <Camera className="w-3 h-3 text-blue-500 shrink-0" />}
                                                             <span className="truncate">{lead.photographer_name || '—'}</span>

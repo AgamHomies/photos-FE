@@ -132,7 +132,7 @@ export interface AllEventItem {
     is_expired: boolean;
     photographer_id: number | null;
     photographer_name: string | null;
-    user_type: string | null;
+    created_as: string;
     leads_count: number;
     status: string;
     is_uploading: boolean;
@@ -145,7 +145,7 @@ export interface LeadItem {
     event_slug: string;
     photographer_id: number | null;
     photographer_name: string | null;
-    user_type: string | null;
+    event_created_as: string;
     name: string;
     phone: string;
     is_contacted: boolean;
