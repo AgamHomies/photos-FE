@@ -67,9 +67,9 @@ export const UploadProvider: React.FC<{ children: ReactNode }> = ({ children }) 
 
             // B. Upload Gallery Files
             if (files.length > 0) {
-                const BATCH_SIZE = 250;
-                const CONCURRENCY_LIMIT = 20;
-                const COMPRESS_CONCURRENCY = 6; // canvas decode/encode is memory-heavy
+                const BATCH_SIZE = 50;
+                const CONCURRENCY_LIMIT = 8;
+                const COMPRESS_CONCURRENCY = 4; // canvas decode/encode is memory-heavy
                 const totalFiles = files.length;
 
                 // Each photo counts as two units of work: compress, then upload.
@@ -84,17 +84,25 @@ export const UploadProvider: React.FC<{ children: ReactNode }> = ({ children }) 
                 };
 
                 // Helper for concurrency
+                const withRetry = async <T,>(fn: () => Promise<T>, retries = 3): Promise<T> => {
+                    for (let attempt = 0; attempt < retries; attempt++) {
+                        try { return await fn(); } catch (e) {
+                            if (attempt === retries - 1) throw e;
+                            await new Promise(r => setTimeout(r, 500 * (attempt + 1)));
+                        }
+                    }
+                    throw new Error('unreachable');
+                };
+
                 const runWithConcurrency = async (tasks: (() => Promise<any>)[], limit: number) => {
-                    const results = [];
+                    const results: Promise<any>[] = [];
                     const executing: Promise<any>[] = [];
                     for (const task of tasks) {
                         const p = Promise.resolve().then(() => task());
                         results.push(p);
                         const e: Promise<any> = p.then(() => executing.splice(executing.indexOf(e), 1));
                         executing.push(e);
-                        if (executing.length >= limit) {
-                            await Promise.race(executing);
-                        }
+                        if (executing.length >= limit) await Promise.race(executing);
                     }
                     return Promise.all(results);
                 };
@@ -123,7 +131,7 @@ export const UploadProvider: React.FC<{ children: ReactNode }> = ({ children }) 
                     // 3. Upload to R2
                     if (uploadStartTime === 0) uploadStartTime = Date.now();
                     const uploadTasks = urls.map((urlInfo: any, index: number) => async () => {
-                        await BackendService.uploadToS3(urlInfo.uploadUrl, compressedChunk[index]);
+                        await withRetry(() => BackendService.uploadToS3(urlInfo.uploadUrl, compressedChunk[index]));
                         uploadedCount++;
                         bumpProgress();
 
