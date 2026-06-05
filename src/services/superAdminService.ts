@@ -70,6 +70,7 @@ export interface PhotographerStats {
     total_social_traffic: number;
     total_likes: number;
     active_events: number;
+    user_type?: string;  // 'photographer' or 'individual'
 
     // Package Stats
     stats_basic?: PhotographerPackageStats;
@@ -131,6 +132,24 @@ export interface AllEventItem {
     is_expired: boolean;
     photographer_id: number | null;
     photographer_name: string | null;
+    user_type: string | null;
+    leads_count: number;
+    status: string;
+    is_uploading: boolean;
+}
+
+export interface LeadItem {
+    id: number;
+    event_id: number;
+    event_name: string;
+    event_slug: string;
+    photographer_id: number | null;
+    photographer_name: string | null;
+    user_type: string | null;
+    name: string;
+    phone: string;
+    is_contacted: boolean;
+    created_at: string;
 }
 
 class SuperAdminService {
@@ -308,6 +327,13 @@ class SuperAdminService {
     /**
      * Export all photographers to CSV
      */
+    async getAllLeads(): Promise<LeadItem[]> {
+        const response = await fetch(`${API_BASE_URL}/super-admin/leads`, {
+            headers: this.getAuthHeader()
+        });
+        return this.handleResponse<LeadItem[]>(response);
+    }
+
     async exportPhotographersCsv(): Promise<void> {
         const response = await fetch(`${API_BASE_URL}/super-admin/export/photographers/csv`, {
             headers: this.getAuthHeader()

@@ -16,33 +16,40 @@ import {
     Trash2,
     AlertCircle,
     CheckCircle,
-    Clock
+    Clock,
+    Loader2,
+    PartyPopper,
+    UserCheck
 } from 'lucide-react';
-import SuperAdminService, { PlatformStats, PhotographerStats, AllEventItem } from '../../services/superAdminService';
+import SuperAdminService, { PlatformStats, PhotographerStats, AllEventItem, LeadItem } from '../../services/superAdminService';
 
 const SuperAdminDashboard: React.FC = () => {
     const navigate = useNavigate();
-    const [activeTab, setActiveTab] = useState<'photographers' | 'events'>('photographers');
+    const [activeTab, setActiveTab] = useState<'photographers' | 'events' | 'leads'>('photographers');
     const [stats, setStats] = useState<PlatformStats | null>(null);
     const [photographers, setPhotographers] = useState<PhotographerStats[]>([]);
     const [searchQuery, setSearchQuery] = useState('');
+    const [userTypeFilter, setUserTypeFilter] = useState<'all' | 'photographer' | 'individual'>('all');
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState('');
 
     const [events, setEvents] = useState<AllEventItem[]>([]);
     const [eventsLoading, setEventsLoading] = useState(false);
-    const [eventsFilter, setEventsFilter] = useState<'all' | 'expired' | 'active'>('all');
+    const [eventsFilter, setEventsFilter] = useState<'all' | 'expired' | 'active' | 'uploading'>('all');
     const [deletingId, setDeletingId] = useState<number | null>(null);
     const [deletingExpired, setDeletingExpired] = useState(false);
+
+    const [leads, setLeads] = useState<LeadItem[]>([]);
+    const [leadsLoading, setLeadsLoading] = useState(false);
+    const [leadsFilter, setLeadsFilter] = useState<'all' | 'pending' | 'contacted'>('all');
 
     useEffect(() => {
         loadData();
     }, []);
 
     useEffect(() => {
-        if (activeTab === 'events' && events.length === 0) {
-            loadEvents();
-        }
+        if (activeTab === 'events' && events.length === 0) loadEvents();
+        if (activeTab === 'leads' && leads.length === 0) loadLeads();
     }, [activeTab]);
 
     const loadData = async () => {
@@ -72,6 +79,18 @@ const SuperAdminDashboard: React.FC = () => {
             setError(err.message || 'Failed to load events');
         } finally {
             setEventsLoading(false);
+        }
+    };
+
+    const loadLeads = async () => {
+        try {
+            setLeadsLoading(true);
+            const data = await SuperAdminService.getAllLeads();
+            setLeads(data);
+        } catch (err: any) {
+            setError(err.message || 'Failed to load leads');
+        } finally {
+            setLeadsLoading(false);
         }
     };
 
@@ -117,10 +136,9 @@ const SuperAdminDashboard: React.FC = () => {
 
     const filteredPhotographers = photographers.filter((p) => {
         const searchLower = searchQuery.toLowerCase();
-        return (
-            p.email.toLowerCase().includes(searchLower) ||
-            (p.name && p.name.toLowerCase().includes(searchLower))
-        );
+        const matchesSearch = p.email.toLowerCase().includes(searchLower) || (p.name && p.name.toLowerCase().includes(searchLower));
+        const matchesType = userTypeFilter === 'all' || (p.user_type || 'photographer') === userTypeFilter;
+        return matchesSearch && matchesType;
     });
 
     const handleExportCsv = async () => {
@@ -170,18 +188,19 @@ const SuperAdminDashboard: React.FC = () => {
 
                 {/* Tabs */}
                 <div className="flex gap-2 mb-6 border-b border-gray-200">
-                    <button
-                        onClick={() => setActiveTab('photographers')}
-                        className={`px-5 py-2.5 font-semibold rounded-t-lg transition-colors ${activeTab === 'photographers' ? 'bg-white border border-b-white border-gray-200 -mb-px text-blue-600' : 'text-gray-500 hover:text-gray-800'}`}
-                    >
-                        <span className="flex items-center gap-2"><Users className="w-4 h-4" />צלמים</span>
-                    </button>
-                    <button
-                        onClick={() => setActiveTab('events')}
-                        className={`px-5 py-2.5 font-semibold rounded-t-lg transition-colors ${activeTab === 'events' ? 'bg-white border border-b-white border-gray-200 -mb-px text-blue-600' : 'text-gray-500 hover:text-gray-800'}`}
-                    >
-                        <span className="flex items-center gap-2"><Calendar className="w-4 h-4" />אירועים</span>
-                    </button>
+                    {([
+                        { key: 'photographers', label: 'משתמשים', icon: Users },
+                        { key: 'events', label: 'אירועים', icon: Calendar },
+                        { key: 'leads', label: 'לידים', icon: Phone },
+                    ] as const).map(({ key, label, icon: Icon }) => (
+                        <button
+                            key={key}
+                            onClick={() => setActiveTab(key)}
+                            className={`px-5 py-2.5 font-semibold rounded-t-lg transition-colors ${activeTab === key ? 'bg-white border border-b-white border-gray-200 -mb-px text-blue-600' : 'text-gray-500 hover:text-gray-800'}`}
+                        >
+                            <span className="flex items-center gap-2"><Icon className="w-4 h-4" />{label}</span>
+                        </button>
+                    ))}
                 </div>
 
                 {activeTab === 'photographers' && <>
@@ -440,7 +459,15 @@ const SuperAdminDashboard: React.FC = () => {
                                 <span>ייצוא ל-CSV</span>
                             </button>
                         </div>
-                        <div className="flex items-center gap-2">
+                        <div className="flex items-center gap-2 flex-wrap">
+                            <div className="flex gap-1.5">
+                                {([['all','הכל'],['photographer','צלמים'],['individual','פרטיים']] as const).map(([val, label]) => (
+                                    <button key={val} onClick={() => setUserTypeFilter(val)}
+                                        className={`px-3 py-1.5 rounded-full text-xs font-semibold transition-colors ${userTypeFilter === val ? 'bg-gray-900 text-white' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'}`}>
+                                        {label} ({val === 'all' ? photographers.length : photographers.filter(p => (p.user_type || 'photographer') === val).length})
+                                    </button>
+                                ))}
+                            </div>
                             <div className="relative">
                                 <Search className="absolute right-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-900/40" />
                                 <input
@@ -464,7 +491,13 @@ const SuperAdminDashboard: React.FC = () => {
                             >
                                 <div className="flex items-start justify-between mb-3">
                                     <div className="flex-1">
-                                        <h3 className="font-bold text-gray-900 mb-1">{photographer.email}</h3>
+                                        <div className="flex items-center gap-2 mb-1">
+                                            <h3 className="font-bold text-gray-900">{photographer.email}</h3>
+                                            {photographer.user_type === 'individual'
+                                                ? <span className="flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold bg-purple-100 text-purple-700"><PartyPopper className="w-3 h-3" />פרטי</span>
+                                                : <span className="flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold bg-blue-100 text-blue-700"><Camera className="w-3 h-3" />צלם</span>
+                                            }
+                                        </div>
                                         {photographer.name && (
                                             <p className="text-sm text-gray-600 mb-1">{photographer.name}</p>
                                         )}
@@ -551,19 +584,19 @@ const SuperAdminDashboard: React.FC = () => {
                     <div>
                         {/* Toolbar */}
                         <div className="flex flex-wrap items-center justify-between gap-3 mb-4">
-                            <div className="flex gap-2">
-                                {(['all', 'active', 'expired'] as const).map(f => (
+                            <div className="flex gap-2 flex-wrap">
+                                {([
+                                    ['all', 'הכל', events.length],
+                                    ['active', 'פעילים', events.filter(e => !e.is_expired && !e.is_uploading).length],
+                                    ['uploading', 'בהעלאה', events.filter(e => e.is_uploading).length],
+                                    ['expired', 'פגי תוקף', events.filter(e => e.is_expired).length],
+                                ] as const).map(([f, label, count]) => (
                                     <button
                                         key={f}
-                                        onClick={() => setEventsFilter(f)}
+                                        onClick={() => setEventsFilter(f as any)}
                                         className={`px-4 py-1.5 rounded-full text-sm font-medium transition-colors ${eventsFilter === f ? 'bg-gray-900 text-white' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'}`}
                                     >
-                                        {f === 'all' ? 'הכל' : f === 'active' ? 'פעילים' : 'פגי תוקף'}
-                                        {f !== 'all' && (
-                                            <span className="mr-1 opacity-70">
-                                                ({events.filter(e => f === 'expired' ? e.is_expired : !e.is_expired).length})
-                                            </span>
-                                        )}
+                                        {label} <span className="opacity-70 mr-1">({count})</span>
                                     </button>
                                 ))}
                             </div>
@@ -599,12 +632,18 @@ const SuperAdminDashboard: React.FC = () => {
                                             <th className="px-4 py-3 text-right font-semibold text-gray-600">נוצר</th>
                                             <th className="px-4 py-3 text-right font-semibold text-gray-600">תפוגה</th>
                                             <th className="px-4 py-3 text-right font-semibold text-gray-600">סטטוס</th>
+                                            <th className="px-4 py-3 text-right font-semibold text-gray-600">לידים</th>
                                             <th className="px-4 py-3"></th>
                                         </tr>
                                     </thead>
                                     <tbody>
                                         {events
-                                            .filter(e => eventsFilter === 'all' ? true : eventsFilter === 'expired' ? e.is_expired : !e.is_expired)
+                                            .filter(e => {
+                                                if (eventsFilter === 'all') return true;
+                                                if (eventsFilter === 'uploading') return e.is_uploading;
+                                                if (eventsFilter === 'expired') return e.is_expired;
+                                                return !e.is_expired && !e.is_uploading;
+                                            })
                                             .map(event => {
                                                 const status = getExpiryStatus(event);
                                                 const daysLeft = Math.ceil((new Date(event.expiry_date).getTime() - Date.now()) / 86400000);
@@ -612,7 +651,14 @@ const SuperAdminDashboard: React.FC = () => {
                                                     <tr key={event.id} className={`border-b border-gray-100 hover:bg-gray-50 transition-colors ${event.is_expired ? 'opacity-60' : ''}`}>
                                                         <td className="px-4 py-3 font-mono text-gray-500">#{event.id}</td>
                                                         <td className="px-4 py-3 font-medium text-gray-900 max-w-[160px] truncate">{event.name}</td>
-                                                        <td className="px-4 py-3 text-gray-600 max-w-[140px] truncate">{event.photographer_name || '—'}</td>
+                                                        <td className="px-4 py-3 text-gray-600 max-w-[140px] truncate">
+                                                            <div className="flex items-center gap-1">
+                                                                {event.user_type === 'individual'
+                                                                    ? <PartyPopper className="w-3 h-3 text-purple-500 shrink-0" />
+                                                                    : <Camera className="w-3 h-3 text-blue-500 shrink-0" />}
+                                                                <span className="truncate">{event.photographer_name || '—'}</span>
+                                                            </div>
+                                                        </td>
                                                         <td className="px-4 py-3">
                                                             <span className={`px-2 py-0.5 rounded-full text-xs font-bold ${event.package_type === 'gold' ? 'bg-amber-100 text-amber-700' : event.package_type === 'premium' ? 'bg-cyan-100 text-cyan-700' : 'bg-slate-100 text-slate-600'}`}>
                                                                 {event.package_type === 'gold' ? 'זהב' : event.package_type === 'premium' ? 'פרימיום' : 'בסיס'}
@@ -625,20 +671,27 @@ const SuperAdminDashboard: React.FC = () => {
                                                             {new Date(event.expiry_date).toLocaleDateString('he-IL')}
                                                         </td>
                                                         <td className="px-4 py-3">
-                                                            {status === 'expired' && (
+                                                            {event.is_uploading ? (
+                                                                <span className="flex items-center gap-1 text-blue-600 text-xs font-bold">
+                                                                    <Loader2 className="w-3.5 h-3.5 animate-spin" />בהעלאה
+                                                                </span>
+                                                            ) : status === 'expired' ? (
                                                                 <span className="flex items-center gap-1 text-red-600 text-xs font-bold">
                                                                     <AlertCircle className="w-3.5 h-3.5" />פג תוקף
                                                                 </span>
-                                                            )}
-                                                            {status === 'soon' && (
+                                                            ) : status === 'soon' ? (
                                                                 <span className="flex items-center gap-1 text-orange-500 text-xs font-bold">
                                                                     <Clock className="w-3.5 h-3.5" />{daysLeft}י׳
                                                                 </span>
-                                                            )}
-                                                            {status === 'active' && (
+                                                            ) : (
                                                                 <span className="flex items-center gap-1 text-green-600 text-xs font-bold">
                                                                     <CheckCircle className="w-3.5 h-3.5" />{daysLeft}י׳
                                                                 </span>
+                                                            )}
+                                                        </td>
+                                                        <td className="px-4 py-3 text-center">
+                                                            {event.leads_count > 0 && (
+                                                                <span className="inline-flex items-center justify-center w-6 h-6 rounded-full bg-orange-100 text-orange-700 text-xs font-bold">{event.leads_count}</span>
                                                             )}
                                                         </td>
                                                         <td className="px-4 py-3">
@@ -656,8 +709,85 @@ const SuperAdminDashboard: React.FC = () => {
                                             })}
                                     </tbody>
                                 </table>
-                                {events.filter(e => eventsFilter === 'all' ? true : eventsFilter === 'expired' ? e.is_expired : !e.is_expired).length === 0 && (
+                                {events.filter(e => {
+                                        if (eventsFilter === 'all') return true;
+                                        if (eventsFilter === 'uploading') return e.is_uploading;
+                                        if (eventsFilter === 'expired') return e.is_expired;
+                                        return !e.is_expired && !e.is_uploading;
+                                    }).length === 0 && (
                                     <div className="text-center py-12 text-gray-400">אין אירועים</div>
+                                )}
+                            </div>
+                        )}
+                    </div>
+                )}
+
+                {activeTab === 'leads' && (
+                    <div>
+                        <div className="flex flex-wrap items-center justify-between gap-3 mb-4">
+                            <div className="flex gap-2">
+                                {([['all','הכל'], ['pending','טרם טופלו'], ['contacted','טופלו']] as const).map(([f, label]) => (
+                                    <button key={f} onClick={() => setLeadsFilter(f)}
+                                        className={`px-4 py-1.5 rounded-full text-sm font-medium transition-colors ${leadsFilter === f ? 'bg-gray-900 text-white' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'}`}>
+                                        {label} <span className="opacity-70 mr-1">({
+                                            f === 'all' ? leads.length :
+                                            f === 'pending' ? leads.filter(l => !l.is_contacted).length :
+                                            leads.filter(l => l.is_contacted).length
+                                        })</span>
+                                    </button>
+                                ))}
+                            </div>
+                            <button onClick={loadLeads} className="px-4 py-2 text-sm bg-white border border-gray-200 rounded-xl hover:bg-gray-50 transition-colors">רענן</button>
+                        </div>
+
+                        {leadsLoading ? (
+                            <div className="text-center py-16 text-gray-500">טוען לידים...</div>
+                        ) : (
+                            <div className="bg-white rounded-2xl border border-gray-200 overflow-hidden">
+                                <table className="w-full text-sm">
+                                    <thead className="bg-gray-50 border-b border-gray-200">
+                                        <tr>
+                                            <th className="px-4 py-3 text-right font-semibold text-gray-600">תאריך</th>
+                                            <th className="px-4 py-3 text-right font-semibold text-gray-600">שם</th>
+                                            <th className="px-4 py-3 text-right font-semibold text-gray-600">טלפון</th>
+                                            <th className="px-4 py-3 text-right font-semibold text-gray-600">אירוע</th>
+                                            <th className="px-4 py-3 text-right font-semibold text-gray-600">בעל האירוע</th>
+                                            <th className="px-4 py-3 text-right font-semibold text-gray-600">סטטוס</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {leads
+                                            .filter(l => leadsFilter === 'all' ? true : leadsFilter === 'pending' ? !l.is_contacted : l.is_contacted)
+                                            .map(lead => (
+                                                <tr key={lead.id} className={`border-b border-gray-100 hover:bg-gray-50 transition-colors ${lead.is_contacted ? 'opacity-60' : ''}`}>
+                                                    <td className="px-4 py-3 text-gray-500 whitespace-nowrap text-xs">
+                                                        {new Date(lead.created_at).toLocaleDateString('he-IL')}
+                                                    </td>
+                                                    <td className="px-4 py-3 font-bold text-gray-900">{lead.name}</td>
+                                                    <td className="px-4 py-3">
+                                                        <a href={`tel:${lead.phone}`} className="text-blue-600 hover:underline font-medium" dir="ltr">{lead.phone}</a>
+                                                    </td>
+                                                    <td className="px-4 py-3 text-gray-600 max-w-[160px] truncate">{lead.event_name}</td>
+                                                    <td className="px-4 py-3 text-gray-600 max-w-[140px] truncate">
+                                                        <div className="flex items-center gap-1">
+                                                            {lead.user_type === 'individual'
+                                                                ? <PartyPopper className="w-3 h-3 text-purple-500 shrink-0" />
+                                                                : <Camera className="w-3 h-3 text-blue-500 shrink-0" />}
+                                                            <span className="truncate">{lead.photographer_name || '—'}</span>
+                                                        </div>
+                                                    </td>
+                                                    <td className="px-4 py-3">
+                                                        {lead.is_contacted
+                                                            ? <span className="flex items-center gap-1 text-green-600 text-xs font-bold"><CheckCircle className="w-3.5 h-3.5" />טופל</span>
+                                                            : <span className="flex items-center gap-1 text-orange-500 text-xs font-bold"><Clock className="w-3.5 h-3.5" />ממתין</span>
+                                                        }
+                                                    </td>
+                                                </tr>
+                                            ))}
+                                    </tbody>
+                                </table>
+                                {leads.filter(l => leadsFilter === 'all' ? true : leadsFilter === 'pending' ? !l.is_contacted : l.is_contacted).length === 0 && (
+                                    <div className="text-center py-12 text-gray-400">אין לידים</div>
                                 )}
                             </div>
                         )}
