@@ -121,6 +121,18 @@ export interface EventSummary {
     package_type?: string;
 }
 
+export interface AllEventItem {
+    id: number;
+    name: string;
+    slug: string;
+    package_type: string;
+    created_at: string;
+    expiry_date: string;
+    is_expired: boolean;
+    photographer_id: number | null;
+    photographer_name: string | null;
+}
+
 class SuperAdminService {
     private token: string | null = null;
 
@@ -270,6 +282,29 @@ class SuperAdminService {
 
         return this.handleResponse<EventSummary[]>(response);
     }
+    async getAllEvents(): Promise<AllEventItem[]> {
+        const response = await fetch(`${API_BASE_URL}/super-admin/events`, {
+            headers: this.getAuthHeader()
+        });
+        return this.handleResponse<AllEventItem[]>(response);
+    }
+
+    async deleteEvent(eventId: number): Promise<void> {
+        const response = await fetch(`${API_BASE_URL}/super-admin/events/${eventId}`, {
+            method: 'DELETE',
+            headers: this.getAuthHeader()
+        });
+        await this.handleResponse<any>(response);
+    }
+
+    async deleteExpiredEvents(): Promise<{ deleted_count: number }> {
+        const response = await fetch(`${API_BASE_URL}/super-admin/events/expired`, {
+            method: 'DELETE',
+            headers: this.getAuthHeader()
+        });
+        return this.handleResponse<{ deleted_count: number }>(response);
+    }
+
     /**
      * Export all photographers to CSV
      */

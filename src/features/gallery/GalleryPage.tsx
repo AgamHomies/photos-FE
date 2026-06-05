@@ -145,6 +145,7 @@ const GalleryPage: React.FC<GalleryPageProps> = ({ mode: propMode }) => {
    const [selectedPhotos, setSelectedPhotos] = useState<Set<string>>(new Set());
    const [isLeadModalOpen, setIsLeadModalOpen] = useState(false);
    const [showSplash, setShowSplash] = useState(false);
+   const leadsEnabled = event?.packageType !== 'basic';
    const fabAnchorRef = useRef<HTMLDivElement>(null);
    const [isFabDocked, setIsFabDocked] = useState(false);
    const gridRef = useRef<HTMLDivElement>(null);
@@ -1379,7 +1380,7 @@ END:VCARD`;
                   {/* FAB anchor point — docked full-width button below pagination */}
                   {viewState === 'results' && (
                      <div ref={fabAnchorRef} className="mt-2 mb-6">
-                        {isFabDocked && (
+                        {isFabDocked && leadsEnabled && (
                            <button
                               onClick={() => setIsLeadModalOpen(true)}
                               className="w-full flex items-center justify-center gap-2 py-3 transition-all duration-200 hover:brightness-110 active:scale-[0.99] rounded-xl"
@@ -1541,7 +1542,7 @@ END:VCARD`;
          )}
 
          {/* Upcoming Event Splash - shown once before gallery */}
-         {showSplash && (
+         {showSplash && leadsEnabled && (
             <UpcomingEventSplash
                photographerName={photographer?.name}
                onContinue={() => setShowSplash(false)}
@@ -1553,7 +1554,7 @@ END:VCARD`;
          )}
 
          {/* Floating FAB — icon only bubble, right-aligned with rightmost photo */}
-         {viewState === 'results' && !isFabDocked && (
+         {viewState === 'results' && !isFabDocked && leadsEnabled && (
             <button
                onClick={() => setIsLeadModalOpen(true)}
                className="fixed bottom-6 z-30 w-14 h-14 rounded-full shadow-xl transition-all duration-300 hover:scale-110 active:scale-95 flex items-center justify-center"
@@ -1570,7 +1571,7 @@ END:VCARD`;
          )}
 
          {/* Lead Capture Modal */}
-         {id && (
+         {id && leadsEnabled && (
             <LeadCaptureModal
                isOpen={isLeadModalOpen}
                onClose={() => setIsLeadModalOpen(false)}

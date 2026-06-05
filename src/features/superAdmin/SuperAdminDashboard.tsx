@@ -12,21 +12,38 @@ import {
     TrendingUp,
     Share2,
     Camera,
-    Heart
+    Heart,
+    Trash2,
+    AlertCircle,
+    CheckCircle,
+    Clock
 } from 'lucide-react';
-import SuperAdminService, { PlatformStats, PhotographerStats } from '../../services/superAdminService';
+import SuperAdminService, { PlatformStats, PhotographerStats, AllEventItem } from '../../services/superAdminService';
 
 const SuperAdminDashboard: React.FC = () => {
     const navigate = useNavigate();
+    const [activeTab, setActiveTab] = useState<'photographers' | 'events'>('photographers');
     const [stats, setStats] = useState<PlatformStats | null>(null);
     const [photographers, setPhotographers] = useState<PhotographerStats[]>([]);
     const [searchQuery, setSearchQuery] = useState('');
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState('');
 
+    const [events, setEvents] = useState<AllEventItem[]>([]);
+    const [eventsLoading, setEventsLoading] = useState(false);
+    const [eventsFilter, setEventsFilter] = useState<'all' | 'expired' | 'active'>('all');
+    const [deletingId, setDeletingId] = useState<number | null>(null);
+    const [deletingExpired, setDeletingExpired] = useState(false);
+
     useEffect(() => {
         loadData();
     }, []);
+
+    useEffect(() => {
+        if (activeTab === 'events' && events.length === 0) {
+            loadEvents();
+        }
+    }, [activeTab]);
 
     const loadData = async () => {
         try {
@@ -45,6 +62,53 @@ const SuperAdminDashboard: React.FC = () => {
     };
 
 
+
+    const loadEvents = async () => {
+        try {
+            setEventsLoading(true);
+            const data = await SuperAdminService.getAllEvents();
+            setEvents(data);
+        } catch (err: any) {
+            setError(err.message || 'Failed to load events');
+        } finally {
+            setEventsLoading(false);
+        }
+    };
+
+    const handleDeleteEvent = async (eventId: number) => {
+        if (!window.confirm(`למחוק אירוע #${eventId}?`)) return;
+        setDeletingId(eventId);
+        try {
+            await SuperAdminService.deleteEvent(eventId);
+            setEvents(prev => prev.filter(e => e.id !== eventId));
+        } catch (err: any) {
+            alert('שגיאה במחיקה: ' + err.message);
+        } finally {
+            setDeletingId(null);
+        }
+    };
+
+    const handleDeleteExpired = async () => {
+        const expiredCount = events.filter(e => e.is_expired).length;
+        if (!window.confirm(`למחוק את כל ${expiredCount} האירועים הפגי תוקף?`)) return;
+        setDeletingExpired(true);
+        try {
+            const result = await SuperAdminService.deleteExpiredEvents();
+            setEvents(prev => prev.filter(e => !e.is_expired));
+            alert(`נמחקו ${result.deleted_count} אירועים`);
+        } catch (err: any) {
+            alert('שגיאה במחיקה: ' + err.message);
+        } finally {
+            setDeletingExpired(false);
+        }
+    };
+
+    const getExpiryStatus = (event: AllEventItem) => {
+        if (event.is_expired) return 'expired';
+        const daysLeft = Math.ceil((new Date(event.expiry_date).getTime() - Date.now()) / 86400000);
+        if (daysLeft <= 7) return 'soon';
+        return 'active';
+    };
 
     const handleLogout = async () => {
         await SuperAdminService.logout();
@@ -103,6 +167,24 @@ const SuperAdminDashboard: React.FC = () => {
                         {error}
                     </div>
                 )}
+
+                {/* Tabs */}
+                <div className="flex gap-2 mb-6 border-b border-gray-200">
+                    <button
+                        onClick={() => setActiveTab('photographers')}
+                        className={`px-5 py-2.5 font-semibold rounded-t-lg transition-colors ${activeTab === 'photographers' ? 'bg-white border border-b-white border-gray-200 -mb-px text-blue-600' : 'text-gray-500 hover:text-gray-800'}`}
+                    >
+                        <span className="flex items-center gap-2"><Users className="w-4 h-4" />צלמים</span>
+                    </button>
+                    <button
+                        onClick={() => setActiveTab('events')}
+                        className={`px-5 py-2.5 font-semibold rounded-t-lg transition-colors ${activeTab === 'events' ? 'bg-white border border-b-white border-gray-200 -mb-px text-blue-600' : 'text-gray-500 hover:text-gray-800'}`}
+                    >
+                        <span className="flex items-center gap-2"><Calendar className="w-4 h-4" />אירועים</span>
+                    </button>
+                </div>
+
+                {activeTab === 'photographers' && <>
 
                 {/* Statistics Cards */}
                 {stats && (
@@ -462,6 +544,126 @@ const SuperAdminDashboard: React.FC = () => {
                         </div>
                     )}
                 </div>
+
+                </>}
+
+                {activeTab === 'events' && (
+                    <div>
+                        {/* Toolbar */}
+                        <div className="flex flex-wrap items-center justify-between gap-3 mb-4">
+                            <div className="flex gap-2">
+                                {(['all', 'active', 'expired'] as const).map(f => (
+                                    <button
+                                        key={f}
+                                        onClick={() => setEventsFilter(f)}
+                                        className={`px-4 py-1.5 rounded-full text-sm font-medium transition-colors ${eventsFilter === f ? 'bg-gray-900 text-white' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'}`}
+                                    >
+                                        {f === 'all' ? 'הכל' : f === 'active' ? 'פעילים' : 'פגי תוקף'}
+                                        {f !== 'all' && (
+                                            <span className="mr-1 opacity-70">
+                                                ({events.filter(e => f === 'expired' ? e.is_expired : !e.is_expired).length})
+                                            </span>
+                                        )}
+                                    </button>
+                                ))}
+                            </div>
+                            <div className="flex gap-2">
+                                <button
+                                    onClick={loadEvents}
+                                    className="px-4 py-2 text-sm bg-white border border-gray-200 rounded-xl hover:bg-gray-50 transition-colors"
+                                >
+                                    רענן
+                                </button>
+                                <button
+                                    onClick={handleDeleteExpired}
+                                    disabled={deletingExpired || events.filter(e => e.is_expired).length === 0}
+                                    className="flex items-center gap-2 px-4 py-2 text-sm bg-red-50 text-red-600 border border-red-200 rounded-xl hover:bg-red-100 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+                                >
+                                    <Trash2 className="w-4 h-4" />
+                                    מחק כל פגי התוקף ({events.filter(e => e.is_expired).length})
+                                </button>
+                            </div>
+                        </div>
+
+                        {eventsLoading ? (
+                            <div className="text-center py-16 text-gray-500">טוען אירועים...</div>
+                        ) : (
+                            <div className="bg-white rounded-2xl border border-gray-200 overflow-hidden">
+                                <table className="w-full text-sm">
+                                    <thead className="bg-gray-50 border-b border-gray-200">
+                                        <tr>
+                                            <th className="px-4 py-3 text-right font-semibold text-gray-600">ID</th>
+                                            <th className="px-4 py-3 text-right font-semibold text-gray-600">שם אירוע</th>
+                                            <th className="px-4 py-3 text-right font-semibold text-gray-600">צלם</th>
+                                            <th className="px-4 py-3 text-right font-semibold text-gray-600">חבילה</th>
+                                            <th className="px-4 py-3 text-right font-semibold text-gray-600">נוצר</th>
+                                            <th className="px-4 py-3 text-right font-semibold text-gray-600">תפוגה</th>
+                                            <th className="px-4 py-3 text-right font-semibold text-gray-600">סטטוס</th>
+                                            <th className="px-4 py-3"></th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {events
+                                            .filter(e => eventsFilter === 'all' ? true : eventsFilter === 'expired' ? e.is_expired : !e.is_expired)
+                                            .map(event => {
+                                                const status = getExpiryStatus(event);
+                                                const daysLeft = Math.ceil((new Date(event.expiry_date).getTime() - Date.now()) / 86400000);
+                                                return (
+                                                    <tr key={event.id} className={`border-b border-gray-100 hover:bg-gray-50 transition-colors ${event.is_expired ? 'opacity-60' : ''}`}>
+                                                        <td className="px-4 py-3 font-mono text-gray-500">#{event.id}</td>
+                                                        <td className="px-4 py-3 font-medium text-gray-900 max-w-[160px] truncate">{event.name}</td>
+                                                        <td className="px-4 py-3 text-gray-600 max-w-[140px] truncate">{event.photographer_name || '—'}</td>
+                                                        <td className="px-4 py-3">
+                                                            <span className={`px-2 py-0.5 rounded-full text-xs font-bold ${event.package_type === 'gold' ? 'bg-amber-100 text-amber-700' : event.package_type === 'premium' ? 'bg-cyan-100 text-cyan-700' : 'bg-slate-100 text-slate-600'}`}>
+                                                                {event.package_type === 'gold' ? 'זהב' : event.package_type === 'premium' ? 'פרימיום' : 'בסיס'}
+                                                            </span>
+                                                        </td>
+                                                        <td className="px-4 py-3 text-gray-500 whitespace-nowrap">
+                                                            {new Date(event.created_at).toLocaleDateString('he-IL')}
+                                                        </td>
+                                                        <td className="px-4 py-3 text-gray-500 whitespace-nowrap">
+                                                            {new Date(event.expiry_date).toLocaleDateString('he-IL')}
+                                                        </td>
+                                                        <td className="px-4 py-3">
+                                                            {status === 'expired' && (
+                                                                <span className="flex items-center gap-1 text-red-600 text-xs font-bold">
+                                                                    <AlertCircle className="w-3.5 h-3.5" />פג תוקף
+                                                                </span>
+                                                            )}
+                                                            {status === 'soon' && (
+                                                                <span className="flex items-center gap-1 text-orange-500 text-xs font-bold">
+                                                                    <Clock className="w-3.5 h-3.5" />{daysLeft}י׳
+                                                                </span>
+                                                            )}
+                                                            {status === 'active' && (
+                                                                <span className="flex items-center gap-1 text-green-600 text-xs font-bold">
+                                                                    <CheckCircle className="w-3.5 h-3.5" />{daysLeft}י׳
+                                                                </span>
+                                                            )}
+                                                        </td>
+                                                        <td className="px-4 py-3">
+                                                            <button
+                                                                onClick={() => handleDeleteEvent(event.id)}
+                                                                disabled={deletingId === event.id}
+                                                                className="p-1.5 rounded-lg text-red-400 hover:bg-red-50 hover:text-red-600 transition-colors disabled:opacity-40"
+                                                                title="מחק אירוע"
+                                                            >
+                                                                <Trash2 className="w-4 h-4" />
+                                                            </button>
+                                                        </td>
+                                                    </tr>
+                                                );
+                                            })}
+                                    </tbody>
+                                </table>
+                                {events.filter(e => eventsFilter === 'all' ? true : eventsFilter === 'expired' ? e.is_expired : !e.is_expired).length === 0 && (
+                                    <div className="text-center py-12 text-gray-400">אין אירועים</div>
+                                )}
+                            </div>
+                        )}
+                    </div>
+                )}
+
             </div>
         </div >
     );
