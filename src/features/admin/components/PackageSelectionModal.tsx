@@ -15,8 +15,8 @@ const PackageSelectionModal: React.FC<PackageSelectionModalProps> = ({ isOpen, o
     const isIndividual = (localStorage.getItem('active_mode') ?? 'photographer') === 'individual';
 
     const PRICES = isIndividual
-        ? { basic: '50', premium: '70', gold: '100' }
-        : { basic: '199', premium: '279', gold: '529' };
+        ? { basic: '49', premium: '79', gold: '169' }
+        : { basic: '79', premium: '139', gold: '269' };
 
     // Prevent body scroll when modal is open
     useEffect(() => {

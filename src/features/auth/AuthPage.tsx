@@ -1,6 +1,6 @@
-import React, { useState, ChangeEvent, FormEvent, useEffect } from 'react';
+import React, { useState, ChangeEvent, FormEvent, useEffect, useRef } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
-import { Eye, EyeOff, Check, Facebook, Instagram, Linkedin, Youtube, Camera, PartyPopper, ChevronRight } from 'lucide-react';
+import { Eye, EyeOff, Check, Facebook, Instagram, Linkedin, Youtube, Camera, PartyPopper, ChevronDown } from 'lucide-react';
 import { PhotographerRegistration } from '../../types';
 import { useAuth } from '../../hooks/useAuth';
 import { BackendService } from '../../services/backendService';
@@ -18,9 +18,11 @@ const AuthPage: React.FC = () => {
     const locationState = location.state as any;
     const initialMode = locationState?.mode === 'register' ? false : true;
     const [isLogin, setIsLogin] = useState(initialMode);
-    const [userType, setUserType] = useState<'photographer' | 'individual' | null>(
-        locationState?.userType ?? null
+    const [userType, setUserType] = useState<'photographer' | 'individual'>(
+        locationState?.userType ?? 'photographer'
     );
+    const [showTypeDropdown, setShowTypeDropdown] = useState(false);
+    const dropdownRef = useRef<HTMLDivElement>(null);
     const [loading, setLoading] = useState(false);
     const [showPassword, setShowPassword] = useState(false);
 
@@ -57,13 +59,24 @@ const AuthPage: React.FC = () => {
     const [unverifiedEmail, setUnverifiedEmail] = useState('');
     const [showForgotPasswordModal, setShowForgotPasswordModal] = useState(false);
 
+    // Close dropdown on outside click
+    useEffect(() => {
+        const handler = (e: MouseEvent) => {
+            if (dropdownRef.current && !dropdownRef.current.contains(e.target as Node)) {
+                setShowTypeDropdown(false);
+            }
+        };
+        document.addEventListener('mousedown', handler);
+        return () => document.removeEventListener('mousedown', handler);
+    }, []);
+
     // Handle authenticated user (including OAuth callback)
     useEffect(() => {
         const checkUserAndRedirect = async () => {
             if (isAuthenticated && user) {
                 try {
                     // Sync user with backend
-                    const syncResponse = await BackendService.syncUser(userType ?? undefined);
+                    const syncResponse = await BackendService.syncUser(userType);
 
                     // Check if profile is complete
                     if (syncResponse?.data?.profileComplete) {
@@ -192,7 +205,7 @@ const AuthPage: React.FC = () => {
                 if (sessionData) {
                     try {
                         if (userType) localStorage.setItem('active_mode', userType);
-                        const syncResponse = await BackendService.syncUser(userType ?? undefined);
+                        const syncResponse = await BackendService.syncUser(userType);
                         console.log('Sync response:', syncResponse);
 
                         // Check if profile is complete based on backend response
@@ -275,59 +288,54 @@ const AuthPage: React.FC = () => {
 
                 <div className="max-w-md w-full space-y-8 bg-white p-6 md:p-10 rounded-2xl shadow-[0_8px_30px_rgb(0,0,0,0.04)] relative z-10">
 
-                    {/* User type selection — shown only when type not yet chosen */}
-                    {userType === null ? (
-                        <div className="text-center space-y-6">
-                            <div>
-                                <h2 className="text-3xl font-bold text-slate-800 mb-2">ברוך הבא!</h2>
-                                <p className="text-slate-500">איך תרצה להיכנס?</p>
-                            </div>
-                            <div className="grid grid-cols-2 gap-4">
-                                <button
-                                    onClick={() => setUserType('photographer')}
-                                    className="group flex flex-col items-center gap-3 p-6 rounded-2xl border-2 border-slate-200 hover:border-cyan-400 hover:shadow-lg hover:shadow-cyan-900/5 transition-all"
-                                >
-                                    <div className="p-3 bg-slate-100 rounded-2xl group-hover:bg-cyan-50 transition-colors">
-                                        <Camera className="w-7 h-7 text-slate-500 group-hover:text-cyan-600 transition-colors" />
-                                    </div>
-                                    <div>
-                                        <p className="font-bold text-slate-800 text-sm">צלם מקצועי</p>
-                                        <p className="text-xs text-slate-400 mt-0.5">לצלמים ועסקים</p>
-                                    </div>
-                                </button>
-                                <button
-                                    onClick={() => setUserType('individual')}
-                                    className="group flex flex-col items-center gap-3 p-6 rounded-2xl border-2 border-slate-200 hover:border-cyan-400 hover:shadow-lg hover:shadow-cyan-900/5 transition-all"
-                                >
-                                    <div className="p-3 bg-slate-100 rounded-2xl group-hover:bg-cyan-50 transition-colors">
-                                        <PartyPopper className="w-7 h-7 text-slate-500 group-hover:text-cyan-600 transition-colors" />
-                                    </div>
-                                    <div>
-                                        <p className="font-bold text-slate-800 text-sm">בעל האירוע</p>
-                                        <p className="text-xs text-slate-400 mt-0.5">לאירועים פרטיים</p>
-                                    </div>
-                                </button>
-                            </div>
-                        </div>
-                    ) : (
                     <>
                     <div className="text-center">
-                        <button
-                            onClick={() => setUserType(null)}
-                            className="flex items-center gap-1 text-xs text-slate-400 hover:text-slate-600 transition-colors mb-4 mx-auto"
-                        >
-                            <ChevronRight className="w-3 h-3" />
-                            <span>חזרה לבחירה</span>
-                        </button>
-                        <h2 className="text-3xl font-bold text-slate-800 mb-2">
+                        <h2 className="text-3xl font-bold text-slate-800 mb-3">
                             {isLogin ? 'ברוך הבא!' : 'צור חשבון חדש'}
                         </h2>
-                        <p className="text-slate-500">
-                            {isLogin
-                                ? (userType === 'individual' ? 'התחבר לחשבון שלך' : 'התחבר לחשבון הצלם שלך')
-                                : (userType === 'individual' ? 'הירשם והתחל להעלות אירועים' : 'הצטרף לקהילת הצלמים שלנו')
-                            }
-                        </p>
+
+                        {/* User type dropdown */}
+                        <div className="relative inline-block" ref={dropdownRef}>
+                            <button
+                                type="button"
+                                onClick={() => setShowTypeDropdown(v => !v)}
+                                className="flex items-center gap-2 px-4 py-2 rounded-xl border border-slate-200 bg-slate-50 hover:bg-slate-100 transition-colors text-sm font-medium text-slate-700 mx-auto"
+                            >
+                                {userType === 'photographer'
+                                    ? <><Camera className="w-4 h-4 text-cyan-500" /><span>התחברות כצלם</span></>
+                                    : <><PartyPopper className="w-4 h-4 text-cyan-500" /><span>התחברות כבעל אירוע</span></>
+                                }
+                                <ChevronDown className={`w-4 h-4 text-slate-400 transition-transform ${showTypeDropdown ? 'rotate-180' : ''}`} />
+                            </button>
+
+                            {showTypeDropdown && (
+                                <div className="absolute top-full mt-1 right-1/2 translate-x-1/2 w-52 bg-white rounded-xl border border-slate-200 shadow-lg z-20 overflow-hidden">
+                                    <button
+                                        type="button"
+                                        onClick={() => { setUserType('photographer'); setShowTypeDropdown(false); }}
+                                        className={`w-full flex items-center gap-3 px-4 py-3 text-sm text-right hover:bg-slate-50 transition-colors ${userType === 'photographer' ? 'bg-cyan-50 text-cyan-700 font-bold' : 'text-slate-700'}`}
+                                    >
+                                        <Camera className="w-4 h-4 shrink-0" />
+                                        <div className="text-right">
+                                            <p className="font-semibold">התחברות כצלם</p>
+                                            <p className="text-xs text-slate-400">לצלמים ועסקים</p>
+                                        </div>
+                                    </button>
+                                    <div className="h-px bg-slate-100" />
+                                    <button
+                                        type="button"
+                                        onClick={() => { setUserType('individual'); setShowTypeDropdown(false); }}
+                                        className={`w-full flex items-center gap-3 px-4 py-3 text-sm text-right hover:bg-slate-50 transition-colors ${userType === 'individual' ? 'bg-cyan-50 text-cyan-700 font-bold' : 'text-slate-700'}`}
+                                    >
+                                        <PartyPopper className="w-4 h-4 shrink-0" />
+                                        <div className="text-right">
+                                            <p className="font-semibold">התחברות כבעל אירוע</p>
+                                            <p className="text-xs text-slate-400">לאירועים פרטיים</p>
+                                        </div>
+                                    </button>
+                                </div>
+                            )}
+                        </div>
                     </div>
 
                     <div className="mt-8 space-y-6">
@@ -513,7 +521,6 @@ const AuthPage: React.FC = () => {
                         </div>
                     </div>
                     </>
-                    )}
                 </div>
             </main>
 

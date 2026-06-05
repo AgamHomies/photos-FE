@@ -1,7 +1,7 @@
-import React, { useState } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../hooks/useAuth';
-import { Camera, LogOut, User, Menu, X } from 'lucide-react';
+import { Camera, PartyPopper, User, Menu, X, ChevronDown } from 'lucide-react';
 
 interface HeaderProps {
     isAuthenticated?: boolean;
@@ -12,6 +12,18 @@ const Header: React.FC<HeaderProps> = ({ isAuthenticated }) => {
     const location = useLocation();
     const { logout, user } = useAuth();
     const [isMenuOpen, setIsMenuOpen] = useState(false);
+    const [openDropdown, setOpenDropdown] = useState<'login' | 'register' | null>(null);
+    const dropdownRef = useRef<HTMLDivElement>(null);
+
+    useEffect(() => {
+        const handler = (e: MouseEvent) => {
+            if (dropdownRef.current && !dropdownRef.current.contains(e.target as Node)) {
+                setOpenDropdown(null);
+            }
+        };
+        document.addEventListener('mousedown', handler);
+        return () => document.removeEventListener('mousedown', handler);
+    }, []);
 
     const handleLogout = () => {
         logout();
@@ -21,7 +33,7 @@ const Header: React.FC<HeaderProps> = ({ isAuthenticated }) => {
     const isActive = (path: string) => location.pathname === path;
 
     return (
-        <header className="bg-white border-b border-slate-100 py-4 px-6 md:px-12 flex justify-between items-center sticky top-0 z-50">
+        <header className="bg-white border-b border-slate-100 py-4 px-6 sm:px-10 lg:px-16 flex justify-between items-center sticky top-0 z-50">
             {/* Logo (Right side in RTL) */}
             <div
                 className="flex items-center gap-2 cursor-pointer"
@@ -132,19 +144,78 @@ const Header: React.FC<HeaderProps> = ({ isAuthenticated }) => {
                         </div>
                     </div>
                 ) : (
-                    <div className="hidden lg:flex items-center gap-3">
-                        <button
-                            onClick={() => navigate('/auth')}
-                            className="text-sm font-medium text-slate-600 hover:text-cyan-600 transition-colors"
-                        >
-                            התחבר
-                        </button>
-                        <button
-                            onClick={() => navigate('/auth', { state: { mode: 'register' } })}
-                            className="bg-cyan-500 text-white text-sm font-bold py-2 px-6 rounded-full hover:bg-cyan-600 transition-all shadow-sm hover:shadow-md whitespace-nowrap"
-                        >
-                            התחלה בחינם
-                        </button>
+                    <div className="hidden lg:flex items-center gap-3" ref={dropdownRef}>
+                        {/* Login dropdown */}
+                        <div className="relative">
+                            <button
+                                onClick={() => setOpenDropdown(openDropdown === 'login' ? null : 'login')}
+                                className="flex items-center gap-1 text-sm font-medium text-slate-600 hover:text-cyan-600 transition-colors"
+                            >
+                                התחבר
+                                <ChevronDown className={`w-3.5 h-3.5 transition-transform ${openDropdown === 'login' ? 'rotate-180' : ''}`} />
+                            </button>
+                            {openDropdown === 'login' && (
+                                <div className="absolute top-full mt-2 left-0 w-52 bg-white rounded-xl border border-slate-200 shadow-lg z-50 overflow-hidden">
+                                    <button
+                                        onClick={() => { navigate('/auth', { state: { userType: 'photographer' } }); setOpenDropdown(null); }}
+                                        className="w-full flex items-center gap-3 px-4 py-3 text-sm text-slate-700 hover:bg-slate-50 transition-colors text-right"
+                                    >
+                                        <Camera className="w-4 h-4 text-cyan-500 shrink-0" />
+                                        <div>
+                                            <p className="font-semibold">התחברות כצלם</p>
+                                            <p className="text-xs text-slate-400">לצלמים ועסקים</p>
+                                        </div>
+                                    </button>
+                                    <div className="h-px bg-slate-100" />
+                                    <button
+                                        onClick={() => { navigate('/auth', { state: { userType: 'individual' } }); setOpenDropdown(null); }}
+                                        className="w-full flex items-center gap-3 px-4 py-3 text-sm text-slate-700 hover:bg-slate-50 transition-colors text-right"
+                                    >
+                                        <PartyPopper className="w-4 h-4 text-cyan-500 shrink-0" />
+                                        <div>
+                                            <p className="font-semibold">התחברות כבעל אירוע</p>
+                                            <p className="text-xs text-slate-400">לאירועים פרטיים</p>
+                                        </div>
+                                    </button>
+                                </div>
+                            )}
+                        </div>
+
+                        {/* Register dropdown */}
+                        <div className="relative">
+                            <button
+                                onClick={() => setOpenDropdown(openDropdown === 'register' ? null : 'register')}
+                                className="flex items-center gap-1.5 bg-cyan-500 text-white text-sm font-bold py-2 px-6 rounded-full hover:bg-cyan-600 transition-all shadow-sm hover:shadow-md whitespace-nowrap"
+                            >
+                                התחל עכשיו
+                                <ChevronDown className={`w-3.5 h-3.5 transition-transform ${openDropdown === 'register' ? 'rotate-180' : ''}`} />
+                            </button>
+                            {openDropdown === 'register' && (
+                                <div className="absolute top-full mt-2 left-0 w-52 bg-white rounded-xl border border-slate-200 shadow-lg z-50 overflow-hidden">
+                                    <button
+                                        onClick={() => { navigate('/auth', { state: { mode: 'register', userType: 'photographer' } }); setOpenDropdown(null); }}
+                                        className="w-full flex items-center gap-3 px-4 py-3 text-sm text-slate-700 hover:bg-slate-50 transition-colors text-right"
+                                    >
+                                        <Camera className="w-4 h-4 text-cyan-500 shrink-0" />
+                                        <div>
+                                            <p className="font-semibold">הרשמה כצלם</p>
+                                            <p className="text-xs text-slate-400">לצלמים ועסקים</p>
+                                        </div>
+                                    </button>
+                                    <div className="h-px bg-slate-100" />
+                                    <button
+                                        onClick={() => { navigate('/auth', { state: { mode: 'register', userType: 'individual' } }); setOpenDropdown(null); }}
+                                        className="w-full flex items-center gap-3 px-4 py-3 text-sm text-slate-700 hover:bg-slate-50 transition-colors text-right"
+                                    >
+                                        <PartyPopper className="w-4 h-4 text-cyan-500 shrink-0" />
+                                        <div>
+                                            <p className="font-semibold">הרשמה כבעל אירוע</p>
+                                            <p className="text-xs text-slate-400">לאירועים פרטיים</p>
+                                        </div>
+                                    </button>
+                                </div>
+                            )}
+                        </div>
                     </div>
                 )}
             </div>
@@ -244,7 +315,7 @@ const Header: React.FC<HeaderProps> = ({ isAuthenticated }) => {
                                     }}
                                     className="bg-cyan-500 text-white text-center font-bold py-3 rounded-xl hover:bg-cyan-600 transition-all shadow-sm"
                                 >
-                                    התחלה בחינם
+                                    התחל עכשיו
                                 </button>
                             </div>
                         </>

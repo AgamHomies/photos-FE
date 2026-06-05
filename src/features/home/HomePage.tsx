@@ -115,7 +115,7 @@ const HomePage: React.FC = () => {
       icon: <CheckCircle2 className="w-6 h-6 text-white" />,
       bg: "bg-amber-500",
       title: "תמחור פשוט ונגיש",
-      description: "אירוע ראשון עלינו! ולאחר מכן משלמים לפי התמחור שמופיע למטה, לאירוע בלבד. בלי מנוי חודשי, בלי התחייבות!"
+      description: "תשלום לפי אירוע בלבד, לפי התמחור שמופיע למטה. בלי מנוי חודשי, בלי התחייבות!"
     }
   ];
 
@@ -173,7 +173,7 @@ const HomePage: React.FC = () => {
     },
     {
       question: "איך נרשמים?",
-      answer: "פשוט לוחצים על כפתור 'התחל בחינם' או 'פתח חשבון עכשיו', ממלאים פרטים בסיסיים ומתחילים להשתמש במערכת מיד."
+      answer: "לוחצים על 'התחל עכשיו' או 'פתח חשבון', ממלאים פרטים בסיסיים, בוחרים חבילה ומתחילים להשתמש במערכת מיד."
     }
   ];
 
@@ -217,7 +217,7 @@ const HomePage: React.FC = () => {
             <div className="lg:w-1/2 text-center lg:text-right lg:-mt-12 xl:-mt-24">
               {isIndividual ? (
                 <>
-                  <h1 className="text-4xl sm:text-5xl md:text-6xl lg:text-6xl xl:text-7xl font-bold text-slate-900 mb-4 sm:mb-6 leading-tight">
+                  <h1 className="text-3xl sm:text-4xl md:text-5xl lg:text-5xl xl:text-6xl font-bold text-slate-900 mb-4 sm:mb-6 leading-tight">
                     שתפו את כל תמונות האירוע —<br />
                     <span className="text-cyan-500">כל אורח ימצא את עצמו בשניות</span>
                   </h1>
@@ -227,7 +227,7 @@ const HomePage: React.FC = () => {
                 </>
               ) : (
                 <>
-                  <h1 className="text-4xl sm:text-5xl md:text-6xl lg:text-6xl xl:text-7xl font-bold text-slate-900 mb-4 sm:mb-6 leading-tight">
+                  <h1 className="text-3xl sm:text-4xl md:text-5xl lg:text-5xl xl:text-6xl font-bold text-slate-900 mb-4 sm:mb-6 leading-tight">
                     באירוע הבא, כולם ידעו <br />
                     <span className="text-cyan-500">מי צילם אותם!</span>
                   </h1>
@@ -242,7 +242,7 @@ const HomePage: React.FC = () => {
                   onClick={() => navigate('/auth', { state: { mode: 'register', userType: isIndividual ? 'individual' : 'photographer' } })}
                   className="bg-cyan-500 hover:bg-cyan-600 text-white text-base sm:text-lg font-bold py-3 sm:py-3.5 px-6 sm:px-8 rounded-xl transition-all shadow-lg hover:shadow-cyan-500/30 flex items-center gap-2 w-full sm:w-auto justify-center"
                 >
-                  התחל בחינם
+                  התחל עכשיו
                   <ArrowRight className="w-4 h-4 sm:w-5 sm:h-5" />
                 </button>
                 <button
@@ -258,6 +258,10 @@ const HomePage: React.FC = () => {
               </div>
 
               <div className="flex flex-wrap justify-center lg:justify-start gap-2 sm:gap-3 lg:gap-4 text-xs sm:text-sm font-bold text-slate-500 px-4 lg:px-0">
+                <div className="flex items-center gap-2 bg-amber-50 text-amber-700 px-3 py-1.5 rounded-lg border border-amber-200">
+                  <span>🏆</span>
+                  <span>הזול ביותר בישראל</span>
+                </div>
                 <div className="flex items-center gap-2 bg-green-50 text-green-700 px-3 py-1.5 rounded-lg border border-green-100">
                   <CheckCircle2 className="w-4 h-4" />
                   <span>זיהוי פנים מתקדם</span>
@@ -281,7 +285,7 @@ const HomePage: React.FC = () => {
                     </div>
                     <div className="flex items-center gap-2 bg-green-50 text-green-700 px-3 py-1.5 rounded-lg border border-green-100">
                       <CheckCircle2 className="w-4 h-4" />
-                      <span>אירוע ראשון חינם</span>
+                      <span>ללא התחייבות</span>
                     </div>
                   </>
                 )}
@@ -320,7 +324,7 @@ const HomePage: React.FC = () => {
 
       {/* How It Works Section */}
       <section id="how-it-works-section" className="py-fluid-xl lg:py-fluid-2xl bg-white relative">
-        <div className="container mx-auto px-4 sm:px-6 lg:px-8 max-w-7xl">
+        <div className="container mx-auto px-6 sm:px-10 lg:px-16 max-w-7xl">
           <div className="text-center mb-12 sm:mb-16 lg:mb-20">
             <h2 className="text-3xl sm:text-4xl lg:text-5xl font-bold text-slate-900 mb-4 sm:mb-6 px-4">איך זה עובד? <span className="text-cyan-500">3 שלבים פשוטים</span></h2>
             <p className="text-base sm:text-lg lg:text-xl text-slate-600 max-w-2xl mx-auto px-4">תהליך פשוט ומהיר שחוסך לך זמן ומביא תוצאות</p>
@@ -348,7 +352,7 @@ const HomePage: React.FC = () => {
 
       {/* Benefits Section */}
       <section id="benefits-section" className="py-fluid-xl lg:py-fluid-2xl bg-slate-50">
-        <div className="container mx-auto px-4 sm:px-6 lg:px-8 max-w-7xl">
+        <div className="container mx-auto px-6 sm:px-10 lg:px-16 max-w-7xl">
           <div className="flex flex-col lg:flex-row gap-8 sm:gap-12 lg:gap-16 items-start">
             <div className="lg:w-1/3 lg:sticky lg:top-24 w-full">
               <h2 className="text-3xl sm:text-4xl font-bold text-slate-900 mb-4 sm:mb-6">למה לבחור בנו?</h2>
@@ -394,8 +398,12 @@ const HomePage: React.FC = () => {
 
       {/* Pricing Section */}
       <section id="pricing-section" className="py-fluid-xl lg:py-fluid-2xl bg-white relative overflow-hidden">
-        <div className="container mx-auto px-4 sm:px-6 lg:px-8 max-w-7xl">
+        <div className="container mx-auto px-6 sm:px-10 lg:px-16 max-w-7xl">
           <div className="text-center mb-12 sm:mb-16 lg:mb-20">
+            <div className="inline-flex items-center gap-2 bg-amber-50 border border-amber-200 text-amber-700 px-4 py-2 rounded-full text-sm font-bold mb-4 shadow-sm">
+              <span>🏆</span>
+              <span>המחיר הזול ביותר לגלריה חכמה עם זיהוי פנים בישראל</span>
+            </div>
             <h2 className="text-3xl sm:text-4xl lg:text-5xl xl:text-fluid-5xl font-bold text-slate-900 mb-4 sm:mb-6">תמחור גמיש ופשוט</h2>
             <p className="text-base sm:text-lg lg:text-xl text-slate-600 max-w-2xl mx-auto px-4">תשלום לאירוע, ללא דמי מנוי חודשיים וללא התחייבות.</p>
           </div>
@@ -549,7 +557,7 @@ const HomePage: React.FC = () => {
               <span className="flex items-center justify-center gap-2 sm:gap-3">
                 {isIndividual
                   ? 'צרו גלריה לאירוע שלכם תוך דקות!'
-                  : 'התחל עכשיו וקבל אירוע ראשון בחינם!!'}
+                  : 'התחל עכשיו!'}
                 <ArrowRight className="w-5 h-5 sm:w-6 sm:h-6 group-hover:translate-x-1 transition-transform" />
               </span>
             </button>
@@ -564,7 +572,7 @@ const HomePage: React.FC = () => {
 
       {/* FAQ Section */}
       <section id="faq-section" className="py-fluid-xl lg:py-fluid-2xl bg-slate-50">
-        <div className="container mx-auto px-4 sm:px-6 lg:px-8 max-w-3xl">
+        <div className="container mx-auto px-6 sm:px-10 lg:px-16 max-w-3xl">
           <div className="text-center mb-12 sm:mb-16">
             <h2 className="text-3xl sm:text-4xl font-bold text-slate-900 mb-4 px-4">שאלות נפוצות</h2>
             <p className="text-sm sm:text-base text-slate-500 px-4">כל מה שרצית לדעת על Click2Pic</p>
@@ -600,7 +608,7 @@ const HomePage: React.FC = () => {
           <div className="hidden lg:block absolute bottom-[-10%] right-[-10%] w-[40%] h-[40%] bg-white rounded-full blur-3xl"></div>
         </div>
 
-        <div className="container mx-auto px-4 sm:px-6 lg:px-8 relative z-10 max-w-4xl">
+        <div className="container mx-auto px-6 sm:px-10 lg:px-16 relative z-10 max-w-4xl">
           <h2 className="text-3xl sm:text-4xl lg:text-5xl font-bold mb-4 sm:mb-6 leading-tight px-4">
             {isIndividual
               ? <>צרו גלריה לאירוע שלכם —<br className="hidden sm:block" /> תוך דקות!</>
@@ -640,7 +648,7 @@ const HomePage: React.FC = () => {
             </div>
             <div className="flex items-center gap-2">
               <CheckCircle2 className="w-4 h-4" />
-              <span>{isIndividual ? 'ללא התחייבות' : 'אירוע ראשון חינם'}</span>
+              <span>ללא התחייבות</span>
             </div>
           </div>
         </div>
