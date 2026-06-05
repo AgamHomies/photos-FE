@@ -90,7 +90,7 @@ export const UploadProvider: React.FC<{ children: ReactNode }> = ({ children }) 
 
             // B. Upload Gallery Files
             if (files.length > 0) {
-                const BATCH_SIZE = 50;          // small batches → less memory, smaller blast radius
+                const BATCH_SIZE = 100;         // balance: less memory than 250, fewer batches than 50
                 const CONCURRENCY_LIMIT = 8;    // concurrent S3 uploads
                 const COMPRESS_CONCURRENCY = 4; // concurrent canvas decodes
                 const totalFiles = files.length;
