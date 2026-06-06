@@ -259,8 +259,8 @@ const HomePage: React.FC = () => {
 
               <div className="flex flex-wrap justify-center lg:justify-start gap-2 sm:gap-3 lg:gap-4 text-xs sm:text-sm font-bold text-slate-500 px-4 lg:px-0">
                 <div className="flex items-center gap-2 bg-amber-50 text-amber-700 px-3 py-1.5 rounded-lg border border-amber-200">
+                  <span>הזול ביותר</span>
                   <span>🏆</span>
-                  <span>הזול ביותר בישראל</span>
                 </div>
                 <div className="flex items-center gap-2 bg-green-50 text-green-700 px-3 py-1.5 rounded-lg border border-green-100">
                   <CheckCircle2 className="w-4 h-4" />
@@ -401,8 +401,8 @@ const HomePage: React.FC = () => {
         <div className="container mx-auto px-6 sm:px-10 lg:px-16 max-w-7xl">
           <div className="text-center mb-12 sm:mb-16 lg:mb-20">
             <div className="inline-flex items-center gap-2 bg-amber-50 border border-amber-200 text-amber-700 px-4 py-2 rounded-full text-sm font-bold mb-4 shadow-sm">
+              <span>המחיר הזול ביותר לגלריה חכמה עם זיהוי פנים</span>
               <span>🏆</span>
-              <span>המחיר הזול ביותר לגלריה חכמה עם זיהוי פנים בישראל</span>
             </div>
             <h2 className="text-3xl sm:text-4xl lg:text-5xl xl:text-fluid-5xl font-bold text-slate-900 mb-4 sm:mb-6">תמחור גמיש ופשוט</h2>
             <p className="text-base sm:text-lg lg:text-xl text-slate-600 max-w-2xl mx-auto px-4">תשלום לאירוע, ללא דמי מנוי חודשיים וללא התחייבות.</p>
