@@ -5,6 +5,7 @@ import { CONFIG } from '../../config';
 import { Event, Photo, PhotographerProfile } from '../../types';
 import {
    Camera,
+   Aperture,
    Download,
    Share2,
    Instagram,
