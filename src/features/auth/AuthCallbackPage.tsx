@@ -11,57 +11,84 @@ const AuthCallbackPage: React.FC = () => {
     const [message, setMessage] = useState('מעבד אימות...');
 
     useEffect(() => {
-        const handleCallback = async () => {
+        // Supabase processes the #access_token hash asynchronously and fires
+        // onAuthStateChange(SIGNED_IN) when done. Calling getSession() immediately
+        // races with this processing and can return null on first load.
+        // The correct approach: listen for SIGNED_IN, then proceed.
+
+        let handled = false; // ensure we only process once
+
+        const processSession = async (session: any) => {
+            if (handled) return;
+            handled = true;
             try {
-                // Get the session from Supabase
-                const { session, error } = await supabaseAuthService.getSession();
+                setStatus('loading');
+                setMessage('מסנכרן נתוני משתמש...');
 
-                if (error) {
-                    setStatus('error');
-                    setMessage('שגיאה באימות: ' + error.message);
-                    setTimeout(() => navigate('/auth'), 3000);
-                    return;
-                }
+                // Read the user type chosen before the OAuth redirect
+                const pendingType = sessionStorage.getItem('pending_user_type') as 'photographer' | 'individual' | null;
+                sessionStorage.removeItem('pending_user_type');
+                if (pendingType) localStorage.setItem('active_mode', pendingType);
 
-                if (session) {
-                    setStatus('loading');
-                    setMessage('מסנכרן נתוני משתמש...');
+                const syncResponse = await RealAuthAPI.syncUser(pendingType ?? undefined);
 
-                    try {
-                        // Read the user type chosen before the OAuth redirect
-                        const pendingType = sessionStorage.getItem('pending_user_type') as 'photographer' | 'individual' | null;
-                        sessionStorage.removeItem('pending_user_type');
-                        if (pendingType) localStorage.setItem('active_mode', pendingType);
+                setStatus('success');
+                setMessage('אימות הצליח! מעביר לדף הראשי...');
 
-                        const syncResponse = await RealAuthAPI.syncUser(pendingType ?? undefined);
-
-                        setStatus('success');
-                        setMessage('אימות הצליח! מעביר לדף הראשי...');
-
-                        const isComplete = syncResponse?.data?.profileComplete;
-                        // Individual users skip profile completion — it's photographer-only
-                        const dest = (isComplete || pendingType === 'individual') ? '/admin' : '/complete-profile';
-                        setTimeout(() => navigate(dest), 1500);
-                    } catch (syncError: any) {
-                        console.error('Sync error:', syncError);
-                        setStatus('error');
-                        setMessage('שגיאה בסנכרון נתונים: ' + (syncError.message || 'Unknown error'));
-                        setTimeout(() => navigate('/auth'), 3000);
-                    }
-                } else {
-                    setStatus('error');
-                    setMessage('לא נמצא סשן פעיל');
-                    setTimeout(() => navigate('/auth'), 3000);
-                }
-            } catch (error: any) {
-                console.error('Callback error:', error);
+                const isComplete = syncResponse?.data?.profileComplete;
+                // Individual users skip profile completion — it's photographer-only
+                const dest = (isComplete || pendingType === 'individual') ? '/admin' : '/complete-profile';
+                setTimeout(() => navigate(dest), 1500);
+            } catch (syncError: any) {
+                console.error('Sync error:', syncError);
                 setStatus('error');
-                setMessage('אירעה שגיאה בלתי צפויה');
+                setMessage('שגיאה בסנכרון נתונים: ' + (syncError.message || 'Unknown error'));
                 setTimeout(() => navigate('/auth'), 3000);
             }
         };
 
-        handleCallback();
+        // First, check if a session already exists (e.g. page refresh scenario)
+        supabaseAuthService.getSession().then(({ session, error }) => {
+            if (error) {
+                setStatus('error');
+                setMessage('שגיאה באימות: ' + error.message);
+                setTimeout(() => navigate('/auth'), 3000);
+                return;
+            }
+            if (session) {
+                // Session already available — process immediately
+                processSession(session);
+            }
+            // If no session yet, the onAuthStateChange listener below will handle it
+        });
+
+        // Listen for Supabase to finish processing the hash fragment
+        const { data: { subscription } } = supabaseAuthService.onAuthStateChangeRaw((event, session) => {
+            if (event === 'SIGNED_IN' && session) {
+                processSession(session);
+            } else if (event === 'SIGNED_OUT') {
+                setStatus('error');
+                setMessage('לא נמצא סשן פעיל');
+                setTimeout(() => navigate('/auth'), 3000);
+            }
+        });
+
+        // Safety timeout — if nothing happens in 8s, show error
+        const timeout = setTimeout(() => {
+            setStatus(prev => {
+                if (prev === 'loading') {
+                    setTimeout(() => navigate('/auth'), 3000);
+                    return 'error';
+                }
+                return prev;
+            });
+            setMessage(prev => prev === 'מעבד אימות...' ? 'תם הזמן המוקצב לאימות' : prev);
+        }, 8000);
+
+        return () => {
+            subscription.unsubscribe();
+            clearTimeout(timeout);
+        };
     }, [navigate]);
 
     return (

@@ -93,11 +93,20 @@ export class SupabaseAuthService {
   }
 
   /**
-   * Listen to auth state changes
+   * Listen to auth state changes (session only)
    */
   onAuthStateChange(callback: (session: Session | null) => void) {
     return supabase.auth.onAuthStateChange((_event, session: Session | null) => {
       callback(session);
+    });
+  }
+
+  /**
+   * Listen to auth state changes with raw event + session (used by callback page)
+   */
+  onAuthStateChangeRaw(callback: (event: string, session: Session | null) => void) {
+    return supabase.auth.onAuthStateChange((event, session) => {
+      callback(event, session);
     });
   }
 
