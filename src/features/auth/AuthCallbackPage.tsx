@@ -11,21 +11,23 @@ const AuthCallbackPage: React.FC = () => {
     const [message, setMessage] = useState('מעבד אימות...');
 
     useEffect(() => {
-        // Supabase processes the #access_token hash asynchronously and fires
-        // onAuthStateChange(SIGNED_IN) when done. Calling getSession() immediately
-        // races with this processing and can return null on first load.
-        // The correct approach: listen for SIGNED_IN, then proceed.
+        // Supabase v2 processes the #access_token hash asynchronously.
+        // It may fire INITIAL_SESSION or SIGNED_IN (depending on timing).
+        // We use two strategies in parallel:
+        //   1. onAuthStateChange — catches any event that includes a session
+        //   2. Polling getSession() every 300ms as a fallback
+        // Both are guarded by `handled` so only one runs.
 
-        let handled = false; // ensure we only process once
+        let handled = false;
 
         const processSession = async (session: any) => {
             if (handled) return;
             handled = true;
+
             try {
                 setStatus('loading');
                 setMessage('מסנכרן נתוני משתמש...');
 
-                // Read the user type chosen before the OAuth redirect
                 const pendingType = sessionStorage.getItem('pending_user_type') as 'photographer' | 'individual' | null;
                 sessionStorage.removeItem('pending_user_type');
                 if (pendingType) localStorage.setItem('active_mode', pendingType);
@@ -36,7 +38,6 @@ const AuthCallbackPage: React.FC = () => {
                 setMessage('אימות הצליח! מעביר לדף הראשי...');
 
                 const isComplete = syncResponse?.data?.profileComplete;
-                // Individual users skip profile completion — it's photographer-only
                 const dest = (isComplete || pendingType === 'individual') ? '/admin' : '/complete-profile';
                 setTimeout(() => navigate(dest), 1500);
             } catch (syncError: any) {
@@ -47,47 +48,43 @@ const AuthCallbackPage: React.FC = () => {
             }
         };
 
-        // First, check if a session already exists (e.g. page refresh scenario)
-        supabaseAuthService.getSession().then(({ session, error }) => {
-            if (error) {
-                setStatus('error');
-                setMessage('שגיאה באימות: ' + error.message);
-                setTimeout(() => navigate('/auth'), 3000);
-                return;
-            }
-            if (session) {
-                // Session already available — process immediately
-                processSession(session);
-            }
-            // If no session yet, the onAuthStateChange listener below will handle it
-        });
-
-        // Listen for Supabase to finish processing the hash fragment
+        // Strategy 1: listen to ANY auth state change that carries a session.
+        // Supabase v2 may fire INITIAL_SESSION, SIGNED_IN, or TOKEN_REFRESHED.
         const { data: { subscription } } = supabaseAuthService.onAuthStateChangeRaw((event, session) => {
-            if (event === 'SIGNED_IN' && session) {
+            if (session && !handled) {
                 processSession(session);
-            } else if (event === 'SIGNED_OUT') {
-                setStatus('error');
-                setMessage('לא נמצא סשן פעיל');
-                setTimeout(() => navigate('/auth'), 3000);
             }
         });
 
-        // Safety timeout — if nothing happens in 8s, show error
-        const timeout = setTimeout(() => {
-            setStatus(prev => {
-                if (prev === 'loading') {
-                    setTimeout(() => navigate('/auth'), 3000);
-                    return 'error';
+        // Strategy 2: poll getSession() every 300 ms for up to 10 seconds.
+        // Catches cases where onAuthStateChange fires before our listener registers.
+        let attempts = 0;
+        const poll = setInterval(async () => {
+            if (handled) { clearInterval(poll); return; }
+            attempts++;
+            try {
+                const { session } = await supabaseAuthService.getSession();
+                if (session) {
+                    clearInterval(poll);
+                    processSession(session);
+                    return;
                 }
-                return prev;
-            });
-            setMessage(prev => prev === 'מעבד אימות...' ? 'תם הזמן המוקצב לאימות' : prev);
-        }, 8000);
+            } catch (_) { /* ignore, keep polling */ }
+
+            if (attempts >= 33) { // ~10 seconds
+                clearInterval(poll);
+                if (!handled) {
+                    handled = true;
+                    setStatus('error');
+                    setMessage('לא נמצא סשן פעיל. נסה שוב.');
+                    setTimeout(() => navigate('/auth'), 3000);
+                }
+            }
+        }, 300);
 
         return () => {
             subscription.unsubscribe();
-            clearTimeout(timeout);
+            clearInterval(poll);
         };
     }, [navigate]);
 
