@@ -5,6 +5,7 @@ import { CONFIG } from '../../config';
 import { Event, Photo, PhotographerProfile } from '../../types';
 import {
    Camera,
+   Aperture,
    Download,
    Share2,
    Instagram,
@@ -976,19 +977,21 @@ END:VCARD`;
          {/* 1. Header & Branding - Full Width Darker Beige Background */}
          <div className="w-full bg-[#EEE9E1] pt-8 pb-8 text-center shadow-sm relative z-10">
             <div className="mb-4">
-               {photographer?.profileImageUrl ? (
+               {event?.createdAs === 'individual' ? (
+                  <div className="w-20 h-20 mx-auto rounded-full bg-[#1e8bb8] flex items-center justify-center shadow-md">
+                     <Aperture className="w-10 h-10 text-white" />
+                  </div>
+               ) : photographer?.profileImageUrl ? (
                   <img
                      src={photographer.profileImageUrl}
                      alt="Logo"
                      className="w-20 h-20 mx-auto rounded-lg object-contain bg-transparent"
                      onError={(e) => {
-                        // Fallback if image fails
                         e.currentTarget.style.display = 'none';
                         e.currentTarget.nextElementSibling?.classList.remove('hidden');
                      }}
                   />
-               ) : null}
-               {!photographer?.profileImageUrl && (
+               ) : (
                   <div className="w-20 h-20 mx-auto rounded-full bg-[#F5F1EB] flex items-center justify-center border border-[#E8DFD3]">
                      <Camera className="w-8 h-8 text-[#C4A882]" />
                   </div>
@@ -996,7 +999,7 @@ END:VCARD`;
             </div>
 
             <h1 className="text-3xl font-bold text-[#4A3B2C] mb-1">
-               {photographer?.name || 'שם הצלם'}
+               {event?.createdAs === 'individual' ? 'Click2Pic' : (photographer?.name || 'שם הצלם')}
             </h1>
             <p className="text-xs tracking-[0.2em] text-[#A89680] uppercase mb-4">
                {event?.createdAs === 'individual' ? 'SMART GALLERY' : 'PHOTOGRAPHY STUDIO'}
