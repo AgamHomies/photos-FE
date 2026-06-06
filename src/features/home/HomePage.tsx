@@ -424,29 +424,6 @@ const HomePage: React.FC = () => {
                 : 'כשהשוק גובה ₪300–₪500 לאירוע, אנחנו שוברים את הכללים. אותה טכנולוגיה, שליש המחיר.'}
             </p>
 
-            {/* Market comparison strip */}
-            <div className="inline-flex flex-col sm:flex-row items-center gap-3 bg-slate-900 text-white px-6 py-4 rounded-2xl shadow-xl mx-auto text-sm sm:text-base font-bold">
-              <div className="flex items-center gap-2 text-slate-400">
-                <span>שאר השוק</span>
-                <span className="line-through text-red-400 text-lg font-black">
-                  {isIndividual ? '₪150–₪450' : '₪300–₪700'}
-                </span>
-              </div>
-              <div className="hidden sm:block w-px h-8 bg-slate-700" />
-              <div className="sm:hidden w-16 h-px bg-slate-700" />
-              <div className="flex items-center gap-2 text-cyan-400">
-                <Zap className="w-4 h-4" />
-                <span>Click2Pic</span>
-                <span className="text-white text-lg font-black">
-                  {isIndividual ? '₪49–₪169' : '₪79–₪269'}
-                </span>
-              </div>
-              <div className="hidden sm:block w-px h-8 bg-slate-700" />
-              <div className="hidden sm:block sm:hidden w-16 h-px bg-slate-700" />
-              <div className="bg-green-500 text-white px-3 py-1 rounded-full text-xs font-black">
-                {isIndividual ? 'חיסכון עד 67%' : 'חיסכון עד 69%'}
-              </div>
-            </div>
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 sm:gap-8 lg:gap-6 xl:gap-8 items-stretch max-w-7xl mx-auto">
