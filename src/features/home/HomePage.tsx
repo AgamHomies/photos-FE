@@ -398,23 +398,73 @@ const HomePage: React.FC = () => {
 
       {/* Pricing Section */}
       <section id="pricing-section" className="py-fluid-xl lg:py-fluid-2xl bg-white relative overflow-hidden">
-        <div className="container mx-auto px-6 sm:px-10 lg:px-16 max-w-7xl">
-          <div className="text-center mb-12 sm:mb-16 lg:mb-20">
-            <div className="inline-flex items-center gap-2 bg-amber-50 border border-amber-200 text-amber-700 px-4 py-2 rounded-full text-sm font-bold mb-4 shadow-sm">
-              <span>המחיר הזול ביותר לגלריה חכמה עם זיהוי פנים</span>
-              <span>🏆</span>
+        {/* Background decoration */}
+        <div className="absolute inset-0 pointer-events-none">
+          <div className="absolute top-0 left-1/4 w-96 h-96 bg-amber-50 rounded-full blur-3xl opacity-50" />
+          <div className="absolute bottom-0 right-1/4 w-96 h-96 bg-cyan-50 rounded-full blur-3xl opacity-50" />
+        </div>
+
+        <div className="container mx-auto px-6 sm:px-10 lg:px-16 max-w-7xl relative">
+          <div className="text-center mb-10 sm:mb-14 lg:mb-16">
+            {/* Main punch badge */}
+            <div className="inline-flex items-center gap-2 bg-red-50 border border-red-200 text-red-600 px-4 py-2 rounded-full text-sm font-black mb-5 shadow-sm tracking-wide uppercase">
+              <span>💥</span>
+              <span>שוברים את השוק</span>
+              <span>💥</span>
             </div>
-            <h2 className="text-3xl sm:text-4xl lg:text-5xl xl:text-fluid-5xl font-bold text-slate-900 mb-4 sm:mb-6">תמחור גמיש ופשוט</h2>
-            <p className="text-base sm:text-lg lg:text-xl text-slate-600 max-w-2xl mx-auto px-4">תשלום לאירוע, ללא דמי מנוי חודשיים וללא התחייבות.</p>
+
+            <h2 className="text-3xl sm:text-4xl lg:text-5xl xl:text-fluid-5xl font-black text-slate-900 mb-4 sm:mb-5 leading-tight">
+              {isIndividual
+                ? 'גלריה חכמה עם זיהוי פנים — לכולם'
+                : 'מחיר שלא ראיתם בשוק הצילום'}
+            </h2>
+            <p className="text-base sm:text-lg lg:text-xl text-slate-500 max-w-2xl mx-auto px-4 mb-8">
+              {isIndividual
+                ? 'מה שפעם היה יקר ומסובך — עכשיו זמין לכל אחד. תשלום חד-פעמי, ללא מנוי, ללא התחייבות.'
+                : 'כשהשוק גובה ₪300–₪500 לאירוע, אנחנו שוברים את הכללים. אותה טכנולוגיה, שליש המחיר.'}
+            </p>
+
+            {/* Market comparison strip */}
+            <div className="inline-flex flex-col sm:flex-row items-center gap-3 bg-slate-900 text-white px-6 py-4 rounded-2xl shadow-xl mx-auto text-sm sm:text-base font-bold">
+              <div className="flex items-center gap-2 text-slate-400">
+                <span>שאר השוק</span>
+                <span className="line-through text-red-400 text-lg font-black">
+                  {isIndividual ? '₪150–₪450' : '₪300–₪700'}
+                </span>
+              </div>
+              <div className="hidden sm:block w-px h-8 bg-slate-700" />
+              <div className="sm:hidden w-16 h-px bg-slate-700" />
+              <div className="flex items-center gap-2 text-cyan-400">
+                <Zap className="w-4 h-4" />
+                <span>Click2Pic</span>
+                <span className="text-white text-lg font-black">
+                  {isIndividual ? '₪49–₪169' : '₪79–₪269'}
+                </span>
+              </div>
+              <div className="hidden sm:block w-px h-8 bg-slate-700" />
+              <div className="hidden sm:block sm:hidden w-16 h-px bg-slate-700" />
+              <div className="bg-green-500 text-white px-3 py-1 rounded-full text-xs font-black">
+                {isIndividual ? 'חיסכון עד 67%' : 'חיסכון עד 69%'}
+              </div>
+            </div>
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 sm:gap-8 lg:gap-6 xl:gap-8 items-stretch max-w-7xl mx-auto">
             {/* Basic */}
             <div className="group relative bg-white border border-slate-200 rounded-[2rem] p-6 sm:p-8 lg:p-6 xl:p-8 transition-all hover:border-slate-300 hover:shadow-xl hover:shadow-slate-900/5 flex flex-col items-center text-center">
+              {/* Savings badge */}
+              <div className="absolute -top-3 left-4 bg-green-500 text-white text-xs font-black px-3 py-1 rounded-full shadow-md">
+                {isIndividual ? 'חיסכון 67%' : 'חיסכון 60%'}
+              </div>
               <div className="mb-4 sm:mb-6 p-3 sm:p-4 bg-slate-50 rounded-2xl group-hover:bg-slate-100 transition-colors">
                 <Star className="w-6 h-6 sm:w-8 sm:h-8 text-slate-400 group-hover:text-slate-600 transition-colors" />
               </div>
               <h3 className="text-lg sm:text-xl font-bold text-slate-900 mb-2">חבילת בסיס</h3>
+              {/* Market price strikethrough */}
+              <div className="flex items-center justify-center gap-2 mb-1">
+                <span className="text-xs text-slate-400 font-medium">מחיר שוק:</span>
+                <span className="text-sm text-red-400 line-through font-bold">{isIndividual ? '₪150' : '₪200'}</span>
+              </div>
               <div className="flex items-baseline justify-center gap-1 mb-2">
                 <span className="text-3xl sm:text-4xl lg:text-3xl xl:text-4xl font-black text-slate-900">
                   {isIndividual ? '₪49' : '₪79'}
@@ -452,14 +502,24 @@ const HomePage: React.FC = () => {
 
             {/* Premium */}
             <div className="group relative bg-white border-2 border-cyan-500 rounded-[2rem] p-6 sm:p-8 lg:p-6 xl:p-8 shadow-2xl shadow-cyan-900/10 sm:transform sm:md:-translate-y-0 lg:-translate-y-4 transition-all hover:shadow-cyan-900/20 flex flex-col items-center text-center z-10 w-full">
-              <div className="absolute -top-3 left-1/2 -translate-x-1/2 bg-cyan-50 text-cyan-700 border border-cyan-200 px-3 sm:px-4 py-1 rounded-full text-xs sm:text-sm font-bold shadow-sm flex items-center gap-1.5 whitespace-nowrap">
-                <Sparkles className="w-3 h-3 sm:w-3.5 sm:h-3.5" />
-                <span>מומלץ ביותר</span>
+              <div className="absolute -top-3 left-1/2 -translate-x-1/2 flex items-center gap-2">
+                <div className="bg-cyan-500 text-white border border-cyan-400 px-3 sm:px-4 py-1 rounded-full text-xs sm:text-sm font-bold shadow-sm flex items-center gap-1.5 whitespace-nowrap">
+                  <Sparkles className="w-3 h-3 sm:w-3.5 sm:h-3.5" />
+                  <span>מומלץ ביותר</span>
+                </div>
+                <div className="bg-green-500 text-white text-xs font-black px-2 py-1 rounded-full shadow-md whitespace-nowrap">
+                  {isIndividual ? 'חיסכון 68%' : 'חיסכון 69%'}
+                </div>
               </div>
               <div className="mb-4 sm:mb-6 p-4 sm:p-5 bg-gradient-to-br from-cyan-500 to-cyan-600 rounded-2xl shadow-lg shadow-cyan-500/20 group-hover:scale-110 transition-transform duration-300">
                 <Award className="w-8 h-8 sm:w-10 sm:h-10 text-white" />
               </div>
               <h3 className="text-xl sm:text-2xl font-bold text-slate-900 mb-2">חבילת פרימיום</h3>
+              {/* Market price strikethrough */}
+              <div className="flex items-center justify-center gap-2 mb-1">
+                <span className="text-xs text-slate-400 font-medium">מחיר שוק:</span>
+                <span className="text-sm text-red-400 line-through font-bold">{isIndividual ? '₪250' : '₪450'}</span>
+              </div>
               <div className="flex items-baseline justify-center gap-1 mb-2">
                 <span className="text-4xl sm:text-5xl lg:text-4xl xl:text-5xl font-black text-slate-900">
                   {isIndividual ? '₪79' : '₪139'}
@@ -505,10 +565,19 @@ const HomePage: React.FC = () => {
 
             {/* Gold */}
             <div className="group relative bg-white border border-slate-200 rounded-[2rem] p-6 sm:p-8 lg:p-6 xl:p-8 transition-all hover:border-amber-200 hover:shadow-xl hover:shadow-amber-900/5 flex flex-col items-center text-center sm:col-span-2 lg:col-span-1">
+              {/* Savings badge */}
+              <div className="absolute -top-3 left-4 bg-green-500 text-white text-xs font-black px-3 py-1 rounded-full shadow-md">
+                {isIndividual ? 'חיסכון 58%' : 'חיסכון 62%'}
+              </div>
               <div className="mb-4 sm:mb-6 p-3 sm:p-4 bg-slate-50 rounded-2xl group-hover:bg-amber-50 transition-colors">
                 <Crown className="w-6 h-6 sm:w-8 sm:h-8 text-slate-400 group-hover:text-amber-500 transition-colors" />
               </div>
               <h3 className="text-lg sm:text-xl font-bold text-slate-900 mb-2">חבילת זהב</h3>
+              {/* Market price strikethrough */}
+              <div className="flex items-center justify-center gap-2 mb-1">
+                <span className="text-xs text-slate-400 font-medium">מחיר שוק:</span>
+                <span className="text-sm text-red-400 line-through font-bold">{isIndividual ? '₪400' : '₪700'}</span>
+              </div>
               <div className="flex items-baseline justify-center gap-1 mb-2">
                 <span className="text-3xl sm:text-4xl lg:text-3xl xl:text-4xl font-black text-slate-900">
                   {isIndividual ? '₪169' : '₪269'}
@@ -550,22 +619,24 @@ const HomePage: React.FC = () => {
           </div>
 
           <div className="mt-12 sm:mt-16 lg:mt-20 text-center px-4">
+            {/* Trust strip */}
+            <div className="flex flex-wrap justify-center gap-4 sm:gap-8 mb-8 text-sm text-slate-500 font-medium">
+              <span className="flex items-center gap-1.5"><Check className="w-4 h-4 text-green-500" /> ללא דמי מנוי</span>
+              <span className="flex items-center gap-1.5"><Check className="w-4 h-4 text-green-500" /> ללא התחייבות</span>
+              <span className="flex items-center gap-1.5"><Check className="w-4 h-4 text-green-500" /> תשלום חד-פעמי לאירוע</span>
+              <span className="flex items-center gap-1.5"><Check className="w-4 h-4 text-green-500" /> {isIndividual ? 'פשוט ומהיר' : 'ללא עלויות קבועות'}</span>
+            </div>
             <button
               onClick={() => navigate('/auth', { state: { mode: 'register', userType: isIndividual ? 'individual' : 'photographer' } })}
               className="bg-slate-900 text-white text-base sm:text-lg lg:text-xl font-bold py-4 sm:py-5 px-8 sm:px-12 rounded-2xl shadow-xl hover:shadow-2xl hover:bg-slate-800 hover:-translate-y-1 transition-all group w-full sm:w-auto"
             >
               <span className="flex items-center justify-center gap-2 sm:gap-3">
                 {isIndividual
-                  ? 'צרו גלריה לאירוע שלכם תוך דקות!'
-                  : 'התחל עכשיו!'}
+                  ? 'צרו את הגלריה שלכם עכשיו — ב-₪49 בלבד!'
+                  : 'התחל להציע גלריות חכמות — מ-₪79 לאירוע!'}
                 <ArrowRight className="w-5 h-5 sm:w-6 sm:h-6 group-hover:translate-x-1 transition-transform" />
               </span>
             </button>
-            <p className="mt-4 text-sm sm:text-base text-slate-500">
-              {isIndividual
-                ? 'תשלום חד-פעמי לאירוע • ללא מנוי • ללא התחייבות'
-                : 'ללא התחייבות • ללא דמי מנוי • שלם רק כשאתה צריך'}
-            </p>
           </div>
         </div>
       </section>
