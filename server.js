@@ -8,8 +8,21 @@ const PORT = process.env.PORT || 8080;
 // API base URL from environment or default
 const API_BASE_URL = process.env.REACT_APP_API_URL || 'https://click2pic-be-env.eba-m28pri3n.us-east-1.elasticbeanstalk.com/api/v1';
 
-// Serve static files from the React build directory
-app.use(express.static(path.join(__dirname, 'build')));
+// Serve static files from the React build directory.
+// JS/CSS bundles have content-hash names → cache them forever.
+// index.html must NOT be cached so browsers always fetch the latest
+// chunk manifest after a new deployment.
+app.use(express.static(path.join(__dirname, 'build'), {
+    setHeaders(res, filePath) {
+        if (filePath.endsWith('index.html')) {
+            res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
+            res.setHeader('Pragma', 'no-cache');
+            res.setHeader('Expires', '0');
+        } else if (/\.(js|css|woff2?|ttf|eot|svg|ico|png|jpg|jpeg|gif|webp)$/.test(filePath)) {
+            res.setHeader('Cache-Control', 'public, max-age=31536000, immutable');
+        }
+    }
+}));
 
 // Health check endpoint for AWS Elastic Beanstalk
 app.get('/health', (req, res) => {
@@ -167,11 +180,13 @@ app.get('/gallery/:id', async (req, res) => {
     }
 
     // Default: serve the regular React app
+    res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
     res.sendFile(path.join(__dirname, 'build', 'index.html'));
 });
 
 // Handle React routing - return index.html for all routes
 app.get('*', (req, res) => {
+    res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
     res.sendFile(path.join(__dirname, 'build', 'index.html'));
 });
 
