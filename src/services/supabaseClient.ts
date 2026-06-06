@@ -13,6 +13,10 @@ export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
     autoRefreshToken: true,
     persistSession: true,
     detectSessionInUrl: true,
+    // Must match the Supabase dashboard setting (Authentication → General → Auth flow type).
+    // Dashboard is set to "Implicit" → tokens arrive as #access_token= hash fragment.
+    // Without this, supabase-js v2 defaults to PKCE and won't parse the hash automatically.
+    flowType: 'implicit',
     storage: window.localStorage,
   },
 });

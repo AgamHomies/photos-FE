@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { supabase } from '../../services/supabaseClient';
 import { supabaseAuthService } from '../../services/supabaseAuthService';
 import { RealAuthAPI } from '../../services/realApi';
 import { Camera, Loader2, CheckCircle2, XCircle } from 'lucide-react';
@@ -11,13 +12,6 @@ const AuthCallbackPage: React.FC = () => {
     const [message, setMessage] = useState('מעבד אימות...');
 
     useEffect(() => {
-        // Supabase v2 processes the #access_token hash asynchronously.
-        // It may fire INITIAL_SESSION or SIGNED_IN (depending on timing).
-        // We use two strategies in parallel:
-        //   1. onAuthStateChange — catches any event that includes a session
-        //   2. Polling getSession() every 300ms as a fallback
-        // Both are guarded by `handled` so only one runs.
-
         let handled = false;
 
         const processSession = async (session: any) => {
@@ -48,44 +42,74 @@ const AuthCallbackPage: React.FC = () => {
             }
         };
 
-        // Strategy 1: listen to ANY auth state change that carries a session.
-        // Supabase v2 may fire INITIAL_SESSION, SIGNED_IN, or TOKEN_REFRESHED.
-        const { data: { subscription } } = supabaseAuthService.onAuthStateChangeRaw((event, session) => {
-            if (session && !handled) {
+        const handleCallback = async () => {
+            // ── Strategy A: Implicit flow — parse #access_token from hash directly ──
+            // Supabase dashboard is set to "Implicit", so tokens arrive in the URL hash.
+            // We parse them manually and call setSession() — most reliable approach.
+            const hash = window.location.hash;
+            if (hash && hash.includes('access_token=')) {
+                const params = new URLSearchParams(hash.substring(1)); // strip leading '#'
+                const accessToken = params.get('access_token');
+                const refreshToken = params.get('refresh_token');
+
+                if (accessToken && refreshToken) {
+                    try {
+                        const { data, error } = await supabase.auth.setSession({
+                            access_token: accessToken,
+                            refresh_token: refreshToken,
+                        });
+                        if (data?.session) {
+                            processSession(data.session);
+                            return;
+                        }
+                        if (error) console.warn('setSession error:', error.message);
+                    } catch (e) {
+                        console.warn('setSession threw:', e);
+                    }
+                }
+            }
+
+            // ── Strategy B: PKCE flow — check if session already exists ──
+            // Handles the case where Supabase auto-processed a ?code= param.
+            const { session } = await supabaseAuthService.getSession();
+            if (session) {
                 processSession(session);
+                return;
             }
-        });
 
-        // Strategy 2: poll getSession() every 300 ms for up to 10 seconds.
-        // Catches cases where onAuthStateChange fires before our listener registers.
-        let attempts = 0;
-        const poll = setInterval(async () => {
-            if (handled) { clearInterval(poll); return; }
-            attempts++;
-            try {
-                const { session } = await supabaseAuthService.getSession();
-                if (session) {
+            // ── Strategy C: Wait for onAuthStateChange ──
+            // Supabase is still processing the hash asynchronously — wait for it.
+            const { data: { subscription } } = supabaseAuthService.onAuthStateChangeRaw((event, sess) => {
+                if (sess && !handled) {
+                    subscription.unsubscribe();
+                    processSession(sess);
+                }
+            });
+
+            // ── Strategy D: Polling fallback — check getSession every 400ms up to 8s ──
+            let attempts = 0;
+            const poll = setInterval(async () => {
+                if (handled) { clearInterval(poll); return; }
+                attempts++;
+                try {
+                    const { session: s } = await supabaseAuthService.getSession();
+                    if (s) { clearInterval(poll); processSession(s); return; }
+                } catch (_) {}
+
+                if (attempts >= 20) { // 8 seconds
                     clearInterval(poll);
-                    processSession(session);
-                    return;
+                    subscription.unsubscribe();
+                    if (!handled) {
+                        handled = true;
+                        setStatus('error');
+                        setMessage('לא נמצא סשן פעיל. נסה שוב.');
+                        setTimeout(() => navigate('/auth'), 3000);
+                    }
                 }
-            } catch (_) { /* ignore, keep polling */ }
-
-            if (attempts >= 33) { // ~10 seconds
-                clearInterval(poll);
-                if (!handled) {
-                    handled = true;
-                    setStatus('error');
-                    setMessage('לא נמצא סשן פעיל. נסה שוב.');
-                    setTimeout(() => navigate('/auth'), 3000);
-                }
-            }
-        }, 300);
-
-        return () => {
-            subscription.unsubscribe();
-            clearInterval(poll);
+            }, 400);
         };
+
+        handleCallback();
     }, [navigate]);
 
     return (
