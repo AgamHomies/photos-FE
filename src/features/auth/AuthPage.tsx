@@ -78,8 +78,8 @@ const AuthPage: React.FC = () => {
                     // Sync user with backend
                     const syncResponse = await BackendService.syncUser(userType);
 
-                    // Check if profile is complete
-                    if (syncResponse?.data?.profileComplete) {
+                    // Individual users skip profile completion — it's photographer-only
+                    if (userType === 'individual' || syncResponse?.data?.profileComplete) {
                         navigate('/admin');
                     } else {
                         navigate('/complete-profile');
@@ -211,23 +211,10 @@ const AuthPage: React.FC = () => {
                         // Check if profile is complete based on backend response
                         const isProfileComplete = syncResponse?.data?.profileComplete;
 
-                        if (isProfileComplete) {
+                        // Individual users skip profile completion — it's photographer-only
+                        if (isProfileComplete || userType === 'individual') {
                             navigate('/admin');
                         } else {
-                            // If it's registration, show alert first
-                            if (!isLogin) {
-                                // For redirect, we might prefer passing state or using a longer toast.
-                                // triggerToast('הרשמה בוצעה בהצלחה! אנא השלם את הפרופיל שלך.'); 
-                                // Actually since we navigate immediately, the toast might be lost unless we put it in context.
-                                // But let's trigger it and hope for the best or pass state.
-                                // Given the architecture, I'll stick to triggerToast but it might not show if we navigate away.
-                                // However, existing code was alert() then navigate. 
-                                // To emulate blocking alert, we can't easily. 
-                                // But navigation usually clears the component. 
-                                // Let's rely on ProfileCompletionPage to show a welcome message? 
-                                // Or better, just remove the alert here as the next page is self-explanatory.
-                                // User requested "styled messages" so... let's trigger it.
-                            }
                             navigate('/complete-profile', { state: { message: 'הרשמה בוצעה בהצלחה! אנא השלם את הפרופיל שלך.' } });
                         }
                     } catch (backendError: any) {

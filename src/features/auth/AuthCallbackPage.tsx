@@ -39,7 +39,9 @@ const AuthCallbackPage: React.FC = () => {
                         setMessage('אימות הצליח! מעביר לדף הראשי...');
 
                         const isComplete = syncResponse?.data?.profileComplete;
-                        setTimeout(() => navigate(isComplete ? '/admin' : '/complete-profile'), 1500);
+                        // Individual users skip profile completion — it's photographer-only
+                        const dest = (isComplete || pendingType === 'individual') ? '/admin' : '/complete-profile';
+                        setTimeout(() => navigate(dest), 1500);
                     } catch (syncError: any) {
                         console.error('Sync error:', syncError);
                         setStatus('error');
