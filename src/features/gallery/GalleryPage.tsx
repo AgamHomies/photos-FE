@@ -1473,12 +1473,12 @@ END:VCARD`;
 
                      {event?.createdAs === 'individual' ? (
                         <>
-                           <a
-                              href="/auth"
+                           <button
+                              onClick={() => { localStorage.setItem('active_mode', 'individual'); window.location.href = '/'; }}
                               className="group relative overflow-hidden bg-[#C4A882] text-white py-4 px-8 rounded-full font-bold shadow-lg hover:shadow-xl hover:bg-[#B39872] transition-all transform hover:-translate-y-0.5 active:translate-y-0 text-center"
                            >
                               הצטרפו ל-Click2Pic
-                           </a>
+                           </button>
                         </>
                      ) : (
                         <>
