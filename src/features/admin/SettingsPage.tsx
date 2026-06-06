@@ -14,6 +14,12 @@ const SettingsPage: React.FC = () => {
     const { user } = useAuth();
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [isLoading, setIsLoading] = useState(true);
+
+    // Individual (event-owner) users have no profile to edit — redirect them away
+    const isIndividual = (localStorage.getItem('active_mode') ?? 'photographer') === 'individual';
+    useEffect(() => {
+        if (isIndividual) navigate('/admin', { replace: true });
+    }, [isIndividual, navigate]);
     const [formData, setFormData] = useState({
         fullName: '',
         email: '', // Contact email
