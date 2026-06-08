@@ -131,10 +131,17 @@ app.get('/gallery/:id', async (req, res) => {
                 const event = data.event;
                 const photographer = data.photographer || {};
 
-                // Priority: Photographer logo -> Event cover image -> Default site logo
-                const ogImage = photographer.logo_url || event.cover_image_url || `${req.protocol}://${req.get('host')}/logo512.png`;
-                const ogTitle = `${event.title} | ${photographer.name || 'Click2Pic'}`;
-                const ogDesc = `לחצו לצפייה בגלריה המלאה של ${event.title}`;
+                const isIndividual = event.created_as === 'individual';
+
+                // For individual events: use Click2Pic branding instead of "New Photographer"
+                const brandName = isIndividual ? 'Click2Pic' : (photographer.name || 'Click2Pic');
+                const ogImage = (!isIndividual && photographer.logo_url) || event.cover_image_url || `${req.protocol}://${req.get('host')}/logo512.png`;
+                const ogTitle = isIndividual
+                    ? `${event.title} | גלריה חכמה - Click2Pic`
+                    : `${event.title} | ${brandName}`;
+                const ogDesc = isIndividual
+                    ? `לחצו לצפייה בגלריה החכמה של ${event.title} — מופעל על ידי Click2Pic`
+                    : `לחצו לצפייה בגלריה המלאה של ${event.title}`;
 
                 const html = `
 <!DOCTYPE html>
