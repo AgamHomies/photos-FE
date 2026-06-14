@@ -1,5 +1,5 @@
 import React, { useEffect, useState, useRef, useCallback } from 'react';
-import { QRCodeCanvas } from 'qrcode.react';
+import QRCode from 'qrcode';
 import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import { BackendService } from '../../services/backendService';
 import { Event, Photo } from '../../types';
@@ -92,6 +92,7 @@ const EventManagePage: React.FC = () => {
         showQR: boolean;
     }>({ isOpen: false, type: 'guest', url: '', title: '', showQR: false });
     const qrCanvasRef = useRef<HTMLDivElement>(null);
+    const [qrDataUrl, setQrDataUrl] = useState<string>('');
 
     const [shareModalOpen, setShareModalOpen] = useState(false);
 
@@ -136,12 +137,18 @@ const EventManagePage: React.FC = () => {
         }
     };
 
+    useEffect(() => {
+        if (linkModal.showQR && linkModal.url) {
+            QRCode.toDataURL(linkModal.url, { width: 220, margin: 1, color: { dark: '#0f172a', light: '#ffffff' } })
+                .then(url => setQrDataUrl(url))
+                .catch(console.error);
+        }
+    }, [linkModal.showQR, linkModal.url]);
+
     const downloadQR = () => {
-        const canvas = qrCanvasRef.current?.querySelector('canvas');
-        if (!canvas) return;
-        const dataUrl = canvas.toDataURL('image/png');
+        if (!qrDataUrl) return;
         const a = document.createElement('a');
-        a.href = dataUrl;
+        a.href = qrDataUrl;
         a.download = `qr-${event?.name ?? 'gallery'}.png`;
         a.click();
     };
@@ -769,29 +776,33 @@ const EventManagePage: React.FC = () => {
 
                         {/* Links - always visible for non-expired events */}
                         {showLinks && (
-                            <div className="flex gap-2 animate-fade-in">
-                                <button
-                                    onClick={() => handleLinkClick('guest')}
-                                    className={`justify-center px-3.5 py-2 text-sm font-bold rounded-xl transition-colors flex items-center gap-2 ${showProgressBar ? 'text-amber-600 bg-amber-50 border border-amber-200 hover:bg-amber-100' : 'text-slate-600 border border-slate-200 hover:bg-slate-50'}`}
-                                    title={showProgressBar ? 'תמונות עדיין בזיהוי פנים' : 'קישור לאורחים'}
-                                >
-                                    {showProgressBar ? <Loader2 className="w-4 h-4 animate-spin" /> : <Users className="w-4 h-4" />}
-                                    <span>לאורחים</span>
-                                </button>
-                                <button
-                                    onClick={() => handleLinkClick('couple')}
-                                    className="justify-center px-3.5 py-2 text-sm font-bold text-cyan-600 bg-cyan-50 hover:bg-cyan-100 rounded-xl transition-colors flex items-center gap-2 border border-cyan-100"
-                                >
-                                    <Heart className="w-4 h-4" />
-                                    <span>לבעלי האירוע</span>
-                                </button>
-                                <button
-                                    onClick={shareEvent}
-                                    className="justify-center px-3.5 py-2 text-sm font-bold text-green-600 bg-green-50 hover:bg-green-100 rounded-xl transition-colors flex items-center gap-2 border border-green-100"
-                                >
-                                    <Share2 className="w-4 h-4" />
-                                    <span>שתף</span>
-                                </button>
+                            <div className="flex items-center gap-2 animate-fade-in">
+                                {showProgressBar && (
+                                    <Loader2 className="w-4 h-4 text-amber-500 animate-spin flex-shrink-0" />
+                                )}
+                                <div className="flex gap-2">
+                                    <button
+                                        onClick={() => handleLinkClick('guest')}
+                                        className="justify-center px-3.5 py-2 text-sm font-bold text-slate-600 border border-slate-200 hover:bg-slate-50 rounded-xl transition-colors flex items-center gap-2"
+                                    >
+                                        <Users className="w-4 h-4" />
+                                        <span>לאורחים</span>
+                                    </button>
+                                    <button
+                                        onClick={() => handleLinkClick('couple')}
+                                        className="justify-center px-3.5 py-2 text-sm font-bold text-cyan-600 bg-cyan-50 hover:bg-cyan-100 rounded-xl transition-colors flex items-center gap-2 border border-cyan-100"
+                                    >
+                                        <Heart className="w-4 h-4" />
+                                        <span>לבעלי האירוע</span>
+                                    </button>
+                                    <button
+                                        onClick={shareEvent}
+                                        className="justify-center px-3.5 py-2 text-sm font-bold text-green-600 bg-green-50 hover:bg-green-100 rounded-xl transition-colors flex items-center gap-2 border border-green-100"
+                                    >
+                                        <Share2 className="w-4 h-4" />
+                                        <span>שתף</span>
+                                    </button>
+                                </div>
                             </div>
                         )}
                     </div>
@@ -1109,14 +1120,10 @@ const EventManagePage: React.FC = () => {
 
                                 {/* QR Code */}
                                 <div ref={qrCanvasRef} className="p-4 bg-white rounded-2xl border border-slate-100 shadow-sm mb-6">
-                                    <QRCodeCanvas
-                                        value={linkModal.url}
-                                        size={200}
-                                        bgColor="#ffffff"
-                                        fgColor="#0f172a"
-                                        level="M"
-                                        includeMargin={false}
-                                    />
+                                    {qrDataUrl
+                                        ? <img src={qrDataUrl} alt="QR Code" className="w-52 h-52" />
+                                        : <div className="w-52 h-52 flex items-center justify-center"><Loader2 className="w-8 h-8 animate-spin text-slate-400" /></div>
+                                    }
                                 </div>
 
                                 {/* Download Button */}
