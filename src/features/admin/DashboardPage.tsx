@@ -25,7 +25,8 @@ import {
     Crown,
     Award,
     Star,
-    MapPin
+    MapPin,
+    Loader2
 } from 'lucide-react';
 import { Toast } from '../../components';
 import PackageSelectionModal from './components/PackageSelectionModal';
@@ -865,39 +866,43 @@ const DashboardPage: React.FC = () => {
                                                     <X className="w-3 h-3" />
                                                     <span>לא זמין</span>
                                                 </div>
-                                            ) : (event.isPublished || event.initialProcessingDone) ? (
-                                                <div className="flex gap-2 justify-center">
-                                                    <button
-                                                        onClick={(e) => openLinkModal(e, 'guest', `/gallery/${event.slug || event.id}`)}
-                                                        className="w-24 justify-center px-2 py-1.5 text-xs font-bold text-slate-600 border border-slate-200 hover:bg-slate-50 rounded-lg transition-colors flex items-center gap-1"
-                                                        title="קישור לאורחים"
-                                                    >
-                                                        <Users className="w-3 h-3" />
-                                                        <span>לאורחים</span>
-                                                    </button>
-
-                                                    <button
-                                                        onClick={(e) => openLinkModal(e, 'couple', `/gallery/${event.coupleSlug || event.id}`)}
-                                                        className="w-24 justify-center px-2 py-1.5 text-xs font-bold text-cyan-600 bg-cyan-50 hover:bg-cyan-100 rounded-lg transition-colors flex items-center gap-1 border border-cyan-100"
-                                                        title="קישור לבעלי האירוע"
-                                                    >
-                                                        <Heart className="w-3 h-3" />
-                                                        <span>לבעלי האירוע</span>
-                                                    </button>
-
-                                                    <button
-                                                        onClick={(e) => shareEvent(event, e)}
-                                                        className="w-24 justify-center px-2 py-1.5 text-xs font-bold text-green-600 bg-green-50 hover:bg-green-100 rounded-lg transition-colors flex items-center gap-1 border border-green-100"
-                                                        title="שתף אירוע"
-                                                    >
-                                                        <Share2 className="w-3 h-3" />
-                                                        <span>שתף</span>
-                                                    </button>
-                                                </div>
                                             ) : (
-                                                <div className="px-3 py-1.5 text-xs font-bold text-orange-500 bg-orange-50 rounded-lg flex items-center gap-1.5 border border-orange-100 cursor-help justify-center" title="התמונות עדיין עוברות עיבוד">
-                                                    <div className="w-2 h-2 rounded-full bg-orange-500 animate-pulse"></div>
-                                                    <span>בעיבוד...</span>
+                                                <div className="flex flex-col items-center gap-1.5">
+                                                    {/* Processing badge — only when photos not yet done */}
+                                                    {!(event.isPublished || event.initialProcessingDone) && (
+                                                        <div className="text-xs font-medium text-amber-600 bg-amber-50 rounded-full px-2 py-0.5 flex items-center gap-1 border border-amber-100">
+                                                            <Loader2 className="w-2.5 h-2.5 animate-spin" />
+                                                            <span>בעיבוד</span>
+                                                        </div>
+                                                    )}
+                                                    <div className="flex gap-2 justify-center">
+                                                        <button
+                                                            onClick={(e) => openLinkModal(e, 'guest', `/gallery/${event.slug || event.id}`)}
+                                                            className="w-24 justify-center px-2 py-1.5 text-xs font-bold text-slate-600 border border-slate-200 hover:bg-slate-50 rounded-lg transition-colors flex items-center gap-1"
+                                                            title="קישור לאורחים"
+                                                        >
+                                                            <Users className="w-3 h-3" />
+                                                            <span>לאורחים</span>
+                                                        </button>
+
+                                                        <button
+                                                            onClick={(e) => openLinkModal(e, 'couple', `/gallery/${event.coupleSlug || event.id}`)}
+                                                            className="w-24 justify-center px-2 py-1.5 text-xs font-bold text-cyan-600 bg-cyan-50 hover:bg-cyan-100 rounded-lg transition-colors flex items-center gap-1 border border-cyan-100"
+                                                            title="קישור לבעלי האירוע"
+                                                        >
+                                                            <Heart className="w-3 h-3" />
+                                                            <span>לבעלי האירוע</span>
+                                                        </button>
+
+                                                        <button
+                                                            onClick={(e) => shareEvent(event, e)}
+                                                            className="w-24 justify-center px-2 py-1.5 text-xs font-bold text-green-600 bg-green-50 hover:bg-green-100 rounded-lg transition-colors flex items-center gap-1 border border-green-100"
+                                                            title="שתף אירוע"
+                                                        >
+                                                            <Share2 className="w-3 h-3" />
+                                                            <span>שתף</span>
+                                                        </button>
+                                                    </div>
                                                 </div>
                                             )}
                                         </td>

@@ -676,7 +676,9 @@ const EventManagePage: React.FC = () => {
     };
     const etaLabel = formatEta(activeEtaSeconds);
 
-    const showLinks = !showProgressBar && (event.isPublished || event.initialProcessingDone) && event.status !== 'expired';
+    // Always show links for any non-expired event — even when there are no photos yet
+    // or while photos are being processed. A small badge indicates upload-in-progress.
+    const showLinks = event.status !== 'expired';
 
     return (
         <Layout>
@@ -765,30 +767,39 @@ const EventManagePage: React.FC = () => {
                             </div>
                         </div>
 
-                        {/* Links - Only visible when done */}
+                        {/* Links - always visible for non-expired events */}
                         {showLinks && (
-                            <div className="flex gap-2 animate-fade-in">
-                                <button
-                                    onClick={() => handleLinkClick('guest')}
-                                    className="justify-center px-3.5 py-2 text-sm font-bold text-slate-600 border border-slate-200 hover:bg-slate-50 rounded-xl transition-colors flex items-center gap-2"
-                                >
-                                    <Users className="w-4 h-4" />
-                                    <span>לאורחים</span>
-                                </button>
-                                <button
-                                    onClick={() => handleLinkClick('couple')}
-                                    className="justify-center px-3.5 py-2 text-sm font-bold text-cyan-600 bg-cyan-50 hover:bg-cyan-100 rounded-xl transition-colors flex items-center gap-2 border border-cyan-100"
-                                >
-                                    <Heart className="w-4 h-4" />
-                                    <span>לבעלי האירוע</span>
-                                </button>
-                                <button
-                                    onClick={shareEvent}
-                                    className="justify-center px-3.5 py-2 text-sm font-bold text-green-600 bg-green-50 hover:bg-green-100 rounded-xl transition-colors flex items-center gap-2 border border-green-100"
-                                >
-                                    <Share2 className="w-4 h-4" />
-                                    <span>שתף</span>
-                                </button>
+                            <div className="flex items-center gap-3 flex-wrap justify-end animate-fade-in">
+                                {/* Upload-in-progress badge */}
+                                {showProgressBar && (
+                                    <span className="text-xs font-medium text-amber-600 bg-amber-50 border border-amber-100 rounded-full px-2.5 py-1 flex items-center gap-1.5">
+                                        <Loader2 className="w-3 h-3 animate-spin" />
+                                        תמונות בעיבוד...
+                                    </span>
+                                )}
+                                <div className="flex gap-2">
+                                    <button
+                                        onClick={() => handleLinkClick('guest')}
+                                        className="justify-center px-3.5 py-2 text-sm font-bold text-slate-600 border border-slate-200 hover:bg-slate-50 rounded-xl transition-colors flex items-center gap-2"
+                                    >
+                                        <Users className="w-4 h-4" />
+                                        <span>לאורחים</span>
+                                    </button>
+                                    <button
+                                        onClick={() => handleLinkClick('couple')}
+                                        className="justify-center px-3.5 py-2 text-sm font-bold text-cyan-600 bg-cyan-50 hover:bg-cyan-100 rounded-xl transition-colors flex items-center gap-2 border border-cyan-100"
+                                    >
+                                        <Heart className="w-4 h-4" />
+                                        <span>לבעלי האירוע</span>
+                                    </button>
+                                    <button
+                                        onClick={shareEvent}
+                                        className="justify-center px-3.5 py-2 text-sm font-bold text-green-600 bg-green-50 hover:bg-green-100 rounded-xl transition-colors flex items-center gap-2 border border-green-100"
+                                    >
+                                        <Share2 className="w-4 h-4" />
+                                        <span>שתף</span>
+                                    </button>
+                                </div>
                             </div>
                         )}
                     </div>
