@@ -870,7 +870,6 @@ const DashboardPage: React.FC = () => {
                                                 const isProcessing = event.photoCount > 0 && !(event.isPublished || event.initialProcessingDone);
                                                 return (
                                                     <div className="flex items-center gap-1.5 justify-center">
-                                                        {isProcessing && <Loader2 className="w-3 h-3 text-amber-500 animate-spin flex-shrink-0" />}
                                                         <div className="flex gap-2">
                                                             <button
                                                                 onClick={(e) => openLinkModal(e, 'guest', `/gallery/${event.slug || event.id}`)}
@@ -899,6 +898,7 @@ const DashboardPage: React.FC = () => {
                                                                 <span>שתף</span>
                                                             </button>
                                                         </div>
+                                                        {isProcessing && <Loader2 className="w-3 h-3 text-amber-500 animate-spin flex-shrink-0" />}
                                                     </div>
                                                 );
                                             })()}
