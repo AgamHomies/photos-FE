@@ -1,4 +1,5 @@
-import React, { useEffect, useState, useRef } from 'react';
+import React, { useEffect, useState, useRef, useCallback } from 'react';
+import { QRCodeCanvas } from 'qrcode.react';
 import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import { BackendService } from '../../services/backendService';
 import { Event, Photo } from '../../types';
@@ -24,7 +25,10 @@ import {
     X,
     FolderUp,
     Eye,
-    Share2
+    Share2,
+    QrCode,
+    Download,
+    ChevronRight
 } from 'lucide-react';
 import EventPreviewModal from './components/EventPreviewModal';
 import { useUpload } from '../../context/UploadContext';
@@ -85,7 +89,9 @@ const EventManagePage: React.FC = () => {
         type: 'guest' | 'couple' | 'preview';
         url: string;
         title: string;
-    }>({ isOpen: false, type: 'guest', url: '', title: '' });
+        showQR: boolean;
+    }>({ isOpen: false, type: 'guest', url: '', title: '', showQR: false });
+    const qrCanvasRef = useRef<HTMLDivElement>(null);
 
     const [shareModalOpen, setShareModalOpen] = useState(false);
 
@@ -106,7 +112,8 @@ const EventManagePage: React.FC = () => {
             isOpen: true,
             type,
             url,
-            title: type === 'guest' ? 'קישור לאורחים' : 'קישור לבעלי האירוע'
+            title: type === 'guest' ? 'קישור לאורחים' : 'קישור לבעלי האירוע',
+            showQR: false,
         });
     };
 
@@ -127,6 +134,16 @@ const EventManagePage: React.FC = () => {
             showNotification('הקישור הועתק בהצלחה');
             setLinkModal(prev => ({ ...prev, isOpen: false }));
         }
+    };
+
+    const downloadQR = () => {
+        const canvas = qrCanvasRef.current?.querySelector('canvas');
+        if (!canvas) return;
+        const dataUrl = canvas.toDataURL('image/png');
+        const a = document.createElement('a');
+        a.href = dataUrl;
+        a.download = `qr-${event?.name ?? 'gallery'}.png`;
+        a.click();
     };
 
     const showNotification = (message: string, type: 'success' | 'error' = 'success') => {
@@ -179,7 +196,7 @@ const EventManagePage: React.FC = () => {
                     // Clear state immediately to prevent double upload
                     window.history.replaceState({}, document.title);
 
-                    if (id) {
+                    if (id && state) {
                         startUpload(id, state.filesToUpload ?? [], state.coverFile);
                     }
                 }
@@ -1063,45 +1080,97 @@ const EventManagePage: React.FC = () => {
                     <div className="bg-white rounded-3xl shadow-2xl max-w-sm w-full p-6 relative">
                         {/* Close Button */}
                         <button
-                            onClick={() => setLinkModal(prev => ({ ...prev, isOpen: false }))}
+                            onClick={() => setLinkModal(prev => ({ ...prev, isOpen: false, showQR: false }))}
                             className="absolute top-4 right-4 p-2 text-slate-400 hover:text-slate-600 transition-colors"
                         >
                             <X className="w-5 h-5" />
                         </button>
 
-                        <div className="flex flex-col items-center text-center mt-2">
-                            {/* Icon */}
-                            <div className={`w-14 h-14 rounded-full flex items-center justify-center mb-4 ${linkModal.type === 'guest' ? 'bg-slate-50 text-slate-600' : 'bg-pink-50 text-pink-500'}`}>
-                                {linkModal.type === 'guest' ? (
-                                    <Users className="w-7 h-7" />
-                                ) : (
-                                    <Heart className="w-7 h-7" />
-                                )}
-                            </div>
-
-                            {/* Title */}
-                            <h3 className="text-xl font-bold text-slate-900 mb-1">{linkModal.title}</h3>
-                            <p className="text-slate-500 text-sm mb-6">בחר פעולה עבור הקישור</p>
-
-                            {/* Buttons */}
-                            <div className="w-full flex flex-col gap-3">
+                        {linkModal.showQR ? (
+                            /* QR Code View */
+                            <div className="flex flex-col items-center text-center mt-2">
+                                {/* Back button */}
                                 <button
-                                    onClick={() => window.open(linkModal.url, '_blank')}
-                                    className="w-full py-3 px-4 rounded-xl border border-cyan-100 bg-cyan-50 text-cyan-700 font-bold hover:bg-cyan-100 transition-colors flex items-center justify-center gap-2"
+                                    onClick={() => setLinkModal(prev => ({ ...prev, showQR: false }))}
+                                    className="absolute top-4 left-4 p-2 text-slate-400 hover:text-slate-600 transition-colors"
                                 >
-                                    <span>פתח בחלון חדש</span>
-                                    <ExternalLink className="w-4 h-4" />
+                                    <ChevronRight className="w-5 h-5" />
                                 </button>
 
+                                <div className="w-14 h-14 rounded-full bg-slate-50 text-slate-600 flex items-center justify-center mb-4">
+                                    <QrCode className="w-7 h-7" />
+                                </div>
+
+                                <h3 className="text-xl font-bold text-slate-900 mb-1">QR לגלריית אורחים</h3>
+                                <p className="text-slate-500 text-sm mb-6">סרוק כדי לפתוח את הגלריה</p>
+
+                                {/* QR Code */}
+                                <div ref={qrCanvasRef} className="p-4 bg-white rounded-2xl border border-slate-100 shadow-sm mb-6">
+                                    <QRCodeCanvas
+                                        value={linkModal.url}
+                                        size={200}
+                                        bgColor="#ffffff"
+                                        fgColor="#0f172a"
+                                        level="M"
+                                        includeMargin={false}
+                                    />
+                                </div>
+
+                                {/* Download Button */}
                                 <button
-                                    onClick={copyLink}
+                                    onClick={downloadQR}
                                     className="w-full py-3 px-4 rounded-xl bg-slate-900 text-white font-bold hover:bg-slate-800 transition-colors flex items-center justify-center gap-2 shadow-lg shadow-slate-200"
                                 >
-                                    <span>העתק קישור</span>
-                                    <Copy className="w-4 h-4" />
+                                    <span>הורד QR</span>
+                                    <Download className="w-4 h-4" />
                                 </button>
                             </div>
-                        </div>
+                        ) : (
+                            /* Default Link View */
+                            <div className="flex flex-col items-center text-center mt-2">
+                                {/* Icon */}
+                                <div className={`w-14 h-14 rounded-full flex items-center justify-center mb-4 ${linkModal.type === 'guest' ? 'bg-slate-50 text-slate-600' : 'bg-pink-50 text-pink-500'}`}>
+                                    {linkModal.type === 'guest' ? (
+                                        <Users className="w-7 h-7" />
+                                    ) : (
+                                        <Heart className="w-7 h-7" />
+                                    )}
+                                </div>
+
+                                {/* Title */}
+                                <h3 className="text-xl font-bold text-slate-900 mb-1">{linkModal.title}</h3>
+                                <p className="text-slate-500 text-sm mb-6">בחר פעולה עבור הקישור</p>
+
+                                {/* Buttons */}
+                                <div className="w-full flex flex-col gap-3">
+                                    <button
+                                        onClick={() => window.open(linkModal.url, '_blank')}
+                                        className="w-full py-3 px-4 rounded-xl border border-cyan-100 bg-cyan-50 text-cyan-700 font-bold hover:bg-cyan-100 transition-colors flex items-center justify-center gap-2"
+                                    >
+                                        <span>פתח בחלון חדש</span>
+                                        <ExternalLink className="w-4 h-4" />
+                                    </button>
+
+                                    <button
+                                        onClick={copyLink}
+                                        className="w-full py-3 px-4 rounded-xl bg-slate-900 text-white font-bold hover:bg-slate-800 transition-colors flex items-center justify-center gap-2 shadow-lg shadow-slate-200"
+                                    >
+                                        <span>העתק קישור</span>
+                                        <Copy className="w-4 h-4" />
+                                    </button>
+
+                                    {linkModal.type === 'guest' && (
+                                        <button
+                                            onClick={() => setLinkModal(prev => ({ ...prev, showQR: true }))}
+                                            className="w-full py-3 px-4 rounded-xl border border-slate-200 bg-slate-50 text-slate-700 font-bold hover:bg-slate-100 transition-colors flex items-center justify-center gap-2"
+                                        >
+                                            <span>QR ברקוד</span>
+                                            <QrCode className="w-4 h-4" />
+                                        </button>
+                                    )}
+                                </div>
+                            </div>
+                        )}
                     </div>
                 </div>
             )}
