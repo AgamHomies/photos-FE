@@ -928,7 +928,6 @@ const DashboardPage: React.FC = () => {
                                                                 <span>שתף</span>
                                                             </button>
                                                         </div>
-                                                        {isProcessing && <Loader2 className="w-3 h-3 text-amber-500 animate-spin flex-shrink-0" />}
                                                     </div>
                                                 );
                                             })()}
