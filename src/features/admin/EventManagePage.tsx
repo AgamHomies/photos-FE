@@ -777,9 +777,6 @@ const EventManagePage: React.FC = () => {
                         {/* Links - always visible for non-expired events */}
                         {showLinks && (
                             <div className="flex items-center gap-2 animate-fade-in">
-                                {showProgressBar && (
-                                    <Loader2 className="w-4 h-4 text-amber-500 animate-spin flex-shrink-0" />
-                                )}
                                 <div className="flex gap-2">
                                     <button
                                         onClick={() => handleLinkClick('guest')}
