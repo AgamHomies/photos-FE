@@ -845,10 +845,16 @@ const DashboardPage: React.FC = () => {
                                                             <ImageIcon className="w-6 h-6" />
                                                         </div>
                                                     )}
-                                                    <div
-                                                        className={`absolute -top-1 -right-1 w-3 h-3 rounded-full border-2 border-white ${event.status === 'active' ? 'bg-green-500 shadow-[0_0_8px_rgba(34,197,94,0.4)]' : 'bg-slate-300'}`}
-                                                        title={event.status === 'active' ? 'פעיל' : 'פג תוקף'}
-                                                    ></div>
+                                                    {(event.photoCount > 0 && !(event.isPublished || event.initialProcessingDone)) ? (
+                                                        <div className="absolute -top-1 -right-1 w-3.5 h-3.5 flex items-center justify-center bg-white rounded-full border border-white">
+                                                            <Loader2 className="w-3 h-3 text-amber-500 animate-spin" />
+                                                        </div>
+                                                    ) : (
+                                                        <div
+                                                            className={`absolute -top-1 -right-1 w-3 h-3 rounded-full border-2 border-white ${event.status === 'active' ? 'bg-green-500 shadow-[0_0_8px_rgba(34,197,94,0.4)]' : 'bg-slate-300'}`}
+                                                            title={event.status === 'active' ? 'פעיל' : 'פג תוקף'}
+                                                        ></div>
+                                                    )}
                                                 </div>
                                                 <div className="min-w-0 flex-1">
                                                     <div
