@@ -230,23 +230,13 @@ const CreateEventPage: React.FC = () => {
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
 
-        // Validation for mandatory fields
+        // Validation for mandatory fields only
         if (!formData.name.trim() || !formData.date || !formData.location.trim()) {
             triggerToast('נא למלא את כל פרטי האירוע', 'error');
             return;
         }
 
-        if (!coverImageFile) {
-            triggerToast('נא לבחור תמונת קאבר לאירוע', 'error');
-            return;
-        }
-
-        if (galleryFiles.length === 0) {
-            triggerToast('נא לבחור תמונות לגלריה', 'error');
-            return;
-        }
-
-        await processCreateEvent(galleryFiles);
+        await processCreateEvent();
     };
 
     const handleDuplicateOption = (option: 'skip' | 'replace' | 'both') => {
@@ -286,11 +276,10 @@ const CreateEventPage: React.FC = () => {
         }
     };
 
-    const processCreateEvent = async (files: File[]) => {
+    const processCreateEvent = async () => {
         setStep('processing');
 
         try {
-            // 1. Creating Event
             setProcessingStage('יוצר אירוע במערכת...');
             setUploadProgress(0);
 
@@ -304,17 +293,19 @@ const CreateEventPage: React.FC = () => {
                 createdAs: (localStorage.getItem('active_mode') ?? 'photographer') as 'photographer' | 'individual',
             };
 
-            console.log('Creating event with package:', packageType);
-
-            // Create event
             const newEvent = await BackendService.createEvent(eventPayload);
 
-            // 2. Redirect to Admin Page with files to upload
+            // Navigate to event page — pass files/cover only if the user selected any
+            const hasFiles = galleryFiles.length > 0;
+            const hasCover = !!coverImageFile;
+
             navigate(`/admin/events/${newEvent.id}`, {
                 state: {
-                    filesToUpload: files,
-                    coverFile: coverImageFile,
-                    isNewEvent: true
+                    ...(hasFiles || hasCover ? {
+                        filesToUpload: galleryFiles,
+                        coverFile: coverImageFile ?? undefined,
+                    } : {}),
+                    isNewEvent: true,
                 }
             });
         } catch (error) {
@@ -437,7 +428,9 @@ const CreateEventPage: React.FC = () => {
 
                                     {/* Left Column: Cover Image Upload */}
                                     <div className="flex flex-col h-full">
-                                        <label className="block text-sm font-medium text-slate-700 mb-2 text-right">תמונת קאבר</label>
+                                        <label className="block text-sm font-medium text-slate-700 mb-2 text-right">
+                                            תמונת קאבר <span className="text-slate-400 font-normal">(אופציונלי)</span>
+                                        </label>
                                         <div className="border-2 border-dashed border-slate-200 rounded-xl p-4 text-center hover:border-cyan-500 transition-colors cursor-pointer relative group flex-1 w-full mx-auto flex flex-col items-center justify-center bg-slate-50">
                                             <input
                                                 type="file"
@@ -473,7 +466,7 @@ const CreateEventPage: React.FC = () => {
                                 <div className="mb-6">
                                     <div className="flex items-center gap-2 text-slate-800 font-bold text-lg mb-2">
                                         <ImageIcon className="w-5 h-5 text-cyan-500" />
-                                        <h2>העלאת תמונות האירוע</h2>
+                                        <h2>העלאת תמונות האירוע <span className="text-slate-400 font-normal text-base">(אופציונלי)</span></h2>
                                     </div>
                                     <div className="flex items-center gap-2 text-sm">
                                         <span className="text-slate-600">מגבלת תמונות בחבילה:</span>
@@ -586,7 +579,7 @@ const CreateEventPage: React.FC = () => {
                             </div>
 
                             <p className="text-center text-xs text-slate-400">
-                                תוכל לערוך את פרטי האירוע גם לאחר יצירתו.
+                                ניתן להוסיף תמונות וקאבר גם לאחר יצירת האירוע.
                             </p>
                         </form>
                     )}

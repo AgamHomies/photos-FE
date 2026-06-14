@@ -173,13 +173,14 @@ const EventManagePage: React.FC = () => {
             // First load the event data so the user sees the page (not empty loading screen)
             loadEventData(id).then(() => {
                 // If we have files to upload from creation flow, start uploading them NOW
-                if (state?.filesToUpload && !hasStartedUpload.current) {
+                const hasFilesToUpload = (state?.filesToUpload?.length ?? 0) > 0 || !!state?.coverFile;
+                if (hasFilesToUpload && !hasStartedUpload.current) {
                     hasStartedUpload.current = true;
                     // Clear state immediately to prevent double upload
                     window.history.replaceState({}, document.title);
 
                     if (id) {
-                        startUpload(id, state.filesToUpload, state.coverFile);
+                        startUpload(id, state.filesToUpload ?? [], state.coverFile);
                     }
                 }
             });
