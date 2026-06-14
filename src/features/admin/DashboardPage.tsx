@@ -866,22 +866,16 @@ const DashboardPage: React.FC = () => {
                                                     <X className="w-3 h-3" />
                                                     <span>לא זמין</span>
                                                 </div>
-                                            ) : (
-                                                <div className="flex flex-col items-center gap-1.5">
-                                                    {/* Processing badge — only when photos not yet done */}
-                                                    {!(event.isPublished || event.initialProcessingDone) && (
-                                                        <div className="text-xs font-medium text-amber-600 bg-amber-50 rounded-full px-2 py-0.5 flex items-center gap-1 border border-amber-100">
-                                                            <Loader2 className="w-2.5 h-2.5 animate-spin" />
-                                                            <span>בעיבוד</span>
-                                                        </div>
-                                                    )}
+                                            ) : (() => {
+                                                const isProcessing = event.photoCount > 0 && !(event.isPublished || event.initialProcessingDone);
+                                                return (
                                                     <div className="flex gap-2 justify-center">
                                                         <button
                                                             onClick={(e) => openLinkModal(e, 'guest', `/gallery/${event.slug || event.id}`)}
-                                                            className="w-24 justify-center px-2 py-1.5 text-xs font-bold text-slate-600 border border-slate-200 hover:bg-slate-50 rounded-lg transition-colors flex items-center gap-1"
-                                                            title="קישור לאורחים"
+                                                            className={`w-24 justify-center px-2 py-1.5 text-xs font-bold rounded-lg transition-colors flex items-center gap-1 ${isProcessing ? 'text-amber-600 bg-amber-50 border border-amber-200 hover:bg-amber-100' : 'text-slate-600 border border-slate-200 hover:bg-slate-50'}`}
+                                                            title={isProcessing ? 'תמונות עדיין בזיהוי פנים' : 'קישור לאורחים'}
                                                         >
-                                                            <Users className="w-3 h-3" />
+                                                            {isProcessing ? <Loader2 className="w-3 h-3 animate-spin" /> : <Users className="w-3 h-3" />}
                                                             <span>לאורחים</span>
                                                         </button>
 
@@ -903,8 +897,8 @@ const DashboardPage: React.FC = () => {
                                                             <span>שתף</span>
                                                         </button>
                                                     </div>
-                                                </div>
-                                            )}
+                                                );
+                                            })()}
                                         </td>
 
                                     </tr>
