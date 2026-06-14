@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { BackendService } from '../../services/backendService';
 import { DashboardStats, Event } from '../../types';
 import Layout from '../../components/Layout';
+import QRCode from 'qrcode';
 import {
     Download,
     Users,
@@ -26,7 +27,9 @@ import {
     Award,
     Star,
     MapPin,
-    Loader2
+    Loader2,
+    QrCode,
+    ChevronRight
 } from 'lucide-react';
 import { Toast } from '../../components';
 import PackageSelectionModal from './components/PackageSelectionModal';
@@ -89,24 +92,45 @@ const DashboardPage: React.FC = () => {
         type: 'guest' | 'couple';
         url: string;
         title: string;
+        showQR: boolean;
     }>({
         isOpen: false,
         type: 'guest',
         url: '',
-        title: ''
+        title: '',
+        showQR: false,
     });
+    const [qrDataUrl, setQrDataUrl] = useState<string>('');
 
     const [shareModalOpen, setShareModalOpen] = useState(false);
     const [shareEventData, setShareEventData] = useState<Event | null>(null);
 
     const openLinkModal = (e: React.MouseEvent, type: 'guest' | 'couple', path: string) => {
         e.stopPropagation();
+        setQrDataUrl('');
         setLinkModalConfig({
             isOpen: true,
             type,
             url: `${window.location.origin}${path}`,
-            title: type === 'guest' ? 'קישור לאורחים' : 'קישור לבעלי האירוע'
+            title: type === 'guest' ? 'קישור לאורחים' : 'קישור לבעלי האירוע',
+            showQR: false,
         });
+    };
+
+    useEffect(() => {
+        if (linkModalConfig.showQR && linkModalConfig.url) {
+            QRCode.toDataURL(linkModalConfig.url, { width: 220, margin: 1, color: { dark: '#0f172a', light: '#ffffff' } })
+                .then(url => setQrDataUrl(url))
+                .catch(console.error);
+        }
+    }, [linkModalConfig.showQR, linkModalConfig.url]);
+
+    const downloadQR = () => {
+        if (!qrDataUrl) return;
+        const a = document.createElement('a');
+        a.href = qrDataUrl;
+        a.download = `qr-gallery.png`;
+        a.click();
     };
 
     const unsecuredCopyToClipboard = (text: string) => {
@@ -1071,45 +1095,75 @@ const DashboardPage: React.FC = () => {
                             <div className="bg-white rounded-3xl shadow-2xl max-w-sm w-full p-6 relative">
                                 {/* Close Button */}
                                 <button
-                                    onClick={() => setLinkModalConfig(prev => ({ ...prev, isOpen: false }))}
+                                    onClick={() => setLinkModalConfig(prev => ({ ...prev, isOpen: false, showQR: false }))}
                                     className="absolute top-4 right-4 p-2 text-slate-400 hover:text-slate-600 transition-colors"
                                 >
                                     <X className="w-4 h-4" />
                                 </button>
 
-                                <div className="flex flex-col items-center text-center mt-2">
-                                    {/* Icon */}
-                                    <div className={`w-14 h-14 rounded-full flex items-center justify-center mb-4 ${linkModalConfig.type === 'guest' ? 'bg-slate-50 text-slate-600' : 'bg-pink-50 text-pink-500'}`}>
-                                        {linkModalConfig.type === 'guest' ? (
-                                            <Users className="w-7 h-7" />
-                                        ) : (
-                                            <Heart className="w-7 h-7" />
-                                        )}
-                                    </div>
-
-                                    {/* Title */}
-                                    <h3 className="text-xl font-bold text-slate-900 mb-1">{linkModalConfig.title}</h3>
-                                    <p className="text-slate-500 text-sm mb-6">בחר פעולה עבור הקישור</p>
-
-                                    {/* Buttons */}
-                                    <div className="w-full flex flex-col gap-3">
+                                {linkModalConfig.showQR ? (
+                                    /* QR Code View */
+                                    <div className="flex flex-col items-center text-center mt-2">
                                         <button
-                                            onClick={() => window.open(linkModalConfig.url, '_blank')}
-                                            className="w-full py-3 px-4 rounded-xl border border-cyan-100 bg-cyan-50 text-cyan-700 font-bold hover:bg-cyan-100 transition-colors flex items-center justify-center gap-2"
+                                            onClick={() => setLinkModalConfig(prev => ({ ...prev, showQR: false }))}
+                                            className="absolute top-4 left-4 p-2 text-slate-400 hover:text-slate-600 transition-colors"
                                         >
-                                            <span>פתח בחלון חדש</span>
-                                            <ExternalLink className="w-4 h-4" />
+                                            <ChevronRight className="w-5 h-5" />
                                         </button>
-
+                                        <div className="w-14 h-14 rounded-full bg-slate-50 text-slate-600 flex items-center justify-center mb-4">
+                                            <QrCode className="w-7 h-7" />
+                                        </div>
+                                        <h3 className="text-xl font-bold text-slate-900 mb-1">QR לגלריית אורחים</h3>
+                                        <p className="text-slate-500 text-sm mb-6">סרוק כדי לפתוח את הגלריה</p>
+                                        <div className="p-4 bg-white rounded-2xl border border-slate-100 shadow-sm mb-6">
+                                            {qrDataUrl
+                                                ? <img src={qrDataUrl} alt="QR Code" className="w-52 h-52" />
+                                                : <div className="w-52 h-52 flex items-center justify-center"><Loader2 className="w-8 h-8 animate-spin text-slate-400" /></div>
+                                            }
+                                        </div>
                                         <button
-                                            onClick={handleCopyLink}
+                                            onClick={downloadQR}
                                             className="w-full py-3 px-4 rounded-xl bg-slate-900 text-white font-bold hover:bg-slate-800 transition-colors flex items-center justify-center gap-2 shadow-lg shadow-slate-200"
                                         >
-                                            <span>העתק קישור</span>
-                                            <Copy className="w-4 h-4" />
+                                            <span>הורד QR</span>
+                                            <Download className="w-4 h-4" />
                                         </button>
                                     </div>
-                                </div>
+                                ) : (
+                                    /* Default Link View */
+                                    <div className="flex flex-col items-center text-center mt-2">
+                                        <div className={`w-14 h-14 rounded-full flex items-center justify-center mb-4 ${linkModalConfig.type === 'guest' ? 'bg-slate-50 text-slate-600' : 'bg-pink-50 text-pink-500'}`}>
+                                            {linkModalConfig.type === 'guest' ? <Users className="w-7 h-7" /> : <Heart className="w-7 h-7" />}
+                                        </div>
+                                        <h3 className="text-xl font-bold text-slate-900 mb-1">{linkModalConfig.title}</h3>
+                                        <p className="text-slate-500 text-sm mb-6">בחר פעולה עבור הקישור</p>
+                                        <div className="w-full flex flex-col gap-3">
+                                            <button
+                                                onClick={() => window.open(linkModalConfig.url, '_blank')}
+                                                className="w-full py-3 px-4 rounded-xl border border-cyan-100 bg-cyan-50 text-cyan-700 font-bold hover:bg-cyan-100 transition-colors flex items-center justify-center gap-2"
+                                            >
+                                                <span>פתח בחלון חדש</span>
+                                                <ExternalLink className="w-4 h-4" />
+                                            </button>
+                                            <button
+                                                onClick={handleCopyLink}
+                                                className="w-full py-3 px-4 rounded-xl bg-slate-900 text-white font-bold hover:bg-slate-800 transition-colors flex items-center justify-center gap-2 shadow-lg shadow-slate-200"
+                                            >
+                                                <span>העתק קישור</span>
+                                                <Copy className="w-4 h-4" />
+                                            </button>
+                                            {linkModalConfig.type === 'guest' && (
+                                                <button
+                                                    onClick={() => setLinkModalConfig(prev => ({ ...prev, showQR: true }))}
+                                                    className="w-full py-3 px-4 rounded-xl border border-slate-200 bg-slate-50 text-slate-700 font-bold hover:bg-slate-100 transition-colors flex items-center justify-center gap-2"
+                                                >
+                                                    <span>QR ברקוד</span>
+                                                    <QrCode className="w-4 h-4" />
+                                                </button>
+                                            )}
+                                        </div>
+                                    </div>
+                                )}
                             </div>
                         </div>
                     )
