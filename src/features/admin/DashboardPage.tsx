@@ -869,33 +869,36 @@ const DashboardPage: React.FC = () => {
                                             ) : (() => {
                                                 const isProcessing = event.photoCount > 0 && !(event.isPublished || event.initialProcessingDone);
                                                 return (
-                                                    <div className="flex gap-2 justify-center">
-                                                        <button
-                                                            onClick={(e) => openLinkModal(e, 'guest', `/gallery/${event.slug || event.id}`)}
-                                                            className={`w-24 justify-center px-2 py-1.5 text-xs font-bold rounded-lg transition-colors flex items-center gap-1 ${isProcessing ? 'text-amber-600 bg-amber-50 border border-amber-200 hover:bg-amber-100' : 'text-slate-600 border border-slate-200 hover:bg-slate-50'}`}
-                                                            title={isProcessing ? 'תמונות עדיין בזיהוי פנים' : 'קישור לאורחים'}
-                                                        >
-                                                            {isProcessing ? <Loader2 className="w-3 h-3 animate-spin" /> : <Users className="w-3 h-3" />}
-                                                            <span>לאורחים</span>
-                                                        </button>
+                                                    <div className="flex items-center gap-1.5 justify-center">
+                                                        {isProcessing && <Loader2 className="w-3 h-3 text-amber-500 animate-spin flex-shrink-0" />}
+                                                        <div className="flex gap-2">
+                                                            <button
+                                                                onClick={(e) => openLinkModal(e, 'guest', `/gallery/${event.slug || event.id}`)}
+                                                                className="w-24 justify-center px-2 py-1.5 text-xs font-bold text-slate-600 border border-slate-200 hover:bg-slate-50 rounded-lg transition-colors flex items-center gap-1"
+                                                                title="קישור לאורחים"
+                                                            >
+                                                                <Users className="w-3 h-3" />
+                                                                <span>לאורחים</span>
+                                                            </button>
 
-                                                        <button
-                                                            onClick={(e) => openLinkModal(e, 'couple', `/gallery/${event.coupleSlug || event.id}`)}
-                                                            className="w-24 justify-center px-2 py-1.5 text-xs font-bold text-cyan-600 bg-cyan-50 hover:bg-cyan-100 rounded-lg transition-colors flex items-center gap-1 border border-cyan-100"
-                                                            title="קישור לבעלי האירוע"
-                                                        >
-                                                            <Heart className="w-3 h-3" />
-                                                            <span>לבעלי האירוע</span>
-                                                        </button>
+                                                            <button
+                                                                onClick={(e) => openLinkModal(e, 'couple', `/gallery/${event.coupleSlug || event.id}`)}
+                                                                className="w-24 justify-center px-2 py-1.5 text-xs font-bold text-cyan-600 bg-cyan-50 hover:bg-cyan-100 rounded-lg transition-colors flex items-center gap-1 border border-cyan-100"
+                                                                title="קישור לבעלי האירוע"
+                                                            >
+                                                                <Heart className="w-3 h-3" />
+                                                                <span>לבעלי האירוע</span>
+                                                            </button>
 
-                                                        <button
-                                                            onClick={(e) => shareEvent(event, e)}
-                                                            className="w-24 justify-center px-2 py-1.5 text-xs font-bold text-green-600 bg-green-50 hover:bg-green-100 rounded-lg transition-colors flex items-center gap-1 border border-green-100"
-                                                            title="שתף אירוע"
-                                                        >
-                                                            <Share2 className="w-3 h-3" />
-                                                            <span>שתף</span>
-                                                        </button>
+                                                            <button
+                                                                onClick={(e) => shareEvent(event, e)}
+                                                                className="w-24 justify-center px-2 py-1.5 text-xs font-bold text-green-600 bg-green-50 hover:bg-green-100 rounded-lg transition-colors flex items-center gap-1 border border-green-100"
+                                                                title="שתף אירוע"
+                                                            >
+                                                                <Share2 className="w-3 h-3" />
+                                                                <span>שתף</span>
+                                                            </button>
+                                                        </div>
                                                     </div>
                                                 );
                                             })()}
