@@ -847,7 +847,7 @@ const DashboardPage: React.FC = () => {
                                                     )}
                                                     {(event.photoCount > 0 && !(event.isPublished || event.initialProcessingDone)) ? (
                                                         <div className="absolute -top-1 -right-1 w-3.5 h-3.5 flex items-center justify-center bg-white rounded-full border border-white">
-                                                            <Loader2 className="w-3 h-3 text-amber-500 animate-spin" />
+                                                            <Loader2 className="w-3 h-3 text-cyan-500 animate-spin" />
                                                         </div>
                                                     ) : (
                                                         <div
