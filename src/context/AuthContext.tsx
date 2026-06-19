@@ -1,10 +1,6 @@
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import { supabaseAuthService } from '../services/supabaseAuthService';
-import { MockS3Service } from '../services/mockS3';
-import { CONFIG } from '../config';
 import { User } from '@supabase/supabase-js';
-
-const USE_MOCK = CONFIG.USE_MOCK;
 
 interface AuthContextType {
     isAuthenticated: boolean;
@@ -23,93 +19,48 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
 
     useEffect(() => {
         const checkSession = async () => {
-            if (USE_MOCK) {
-                const userEmail = MockS3Service.getCurrentUserEmail();
-                if (userEmail) {
+            try {
+                const { session, error } = await supabaseAuthService.getSession();
+                if (error) throw error;
+                if (session) {
+                    // Validate the stored token against the server. If it was
+                    // issued by a different/older project it returns 401, and we
+                    // must not treat the user as authenticated.
+                    const { user: verifiedUser, error: userError } = await supabaseAuthService.getCurrentUser();
+                    if (userError || !verifiedUser) throw userError || new Error('Invalid session');
                     setIsAuthenticated(true);
-                    setUser({
-                        id: 'mock-user-id',
-                        app_metadata: {},
-                        user_metadata: {
-                            full_name: 'Mock User',
-                            avatar_url: null
-                        },
-                        aud: 'authenticated',
-                        created_at: new Date().toISOString()
-                    } as User);
+                    setUser(verifiedUser);
                 }
-            } else {
-                try {
-                    const { session, error } = await supabaseAuthService.getSession();
-                    if (error) throw error;
-                    if (session) {
-                        // Validate the stored token against the server. If it was
-                        // issued by a different/older project it returns 401, and we
-                        // must not treat the user as authenticated.
-                        const { user: verifiedUser, error: userError } = await supabaseAuthService.getCurrentUser();
-                        if (userError || !verifiedUser) throw userError || new Error('Invalid session');
-                        setIsAuthenticated(true);
-                        setUser(verifiedUser);
-                    }
-                } catch (e) {
-                    // A stored session token rejected by Supabase (e.g. 401 from
-                    // /auth/v1/user when the token is stale or belongs to another
-                    // project) would otherwise leave the app stuck. Purge it so the
-                    // login screen works cleanly.
-                    try { await supabaseAuthService.signOut(); } catch { /* ignore */ }
-                    setIsAuthenticated(false);
-                    setUser(null);
-                }
+            } catch (e) {
+                // A stored session token rejected by Supabase (e.g. 401 from
+                // /auth/v1/user when the token is stale or belongs to another
+                // project) would otherwise leave the app stuck. Purge it so the
+                // login screen works cleanly.
+                try { await supabaseAuthService.signOut(); } catch { /* ignore */ }
+                setIsAuthenticated(false);
+                setUser(null);
             }
             setIsLoading(false);
         };
 
         checkSession();
 
-        if (!USE_MOCK) {
-            const { data: { subscription } } = supabaseAuthService.onAuthStateChange((session) => {
-                setIsAuthenticated(!!session);
-                setUser(session?.user || null);
-            });
+        const { data: { subscription } } = supabaseAuthService.onAuthStateChange((session) => {
+            setIsAuthenticated(!!session);
+            setUser(session?.user || null);
+        });
 
-            return () => {
-                subscription.unsubscribe();
-            };
-        }
+        return () => {
+            subscription.unsubscribe();
+        };
     }, []);
 
     const login = async (password: string, email?: string): Promise<boolean> => {
-        if (USE_MOCK && email) {
-            try {
-                const success = await MockS3Service.login(email, password);
-                if (success) {
-                    setIsAuthenticated(true);
-                    setUser({
-                        id: 'mock-user-id',
-                        app_metadata: {},
-                        user_metadata: {
-                            full_name: 'Mock User',
-                            avatar_url: null
-                        },
-                        aud: 'authenticated',
-                        created_at: new Date().toISOString()
-                    } as User);
-                    return true;
-                }
-            } catch (error) {
-                console.error("Login failed", error);
-                throw error;
-            }
-        }
         return false;
     };
 
     const logout = async () => {
-        if (USE_MOCK) {
-            MockS3Service.logout();
-        } else {
-            await supabaseAuthService.signOut();
-        }
+        await supabaseAuthService.signOut();
         setIsAuthenticated(false);
         setUser(null);
     };
