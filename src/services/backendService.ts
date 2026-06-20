@@ -134,7 +134,7 @@ export const BackendService = {
         return await RealPhotoAPI.processPhoto(eventId, photoId, resizedFile);
     },
 
-    uploadToS3: async (uploadUrl: string, file: File): Promise<void> => {
+    uploadToS3: async (uploadUrl: string, file: File | Blob): Promise<void> => {
         return await RealPhotoAPI.uploadToS3(uploadUrl, file);
     },
 

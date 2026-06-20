@@ -1,6 +1,6 @@
 import React, { createContext, useContext, useState, useCallback, ReactNode } from 'react';
 import { BackendService } from '../services/backendService';
-import { compressImage } from '../utils/imageCompression';
+import { compressImage, compressAndThumbnail } from '../utils/imageCompression';
 
 interface UploadState {
     progress: number;
@@ -109,27 +109,36 @@ export const UploadProvider: React.FC<{ children: ReactNode }> = ({ children }) 
                 for (let i = 0; i < totalFiles; i += BATCH_SIZE) {
                     const chunk = files.slice(i, i + BATCH_SIZE);
 
-                    // 1. Compress — retry each image individually
+                    // 1. Compress + thumbnail — single decode, two encodes per image
                     const compressTasks = chunk.map((f) => async () => {
-                        const compressed = await withRetry(() => compressImage(f));
+                        const result = await withRetry(() => compressAndThumbnail(f));
                         compressedCount++;
                         bumpProgress();
                         updateUploadState(eventId, {
                             phase: 'preparing',
                             stage: `מכין תמונות (${compressedCount}/${totalFiles})...`
                         });
-                        return compressed;
+                        return result;
                     });
-                    const compressedChunk: File[] = await runWithConcurrency(compressTasks, COMPRESS_CONCURRENCY);
+                    const compressResults = await runWithConcurrency(compressTasks, COMPRESS_CONCURRENCY);
+                    const compressedChunk: File[] = compressResults.map((r: any) => r.compressed);
+                    const thumbnailChunk: Blob[] = compressResults.map((r: any) => r.thumbnail);
 
                     // 2. Presign — retry the whole call
                     const fileInfos = compressedChunk.map(f => ({ filename: f.name, contentType: f.type }));
                     const { urls } = await withRetry(() => BackendService.getPresignedUrls(eventId, fileInfos));
 
-                    // 3. Upload to R2 — retry each file individually
+                    // 3. Upload to R2 — main image + thumbnail concurrently, retry each individually
                     if (uploadStartTime === 0) uploadStartTime = Date.now();
                     const uploadTasks = urls.map((urlInfo: any, index: number) => async () => {
-                        await withRetry(() => BackendService.uploadToS3(urlInfo.uploadUrl, compressedChunk[index]));
+                        const thumbUpload = urlInfo.thumbnailUploadUrl && thumbnailChunk[index]
+                            ? withRetry(() => BackendService.uploadToS3(urlInfo.thumbnailUploadUrl, thumbnailChunk[index]))
+                                .catch((e: unknown) => console.warn('Thumbnail upload failed (non-blocking):', e))
+                            : Promise.resolve();
+                        await Promise.all([
+                            withRetry(() => BackendService.uploadToS3(urlInfo.uploadUrl, compressedChunk[index])),
+                            thumbUpload,
+                        ]);
                         uploadedCount++;
                         bumpProgress();
 

@@ -565,7 +565,7 @@ export const RealPhotoAPI = {
         });
     },
 
-    uploadToS3: async (uploadUrl: string, file: File): Promise<void> => {
+    uploadToS3: async (uploadUrl: string, file: File | Blob): Promise<void> => {
         await fetch(uploadUrl, {
             method: 'PUT',
             body: file,

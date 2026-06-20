@@ -240,7 +240,17 @@ const EventManagePage: React.FC = () => {
         if (isClientUploading) return;
         if (!isServerProcessing && !awaitingServer) return;
 
+        const totalPollsRef = { current: 0 };
+        const MAX_POLLS = 180; // 15 minutes at 5s — safety stop
+
         const poll = async () => {
+            totalPollsRef.current += 1;
+            if (totalPollsRef.current > MAX_POLLS) {
+                setAwaitingServer(false);
+                console.warn('Polling stopped after 15 minutes — Modal may have failed');
+                return;
+            }
+
             try {
                 const updatedBatches = await BackendService.getBatches(id);
                 setBatches(updatedBatches);
@@ -249,7 +259,7 @@ const EventManagePage: React.FC = () => {
                     // Batch not visible yet (race) — keep bridging. Bail after ~60s so a
                     // failed confirm never hangs the bar forever.
                     emptyPollsRef.current += 1;
-                    if (emptyPollsRef.current > 20) {
+                    if (emptyPollsRef.current > 12) {
                         setAwaitingServer(false);
                     }
                     return;
@@ -282,7 +292,7 @@ const EventManagePage: React.FC = () => {
         };
 
         poll(); // immediate tick so the first update doesn't wait for the interval
-        const interval = setInterval(poll, 1500);
+        const interval = setInterval(poll, 5000);
         return () => clearInterval(interval);
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [id, isServerProcessing, awaitingServer, uploads]);
