@@ -98,10 +98,6 @@ export const BackendService = {
         return await RealPhotoAPI.getEventPhotos(eventId, page, limit, sortBy);
     },
 
-    uploadEventPhotos: async (eventId: string, files: File[]): Promise<any> => {
-        return await RealPhotoAPI.uploadEventPhotos(eventId, files);
-    },
-
     publishEvent: async (id: string): Promise<Event> => {
         return await RealEventAPI.publishEvent(id);
     },

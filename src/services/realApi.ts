@@ -472,52 +472,6 @@ export const RealPhotoAPI = {
         }
     },
 
-    uploadEventPhotos: async (eventId: string, files: File[]): Promise<any> => {
-        const formData = new FormData();
-
-        files.forEach((file) => {
-            formData.append('files', file);
-        });
-
-        const token = await getAuthToken();
-        const response = await fetch(`${API_BASE_URL}/events/${eventId}/images`, {
-            method: 'POST',
-            headers: {
-                'Authorization': `Bearer ${token}`,
-            },
-            body: formData,
-        });
-
-        if (!response.ok) {
-            const data = await response.json();
-            throw new Error(data.detail || 'Upload failed');
-        }
-
-        const data = await response.json();
-
-        // Map response
-        return {
-            batch: {
-                id: data.batch.id,
-                eventId: data.batch.event_id,
-                totalImages: data.batch.total_images,
-                processedImages: data.batch.processed_images,
-                status: data.batch.status,
-                isInitial: data.batch.is_initial,
-                createdAt: data.batch.created_at
-            },
-            images: data.images.map((img: any) => ({
-                id: img.id,
-                url: img.url,
-                thumbnailUrl: img.thumbnail_url || img.url,
-                title: img.filename || 'Photo',
-                date: img.created_at,
-                width: img.width,
-                height: img.height,
-            }))
-        };
-    },
-
     getPublicPhoto: async (eventId: string, photoId: string): Promise<any> => {
         const data = await apiRequest(`/public/events/${eventId}/images/${photoId}`);
         return {
